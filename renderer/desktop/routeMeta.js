@@ -1,0 +1,144 @@
+/**
+ * Desktop-only presentation of the menu entries MenuProvider builds: which
+ * icon each route gets and which sidebar group it sits in. The entries
+ * themselves (titles, which ones a user sees) still come from MenuContext.
+ */
+
+/** Ionicons name per route; anything missing falls back to `ellipse-outline`. */
+export const ROUTE_ICONS = {
+  SystematicCategoryScreen: 'grid-outline',
+  List: 'grid-outline',
+  OrdersScreen: 'receipt-outline',
+  Wallet: 'wallet-outline',
+  Increase: 'add-circle-outline',
+  TransactionsScreen: 'swap-vertical-outline',
+  CanceledOrdersScreen: 'close-circle-outline',
+  MessageScreen: 'chatbubbles-outline',
+  OrganizationContract: 'document-text-outline',
+  AddressScreen: 'location-outline',
+  TrainingRegistrationScreen: 'school-outline',
+  UserDiscounts: 'pricetags-outline',
+  ProductIssueScreen: 'construct-outline',
+  RateCategory: 'cash-outline',
+  ViolationReportScreen: 'megaphone-outline',
+  FeedbackSurveyScreen: 'happy-outline',
+  WarrantyScreen: 'shield-checkmark-outline',
+  NotesScreen: 'create-outline',
+  LearnMoreScreen: 'help-buoy-outline',
+  FAQScreen: 'help-circle-outline',
+  AboutScreen: 'information-circle-outline',
+  OrganizationTermsScreen: 'information-circle-outline',
+  PrivacyScreen: 'lock-closed-outline',
+  Profile: 'person-circle-outline',
+  OrganizationProfile: 'business-outline',
+  AccountSecurity: 'finger-print-outline',
+  Club: 'diamond-outline',
+};
+
+export const iconForRoute = (routeName) => ROUTE_ICONS[routeName] || 'ellipse-outline';
+
+/** Sidebar groups, in order. Routes not listed in any group go to `services`. */
+export const NAV_GROUPS = [
+  {
+    id: 'main',
+    routes: ['OrdersScreen', 'Wallet', 'MessageScreen', 'CanceledOrdersScreen', 'AddressScreen', 'OrganizationContract'],
+  },
+  {
+    id: 'services',
+    routes: [
+      'UserDiscounts',
+      'TrainingRegistrationScreen',
+      'ProductIssueScreen',
+      'RateCategory',
+      'WarrantyScreen',
+      'NotesScreen',
+    ],
+  },
+  {
+    id: 'support',
+    routes: [
+      'ViolationReportScreen',
+      'FeedbackSurveyScreen',
+      'LearnMoreScreen',
+      'AboutScreen',
+      'OrganizationTermsScreen',
+      'PrivacyScreen',
+    ],
+  },
+];
+
+// Desktop-only labels; kept here rather than in the shared i18n files.
+export const SHELL_LABELS = {
+  fa: {
+    main: 'منوی اصلی',
+    services: 'خدمات',
+    support: 'پشتیبانی و قوانین',
+    home: 'داشبورد',
+    newOrder: 'ثبت سفارش جدید',
+    signIn: 'ورود / ثبت‌نام',
+    guest: 'کاربر مهمان',
+    guestHint: 'برای ثبت و پیگیری سفارش وارد شوید',
+    search: 'جستجو در لوپ…',
+    searchHint: 'صفحه یا عملیات مورد نظر را جستجو کنید',
+    noResults: 'نتیجه‌ای پیدا نشد',
+    wallet: 'کیف پول',
+    toman: 'تومان',
+    back: 'بازگشت',
+    collapse: 'جمع کردن منو',
+    expand: 'باز کردن منو',
+    profile: 'حساب کاربری',
+    logout: 'خروج از حساب',
+    support_: 'پشتیبانی',
+    language: 'English',
+    copy: 'کپی شد',
+    userCode: 'کد کاربری',
+    gems: 'امتیاز',
+    actions: 'عملیات',
+    pages: 'صفحه‌ها',
+    open: 'باز کردن',
+    navigate: 'جابه‌جایی',
+    close: 'بستن',
+    charge: 'شارژ کیف پول',
+    transactions: 'تراکنش‌ها',
+    switchLanguage: 'تغییر زبان به انگلیسی',
+    darkMode: 'حالت تیره',
+    lightMode: 'حالت روشن',
+  },
+  en: {
+    main: 'Main',
+    services: 'Services',
+    support: 'Support & policies',
+    home: 'Dashboard',
+    newOrder: 'New order',
+    signIn: 'Sign in / Sign up',
+    guest: 'Guest',
+    guestHint: 'Sign in to place and track orders',
+    search: 'Search Loop…',
+    searchHint: 'Find a page or an action',
+    noResults: 'No results',
+    wallet: 'Wallet',
+    toman: 'Toman',
+    back: 'Back',
+    collapse: 'Collapse menu',
+    expand: 'Expand menu',
+    profile: 'Account',
+    logout: 'Sign out',
+    support_: 'Support',
+    language: 'فارسی',
+    copy: 'Copied',
+    userCode: 'User code',
+    gems: 'Points',
+    actions: 'Actions',
+    pages: 'Pages',
+    open: 'Open',
+    navigate: 'Navigate',
+    close: 'Close',
+    charge: 'Top up wallet',
+    transactions: 'Transactions',
+    switchLanguage: 'Switch to Persian',
+    darkMode: 'Dark mode',
+    lightMode: 'Light mode',
+  },
+};
+
+export const shellLabels = (lang) => SHELL_LABELS[lang === 'fa' ? 'fa' : 'en'];

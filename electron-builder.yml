@@ -1,0 +1,35 @@
+# Windows installer for the Loop desktop app.
+# The web UI is shipped as extraResources (outside asar) → resources/web,
+# which electron/config.js#getWebRoot reads when app.isPackaged.
+appId: com.clpiran.loop.desktop   # keep in sync with APP_USER_MODEL_ID in electron/config.js
+productName: Loop
+copyright: Copyright © CLP Iran
+
+directories:
+  output: release
+  buildResources: build
+
+files:
+  - electron/**/*
+  - package.json
+
+extraResources:
+  - from: web-build
+    to: web
+
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+  icon: build/icon.png
+  artifactName: Loop-${version}-win-${arch}.${ext}
+
+nsis:
+  artifactName: Loop-Setup-${version}.${ext}
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Loop
+  uninstallDisplayName: Loop

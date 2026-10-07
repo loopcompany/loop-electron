@@ -1,0 +1,31 @@
+{
+  "name": "loop-customer-electron",
+  "productName": "Loop",
+  "version": "1.0.0",
+  "description": "Loop (لوپ) — Windows desktop shell around the loop-customer-mobile web build.",
+  "private": true,
+  "main": "electron/main.js",
+  "author": "CLP Iran",
+  "engines": {
+    "node": ">=20.19.4"
+  },
+  "scripts": {
+    "dev": "concurrently -k -n web,electron -c blue,green \"npm:dev:web\" \"npm:dev:electron\"",
+    "dev:web": "node scripts/dev-web.js",
+    "dev:electron": "wait-on -t 180000 http-get://localhost:8081 && node scripts/electron.js --dev",
+    "start": "node scripts/electron.js",
+    "build:web": "node scripts/build-web.js",
+    "pack": "npm run build:web && electron-builder --dir",
+    "dist:win": "npm run build:web && electron-builder --win nsis --x64",
+    "test": "node --test test/*.test.js",
+    "dist:win:portable": "npm run build:web && electron-builder --win zip --x64",
+    "check:overrides": "node scripts/check-overrides.js",
+    "overrides:accept": "node scripts/check-overrides.js --accept"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.5",
+    "electron": "^44.5.1",
+    "electron-builder": "^26.15.3",
+    "wait-on": "^9.5.1"
+  }
+}

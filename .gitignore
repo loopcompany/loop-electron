@@ -1,0 +1,8 @@
+node_modules/
+web-build/
+release/
+build/icon.png
+*.log
+renderer/node_modules
+renderer/public
+renderer/.expo/

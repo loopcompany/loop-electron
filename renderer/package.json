@@ -1,0 +1,5 @@
+{
+  "name": "loop-desktop-renderer",
+  "private": true,
+  "main": "index.js"
+}

@@ -7,7 +7,7 @@ import HintBadge from '@components/HintBadge';
 import Dialog from './Dialog';
 import { elevation, gradients, motion, onDark, palette, radii, surface } from './desktopTheme';
 import { animate } from './globalStyles';
-import { DButton, formatNumber, useDir } from './ui';
+import { Cheetah, DButton, cheetahFacing, formatNumber, useDir } from './ui';
 import { contentGutter, contentMaxWidth } from './Breakpoints';
 
 const COPY = {
@@ -229,8 +229,9 @@ export default function WizardLayout({ title, subtitle, image, steps, currentId,
           <View style={[styles.mainFooter, dir.row]}>
             <DButton
               title={copy.prev}
-              icon={dir.rtl ? 'arrow-forward' : 'arrow-back'}
+              icon={<Cheetah facing={cheetahFacing(dir.rtl, 'back')} height={34} />}
               variant="outline"
+              size="lg"
               disabled={isFirst}
               onPress={() => onSelect(steps[index - 1].id)}
             />
@@ -245,8 +246,9 @@ export default function WizardLayout({ title, subtitle, image, steps, currentId,
             {!isLast ? (
               <DButton
                 title={copy.next}
-                iconAfter={dir.rtl ? 'arrow-back' : 'arrow-forward'}
+                iconAfter={<Cheetah facing={cheetahFacing(dir.rtl, 'next')} height={34} />}
                 variant="gold"
+                size="lg"
                 onPress={() => onSelect(steps[index + 1].id)}
               />
             ) : (
@@ -417,7 +419,7 @@ const styles = StyleSheet.create({
   miniDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: surface.borderStrong },
   miniDotDone: { backgroundColor: palette.success },
   miniDotActive: { width: 20, backgroundColor: palette.brandBright },
-  footerSpacer: { width: 120 },
+  footerSpacer: { width: 200 },
 
   summary: {
     flex: 1,

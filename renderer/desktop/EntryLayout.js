@@ -1,7 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Image as ExpoImage } from 'expo-image';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
 
@@ -10,10 +9,12 @@ import { setLanguage } from '@slices/languageSlice';
 import { elevation, gradients, motion, onDark, palette, radii } from './desktopTheme';
 import { animate } from './globalStyles';
 import { useDir } from './ui';
+import AppWallpaper from './Wallpaper';
+import { brandCopy, greetingIcon, useTimeGreeting } from './brandCopy';
 
 const COPY = {
   fa: {
-    headline: 'خدمات فنی و پشتیبانی،\nفقط با چند کلیک',
+    headline: 'خدمات و راهکارهای فناوری،\nدر یک فضای یکپارچه',
     lead: 'سفارش تعمیر، نصب و تأمین تجهیزات برای خانه، شرکت و سازمان — با پیگیری لحظه‌ای و پرداخت امن.',
     features: [
       { icon: 'flash-outline', title: 'سفارش سیستماتیک', text: 'دستگاه را انتخاب کنید، بقیه‌اش قدم‌به‌قدم' },
@@ -23,7 +24,7 @@ const COPY = {
     language: 'English',
   },
   en: {
-    headline: 'Tech services & support,\njust a few clicks away',
+    headline: 'Tech services & solutions,\nin one unified space',
     lead: 'Order repairs, installations and equipment for home, business and organisations — with live tracking and secure payment.',
     features: [
       { icon: 'flash-outline', title: 'Systematic ordering', text: 'Pick a device, we guide you step by step' },
@@ -95,12 +96,12 @@ export default function EntryLayout({ title, subtitle, children, footer }) {
   );
 }
 
-/** The moon artwork across the whole window, darkened on the reading side. */
+/** The Loop wallpaper across the whole window, darkened on the reading side. */
 export function CosmicBackdrop() {
   const dir = useDir();
   return (
     <>
-      <ExpoImage source={require('@assets/loopbackground.webp')} style={styles.bg} contentFit="cover" cachePolicy="memory-disk" />
+      <AppWallpaper drift />
       <View style={[styles.shade, { backgroundImage: dir.rtl ? SHADE_RTL : SHADE_LTR }]} pointerEvents="none" />
     </>
   );
@@ -113,9 +114,18 @@ export function CosmicBackdrop() {
 export function BrandStory({ style, compact }) {
   const dir = useDir();
   const copy = COPY[dir.rtl ? 'fa' : 'en'];
+  const greeting = useTimeGreeting(dir.lang);
   return (
     <View style={[styles.story, dir.start, animate('loop-fade-up', '500ms'), style]}>
       <Image source={require('@assets/logo.png')} style={styles.logo} resizeMode="contain" />
+      {/* صبح بخیر · به جوهر آینده (لوپ) خوش آمدید */}
+      <View style={[styles.greet, dir.row, animate('loop-fade-up', '500ms', '120ms')]}>
+        <Ionicons name={greetingIcon()} size={16} color={palette.gold} />
+        <Text style={[styles.greetText, dir.bold, dir.align]}>
+          {greeting}
+          <Text style={[styles.greetWelcome, dir.light]}>{`  ·  ${brandCopy(dir.lang).welcome}`}</Text>
+        </Text>
+      </View>
       <Text style={[styles.headline, compact && styles.headlineCompact, dir.bold, dir.align]}>{copy.headline}</Text>
       <Text style={[styles.lead, compact && styles.leadCompact, dir.light, dir.align]}>{copy.lead}</Text>
       {!compact && <View style={styles.features}>
@@ -132,6 +142,48 @@ export function BrandStory({ style, compact }) {
         ))}
       </View>}
     </View>
+  );
+}
+
+/**
+ * The quieter row under the main actions: everything that should stay
+ * reachable without competing with them.
+ *
+ * @param {object} props
+ * @param {string} props.title
+ * @param {import('react').ReactNode} props.children   EntryLink items
+ */
+export function EntryMore({ title, children }) {
+  const dir = useDir();
+  return (
+    <View style={[styles.more, animate('loop-fade-up', '380ms', '520ms')]}>
+      <Text style={[styles.moreTitle, dir.light, dir.align]}>{title}</Text>
+      <View style={[styles.moreRow, dir.row]}>{children}</View>
+    </View>
+  );
+}
+
+/** One small secondary action (icon + label chip) for EntryMore. */
+export function EntryLink({ icon, title, onPress, badge, disabled }) {
+  const dir = useDir();
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      accessibilityRole="button"
+      accessibilityState={{ disabled: !!disabled }}
+      style={({ hovered, pressed }) => [
+        styles.link,
+        dir.row,
+        hovered && !disabled && styles.linkHover,
+        pressed && !disabled && styles.actionPressed,
+        disabled && styles.actionDisabled,
+      ]}
+    >
+      <Ionicons name={icon} size={16} color={palette.gold} />
+      <Text style={[styles.linkText, dir.bold]} numberOfLines={1}>{title}</Text>
+      {!!badge && <Text style={[styles.badgeText, dir.light]}>{badge}</Text>}
+    </Pressable>
   );
 }
 
@@ -204,17 +256,19 @@ const SHADE_LTR = 'linear-gradient(90deg, rgba(4, 15, 31, 0.92) 0%, rgba(4, 15, 
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   root: { flex: 1, backgroundColor: palette.navy950, overflow: 'hidden' },
-  // the artwork carries its own logo + URL in its bottom-right corner: scale
-  // it up from a point near the top-left so that corner leaves the window
-  // (react-native-web clamps an image wider than its parent, so no negative
-  // offsets)
-  bg: {
-    ...StyleSheet.absoluteFillObject,
-    transform: [{ scale: 1.32 }],
-    transformOrigin: '22% 28%',
-    ...animate('loop-fade-in', '900ms'),
-  },
   shade: { ...StyleSheet.absoluteFillObject },
+  greet: {
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 7,
+    paddingHorizontal: 14,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255, 215, 0, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.28)',
+  },
+  greetText: { color: palette.gold, fontSize: 14 },
+  greetWelcome: { color: onDark.soft, fontSize: 13.5 },
   scroll: { flex: 1 },
   scrollContent: { flexGrow: 1, justifyContent: 'center', paddingVertical: 48, paddingHorizontal: 64 },
   layout: {
@@ -303,6 +357,24 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 215, 0, 0.16)',
   },
   badgeText: { color: palette.gold, fontSize: 11 },
+  more: { marginTop: 18, paddingTop: 16, gap: 10, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.1)' },
+  moreTitle: { color: onDark.muted, fontSize: 12 },
+  moreRow: { flexWrap: 'wrap', gap: 8 },
+  link: {
+    alignItems: 'center',
+    gap: 7,
+    height: 36,
+    paddingHorizontal: 12,
+    borderRadius: radii.md,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    cursor: 'pointer',
+    transitionProperty: 'background-color, border-color',
+    transitionDuration: motion.fast,
+  },
+  linkHover: { backgroundColor: 'rgba(255,255,255,0.12)', borderColor: 'rgba(255, 215, 0, 0.35)' },
+  linkText: { color: onDark.text, fontSize: 12.5 },
   chevron: { transitionProperty: 'transform', transitionDuration: motion.base },
   chevronNudgeRtl: { transform: 'translateX(-4px)' },
   chevronNudgeLtr: { transform: 'translateX(4px)' },

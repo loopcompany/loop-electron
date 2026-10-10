@@ -2,10 +2,12 @@
  * DESKTOP OVERRIDE of loop-customer-mobile/org/List.js
  *
  * The organisation home. On a phone: two icon tiles on the moon artwork.
- * On the desktop: the same dashboard frame as the customer home
- * (@desktop/DashboardParts) with the two ways to order — comprehensive and
- * systematic — as large cards that show their explanation up front instead
- * of behind a "?" badge.
+ * On the desktop: the same calm home as the customer's
+ * (@desktop/DashboardParts): a greeting banner, three large actions (order a
+ * service, goods / product supply, orders), then the two ways to order —
+ * comprehensive and systematic — as large cards that show their explanation
+ * up front instead of behind a "?" badge (always shown; «ثبت سفارش خدمات»
+ * scrolls to them), the account at a glance and a quick-access row.
  *
  * Same behaviour as the mobile file: the same two destinations, the same
  * title (the organisation's name), and customers are redirected to their
@@ -14,7 +16,7 @@
  * When the mobile file changes, `npm run check:overrides` fails: port the
  * change here, then run `npm run overrides:accept`.
  */
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, Image, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
@@ -28,12 +30,14 @@ import { CUSTOMER_HOME_ROUTE } from '@navigation/homeRoute';
 import { Card, Pill, SectionHeader, useDir } from '@desktop/ui';
 import { elevation, gradients, motion, onDark, palette, radii, surface } from '@desktop/desktopTheme';
 import { animate } from '@desktop/globalStyles';
+import { brandCopy, useTimeGreeting } from '@desktop/brandCopy';
 import {
   AccountStats,
-  RecentOrdersCard,
+  HomeActions,
+  QuickAccess,
   Shortcut,
   WelcomeHero,
-  dashboardCopy,
+  greetingIcon,
   dashboardStyles,
   greetingName,
 } from '@desktop/DashboardParts';
@@ -60,7 +64,7 @@ const COPY = {
     badge: 'پنل سازمانی',
     heroText: 'سفارش‌های سازمان را یکجا ثبت کنید یا دستگاه‌به‌دستگاه پیش بروید؛ پیگیری و پرداخت هم همین‌جاست.',
     contract: 'قرارداد',
-    orders: 'سفارش‌ها',
+    contractHint: 'قرارداد و توافق‌نامه‌ی سازمان',
     choose: 'روش ثبت سفارش',
     chooseHint: 'یکی از دو مسیر زیر را انتخاب کنید',
     start: 'شروع',
@@ -74,7 +78,7 @@ const COPY = {
     badge: 'Organisation panel',
     heroText: 'Place your organisation’s orders all at once or device by device — tracking and payment live here too.',
     contract: 'Contract',
-    orders: 'Orders',
+    contractHint: 'Your organisation’s agreement',
     choose: 'How to order',
     chooseHint: 'Pick one of the two ways below',
     start: 'Start',
@@ -94,7 +98,14 @@ const List = ({ navigation }) => {
   const token = useSelector((state) => state?.auth?.token);
   const user = useSelector((state) => state?.user?.data);
   const orders = useSelector((state) => state?.orders?.data);
-  const ordersLoading = useSelector((state) => state?.orders?.loading);
+  const greeting = useTimeGreeting(dir.lang);
+  const brand = brandCopy(dir.lang);
+
+  // «ثبت سفارش خدمات» به بخش «روش ثبت سفارش» (همیشه باز) اسکرول می‌کند
+  const scrollRef = useRef(null);
+  const servicesY = useRef(0);
+  const scrollToServices = () =>
+    scrollRef.current?.scrollTo({ y: Math.max(0, servicesY.current - 16), animated: true });
 
   const organizationName = useSelector(
     (state) => state?.organization?.profile?.company_name
@@ -117,22 +128,25 @@ const List = ({ navigation }) => {
   return (
     <View style={dashboardStyles.screen}>
       <ScreenHeaders title={organizationName || L('سازمانی / دولتی')} />
-      <ScrollView style={dashboardStyles.scroll} contentContainerStyle={dashboardStyles.scrollContent}>
+      <ScrollView ref={scrollRef} style={dashboardStyles.scroll} contentContainerStyle={dashboardStyles.scrollContent}>
         <View style={dashboardStyles.page}>
           <WelcomeHero
-            badge={copy.badge}
-            title={dashboardCopy(dir.rtl).hello(name)}
-            text={copy.heroText}
-            actions={[
-              { title: copy.orders, icon: 'receipt-outline', onPress: () => navigation.navigate('OrdersScreen') },
-              { title: copy.contract, icon: 'document-text-outline', onPress: () => navigation.navigate('OrganizationContract') },
-            ]}
+            greeting={[greeting, name].filter(Boolean).join(dir.rtl ? '، ' : ', ')}
+            greetingIcon={greetingIcon()}
+            title={brand.welcome}
+            text={brand.tagline}
           />
 
-          <AccountStats navigation={navigation} orders={orders} />
+          <HomeActions
+            onService={scrollToServices}
+            onSupply={() => navigation.navigate('HardwareSelectionScreen')}
+            onOrders={() => navigation.navigate('OrdersScreen')}
+            orders={orders}
+          />
 
-          <View style={[dashboardStyles.columns, dir.row]}>
-            <Card style={[dashboardStyles.mainColumn, animate('loop-fade-up', '380ms', '120ms')]}>
+          {/* Two ways to order */}
+          <View onLayout={(e) => { servicesY.current = e.nativeEvent.layout.y; }}>
+            <Card style={[styles.services, animate('loop-fade-up', '320ms')]}>
               <SectionHeader title={copy.choose} subtitle={copy.chooseHint} icon="git-branch-outline" />
               <View style={[styles.options, dir.row]}>
                 {entryOptions.map((item, i) => (
@@ -143,7 +157,7 @@ const List = ({ navigation }) => {
                     accessibilityLabel={L(item.title)}
                     style={({ hovered, pressed }) => [
                       styles.option,
-                      animate('loop-fade-up', '340ms', `${180 + i * 80}ms`),
+                      animate('loop-fade-up', '340ms', `${80 + i * 80}ms`),
                       hovered && styles.optionHover,
                       pressed && styles.optionPressed,
                     ]}
@@ -169,15 +183,15 @@ const List = ({ navigation }) => {
                 ))}
               </View>
             </Card>
-
-            <View style={[dashboardStyles.sideColumn, animate('loop-fade-up', '380ms', '180ms')]}>
-              <RecentOrdersCard navigation={navigation} orders={orders} loading={ordersLoading} />
-              <View style={[dashboardStyles.shortcuts, dir.row]}>
-                <Shortcut icon="business-outline" title={copy.profile} hint={copy.profileHint} onPress={() => navigation.navigate('Profile')} />
-                <Shortcut icon="headset-outline" title={copy.support} hint={copy.supportHint} onPress={() => navigation.navigate('MessageScreen')} />
-              </View>
-            </View>
           </View>
+
+          <AccountStats navigation={navigation} orders={orders} />
+
+          <QuickAccess>
+            <Shortcut icon="document-text-outline" title={copy.contract} hint={copy.contractHint} onPress={() => navigation.navigate('OrganizationContract')} />
+            <Shortcut icon="business-outline" title={copy.profile} hint={copy.profileHint} onPress={() => navigation.navigate('Profile')} />
+            <Shortcut icon="headset-outline" title={copy.support} hint={copy.supportHint} onPress={() => navigation.navigate('MessageScreen')} />
+          </QuickAccess>
         </View>
       </ScrollView>
     </View>
@@ -185,6 +199,7 @@ const List = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
+  services: { padding: 24 },
   options: { gap: 16, alignItems: 'stretch' },
   option: {
     flex: 1,

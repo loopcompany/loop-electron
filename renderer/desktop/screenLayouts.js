@@ -8,6 +8,9 @@
  *              read when they are wide
  *   dashboard  no card: desktop-designed screens lay out their own cards and
  *              grids directly on the canvas
+ *   document   no card either: a paper document (the order receipt) floats in
+ *              a centred column on the wallpaper; the screen's own moon
+ *              artwork is hidden (desktop/documentLayout)
  *
  * page, narrow and dashboard all share one content width and one gap under
  * the top bar (contentMaxWidth / contentTopGap in ./Breakpoints).
@@ -61,6 +64,8 @@ const LAYOUTS = {
   FeedbackSurveyScreen: 'dashboard',
   Increase: 'dashboard',
   AddEditNoteScreen: 'dashboard',
+  HardwareSelectionScreen: 'dashboard',
+  Details: 'dashboard',
 
   // Single-column forms, receipts and conversations
   ChatRoom: 'narrow',
@@ -71,11 +76,13 @@ const LAYOUTS = {
   AddNewAddress: 'narrow',
   OrganizationProfile: 'narrow',
   AccountSecurity: 'narrow',
-  Details: 'narrow',
   Invoice: 'narrow',
-  OrderReceipt: 'narrow',
   Preview: 'narrow',
-  OrderSummaryScreen: 'narrow',
+
+  // The receipt as a sheet of paper on the wallpaper
+  OrderReceipt: 'document',
+  OrderSummaryScreen: 'document',
+  ReceiptGallery: 'document',
   DeviceOrderSummary: 'narrow',
   OrderTrackingScreen: 'narrow',
   OrgPrivacy: 'narrow',
@@ -83,7 +90,7 @@ const LAYOUTS = {
 
 /**
  * @param {string} routeName
- * @returns {'page'|'narrow'|'dashboard'|'full'|'auth'|'authWide'}
+ * @returns {'page'|'narrow'|'dashboard'|'document'|'full'|'auth'|'authWide'}
  */
 export function screenLayoutFor(routeName) {
   return LAYOUTS[routeName] || 'page';

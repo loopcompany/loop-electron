@@ -6,6 +6,7 @@ import { sidebarWidth, sidebarRailWidth } from './Breakpoints';
 import { chrome, elevation, gradients, motion, onDark, palette, radii } from './desktopTheme';
 import { NAV_GROUPS, iconForRoute, shellLabels } from './routeMeta';
 import { formatNumber } from './ui';
+import { brandCopy } from './brandCopy';
 import { getFontFamily } from '@theme/Typography';
 
 /**
@@ -160,15 +161,15 @@ export default function DesktopSidebar({
     >
       {/* Brand + fold button */}
       <View style={[styles.brand, row, collapsed && styles.brandCollapsed]}>
-        <Pressable onPress={onHome} accessibilityRole="link" style={[styles.brandLink, row]}>
+        <Pressable onPress={onHome} accessibilityRole="link" style={[styles.brandLink, row, !collapsed && styles.brandLinkWide]}>
           <View style={styles.brandMark}>
             <Image source={require('@assets/images/start.png')} style={styles.brandLogo} />
           </View>
           {!collapsed && (
-            <View>
+            <View style={styles.brandText}>
               <Text style={[styles.brandName, bold, textAlign]}>{rtl ? 'لوپ' : 'Loop'}</Text>
-              <Text style={[styles.brandTag, light, textAlign]}>
-                {rtl ? 'خدمات فنی و پشتیبانی' : 'Tech services & support'}
+              <Text style={[styles.brandTag, light, textAlign]} numberOfLines={2}>
+                {brandCopy(lang).tagline}
               </Text>
             </View>
           )}
@@ -349,6 +350,8 @@ const styles = StyleSheet.create({
   },
   brandCollapsed: { justifyContent: 'center', paddingHorizontal: 0 },
   brandLink: { alignItems: 'center', gap: 11, cursor: 'pointer' },
+  brandLinkWide: { flex: 1, minWidth: 0 },
+  brandText: { flex: 1, minWidth: 0 },
   brandMark: {
     width: 40,
     height: 40,
@@ -362,7 +365,7 @@ const styles = StyleSheet.create({
   },
   brandLogo: { width: 30, height: 30, resizeMode: 'contain' },
   brandName: { color: palette.white, fontSize: 18, lineHeight: 24 },
-  brandTag: { color: onDark.muted, fontSize: 11 },
+  brandTag: { color: onDark.muted, fontSize: 10.5, lineHeight: 17 },
   fold: {
     width: 28,
     height: 28,

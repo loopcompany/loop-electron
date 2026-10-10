@@ -129,6 +129,8 @@ function createMainWindow() {
       nodeIntegration: false,
       sandbox: true,
       spellcheck: false,
+      // the background music (renderer/desktop/backgroundMusic.js) starts with the app
+      autoplayPolicy: 'no-user-gesture-required',
       additionalArguments: [`--loop-app-version=${app.getVersion()}`, `--loop-title-bar=${TITLE_BAR}`],
     },
   });

@@ -62,14 +62,18 @@ import { AUTH_ROUTE, requiresAuth } from '@navigation/routes';
 import { homeRouteFor, resetToHome } from '@navigation/homeRoute';
 import useResponsive from '@desktop/useResponsive';
 import DesktopSidebar from '@desktop/DesktopSidebar';
-import { authFormWidth, authWideFormWidth, contentGutter, contentMaxWidth, contentTopGap, narrowContentWidth } from '@desktop/Breakpoints';
+import { authFormWidth, authWideFormWidth, contentGutter, contentMaxWidth, contentTopGap, documentWidth, narrowContentWidth } from '@desktop/Breakpoints';
 import { screenLayoutFor } from '@desktop/screenLayouts';
 import DesktopTitleBar, { hasCustomTitleBar } from '@desktop/DesktopTitleBar';
-import DesktopAuthPanel from '@desktop/DesktopAuthPanel';
+import DesktopAuthPanel, { AuthCardBar } from '@desktop/DesktopAuthPanel';
 import { CosmicBackdrop } from '@desktop/EntryLayout';
+import AppWallpaper from '@desktop/Wallpaper';
+import { startBackgroundMusic, toggleBackgroundMusic, useBackgroundMusic } from '@desktop/backgroundMusic';
 import { useGlassAuth } from '@desktop/glassAuth';
+import { useDocumentFrame } from '@desktop/documentLayout';
 import { toggleTheme, useTheme } from '@desktop/theme';
 import DesktopTopBar from '@desktop/DesktopTopBar';
+import { Cheetah, cheetahFacing } from '@desktop/ui';
 import CommandPalette from '@desktop/CommandPalette';
 import { usePageMeta } from '@desktop/pageTitle';
 import { bandHeight, elevation, gradients, motion, radii, surface } from '@desktop/desktopTheme';
@@ -586,6 +590,8 @@ export const MenuProvider = ({ children }) => {
     const shellText = shellLabels(i18n.language);
     // حالت روشن / تیره (desktop/theme.js)
     const { theme } = useTheme();
+    // موسیقی پس‌زمینه؛ با باز شدن برنامه شروع و تا بسته شدنش تکرار می‌شود
+    const musicOn = useBackgroundMusic();
 
     // ستون کناری می‌تواند به نوار آیکون جمع شود؛ انتخاب کاربر بین اجراها می‌ماند
     const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
@@ -610,6 +616,7 @@ export const MenuProvider = ({ children }) => {
     const [paletteOpen, setPaletteOpen] = useState(false);
     useEffect(() => {
         injectGlobalStyles();
+        startBackgroundMusic();
         const onKey = (e) => {
             if ((e.ctrlKey || e.metaKey) && (e.code === 'KeyK' || e.code === 'KeyF')) {
                 e.preventDefault();
@@ -716,7 +723,9 @@ export const MenuProvider = ({ children }) => {
     };
     const canGoBack = !isHome && (!!pageMeta?.onBack || !!navigation.canGoBack?.());
     // صفحه‌های تمام‌پنجره و فرم‌های ورود نوار بالا ندارند؛ «بازگشت» برایشان شناور است
-    const floatingBack = !framed && canGoBack && !['Landing', 'Welcome', 'OrderMenuScreen'].includes(currentRouteName);
+    const floatingBack = !framed && !showAuthPanel && canGoBack && !['Landing', 'Welcome', 'OrderMenuScreen'].includes(currentRouteName);
+    // فرم‌های ورود «بازگشت» را در نوار بالای کارت خودشان دارند؛ بدون تاریخچه، به منوی شروع
+    const authBack = canGoBack ? handleBack : () => navigation.navigate('OrderMenuScreen');
 
     const changeLanguage = async (lng) => {
         await i18n.changeLanguage(lng);
@@ -755,6 +764,14 @@ export const MenuProvider = ({ children }) => {
             keywords: 'theme dark light تم تیره روشن',
             run: toggleTheme,
         },
+        {
+            id: 'music',
+            title: musicOn ? shellText.musicOff : shellText.musicOn,
+            icon: musicOn ? 'volume-mute-outline' : 'musical-notes-outline',
+            group: 'actions',
+            keywords: 'music sound audio موسیقی صدا آهنگ',
+            run: toggleBackgroundMusic,
+        },
         ...(isLoggedIn
             ? [{ id: 'logout', title: shellText.logout, icon: 'log-out-outline', group: 'actions', run: () => logoutWithConfirmation() }]
             : []),
@@ -774,9 +791,12 @@ export const MenuProvider = ({ children }) => {
         })),
     ];
 
-    const cardFrame = framed && screenLayout !== 'dashboard';
+    const isDocument = screenLayout === 'document';
+    const cardFrame = framed && screenLayout !== 'dashboard' && !isDocument;
     // فرم‌های ورود: پس‌زمینه‌ی خود صفحه شفاف می‌شود تا کارت شیشه‌ای دیده شود
     useGlassAuth(showAuthPanel, currentRouteName);
+    // رسید: برگه‌ی کاغذی روی والپیپر (پس‌زمینه‌های مات صفحه‌ی موبایل شفاف می‌شوند)
+    useDocumentFrame(framed && isDocument, currentRouteName);
 
     return (
         <MenuContext.Provider value={contextValue}>
@@ -805,6 +825,12 @@ export const MenuProvider = ({ children }) => {
                         dataSet={showAuthPanel ? { loopAuth: '' } : undefined}
                         style={[styles.shellContent, showAuthPanel && styles.authColumn, screenLayout === 'authWide' && styles.authColumnWide, framed && styles.canvas]}
                     >
+                        {showAuthPanel && <View pointerEvents="none" style={styles.authEdge} />}
+                        {showAuthPanel && (
+                            <AuthCardBar lang={i18n.language} onBack={authBack} onToggleLanguage={toggleLanguage} />
+                        )}
+                        {/* پس‌زمینه‌ی اصلی برنامه (والپیپر لوپ) زیر پرده‌ی رنگ تم */}
+                        {framed && <AppWallpaper veil />}
                         {framed && <View pointerEvents="none" style={styles.band} />}
                         {framed && (
                             <DesktopTopBar
@@ -820,6 +846,8 @@ export const MenuProvider = ({ children }) => {
                                 onSignIn={() => navigation.navigate(AUTH_ROUTE)}
                                 theme={theme}
                                 onToggleTheme={toggleTheme}
+                                musicOn={musicOn}
+                                onToggleMusic={toggleBackgroundMusic}
                                 lang={i18n.language}
                             />
                         )}
@@ -829,12 +857,14 @@ export const MenuProvider = ({ children }) => {
                         >
                             <View
                                 // صفحه‌های موبایلی رنگ روشن خودشان را دارند؛ کارتشان در حالت تیره هم روشن می‌ماند
-                                dataSet={cardFrame ? { loopPaper: '' } : undefined}
+                                dataSet={cardFrame ? { loopPaper: '' } : isDocument ? { loopDocument: '' } : undefined}
                                 style={[
                                     styles.frame,
                                     cardFrame && styles.frameCard,
                                     // فرم‌های تک‌ستونه: همان کارتِ هم‌عرض، ستون محتوا در وسطش
                                     screenLayout === 'narrow' && styles.frameNarrow,
+                                    // رسید: یک برگه روی والپیپر، بدون کارت سفید دورش
+                                    isDocument && styles.frameDocument,
                                 ]}
                             >
                                 {children}
@@ -851,7 +881,7 @@ export const MenuProvider = ({ children }) => {
                                     hovered && styles.floatingBackHover,
                                 ]}
                             >
-                                <Ionicons name={i18n.language === 'fa' ? 'arrow-forward' : 'arrow-back'} size={18} color="#ffffff" />
+                                <Cheetah facing={cheetahFacing(i18n.language === 'fa', 'back')} height={28} />
                                 <Text style={[styles.floatingBackText, { fontFamily: getFontFamily('bold', i18n.language) }]}>
                                     {shellText.back}
                                 </Text>
@@ -1130,6 +1160,10 @@ const createLocalStyles = (NewStyles, language) => StyleSheet.create({
         borderColor: surface.border,
         maxWidth: contentMaxWidth,
     },
+    frameDocument: {
+        alignSelf: 'center',
+        maxWidth: documentWidth,
+    },
     frameNarrow: {
         // حاشیه‌های دو طرف ستون فرم با تم عوض می‌شوند؛ خود ستون روشن می‌ماند
         backgroundColor: 'var(--loop-gutter)',
@@ -1137,7 +1171,17 @@ const createLocalStyles = (NewStyles, language) => StyleSheet.create({
     },
     authShell: {
         backgroundColor: '#040f1f',
-        padding: 28,
+        padding: 32,
+    },
+    // خط طلایی روشن روی لبه‌ی بالای کارت شیشه‌ای
+    authEdge: {
+        position: 'absolute',
+        top: 0,
+        left: 40,
+        right: 40,
+        height: 1,
+        zIndex: 2,
+        backgroundImage: 'linear-gradient(90deg, rgba(255, 215, 0, 0) 0%, rgba(255, 215, 0, 0.7) 50%, rgba(255, 215, 0, 0) 100%)',
     },
     // فرم ورود: کارت شناور روی تصویر، نه یک ستون چسبیده به لبه‌ی پنجره
     authColumn: {
@@ -1148,12 +1192,15 @@ const createLocalStyles = (NewStyles, language) => StyleSheet.create({
         maxWidth: authFormWidth.max,
         borderRadius: 30,
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.16)',
-        // شیشه‌ی مات روی تصویر ماه
-        backgroundColor: 'rgba(8, 26, 48, 0.38)',
-        backgroundImage: 'linear-gradient(160deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.02) 40%, rgba(79,143,224,0.06) 100%)',
-        backdropFilter: 'blur(26px) saturate(1.35)',
-        boxShadow: '0 30px 80px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.14)',
+        borderColor: 'rgba(255, 255, 255, 0.14)',
+        // شیشه‌ی مات و عمیق روی والپیپر لوپ؛ تیره‌تر تا فیلدها و متن خوانا باشند
+        backgroundColor: 'rgba(6, 18, 36, 0.66)',
+        backgroundImage: [
+            'radial-gradient(90% 40% at 50% 0%, rgba(255, 215, 0, 0.07) 0%, rgba(255, 215, 0, 0) 70%)',
+            'linear-gradient(160deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.015) 40%, rgba(79,143,224,0.08) 100%)',
+        ].join(', '),
+        backdropFilter: 'blur(30px) saturate(1.4)',
+        boxShadow: '0 40px 90px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 215, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.12)',
     },
     // فرم‌های ثبت‌نام بلند (سازمان): کارت پهن‌تر، پنل برند فشرده
     authColumnWide: {

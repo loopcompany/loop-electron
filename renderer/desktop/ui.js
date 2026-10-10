@@ -5,7 +5,7 @@
  * their colours from ./desktopTheme.
  */
 import React, { useMemo } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 
@@ -120,18 +120,45 @@ export function DButton({
         <ActivityIndicator size="small" color={v.fg} />
       ) : (
         <>
-          {!!icon && <Ionicons name={icon} size={size === 'sm' ? 15 : 17} color={v.fg} />}
+          {!!icon && (typeof icon === 'string' ? <Ionicons name={icon} size={size === 'sm' ? 15 : 17} color={v.fg} /> : icon)}
           {!!title && (
             <Text style={[styles.buttonText, dir.bold, { color: v.fg, fontSize }, textStyle]} numberOfLines={1}>
               {title}
             </Text>
           )}
-          {!!iconAfter && <Ionicons name={iconAfter} size={size === 'sm' ? 14 : 16} color={v.fg} />}
+          {!!iconAfter && (typeof iconAfter === 'string' ? <Ionicons name={iconAfter} size={size === 'sm' ? 14 : 16} color={v.fg} /> : iconAfter)}
         </>
       )}
     </Pressable>
   );
 }
+
+// The running gold cheetah of the mobile Next / Back buttons (assets/gif/next,
+// prev), with the white background turned into transparency so it sits on any
+// button colour. Same 93×52 frame as the GIFs.
+const CHEETAH = {
+  left: require('./assets/cheetah-left.webp'),
+  right: require('./assets/cheetah-right.webp'),
+};
+const CHEETAH_RATIO = 93 / 52;
+
+/**
+ * The cheetah running toward `facing`. For a Next / Back button pass the way
+ * the button points: `cheetahFacing(dir.rtl, 'next')`.
+ */
+export function Cheetah({ facing = 'right', height = 30, style }) {
+  return (
+    <Image
+      source={CHEETAH[facing === 'left' ? 'left' : 'right']}
+      style={[{ width: Math.round(height * CHEETAH_RATIO), height }, style]}
+      resizeMode="contain"
+      accessibilityIgnoresInvertColors
+    />
+  );
+}
+
+/** Which way the cheetah runs on a Next / Back button in the current direction. */
+export const cheetahFacing = (rtl, kind) => ((kind === 'next') !== rtl ? 'right' : 'left');
 
 const hoverTint = (variant) =>
   ({

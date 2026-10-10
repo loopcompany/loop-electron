@@ -2,9 +2,14 @@
  * DESKTOP OVERRIDE of loop-customer-mobile/org/SystematicCategoryScreen.js
  *
  * The customer's home page. On a phone it is a two-column grid of icon tiles
- * over the moon artwork; on the desktop it is a dashboard: a welcome banner,
- * the account at a glance (wallet, orders, points), the device categories as
- * large cards, and the latest orders beside them.
+ * over the moon artwork; on the desktop it is a calm home: a greeting banner,
+ * three large actions (order a service, goods / product supply, orders), the
+ * device categories as large cards (always shown; «ثبت سفارش خدمات» scrolls
+ * to them), the account at a glance and a quiet quick-access row.
+ *
+ * An organisation reaches this screen from its own home («انتخاب
+ * سیستماتیک»); for them it is not the home, so it shows only the device
+ * categories to start the order from.
  *
  * Everything that decides *what happens* is the mobile file's, unchanged:
  * loading and caching /categories, which tiles exist and in what order,
@@ -13,7 +18,7 @@
  * When the mobile file changes, `npm run check:overrides` fails: port the
  * change here, then run `npm run overrides:accept`.
  */
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -40,13 +45,16 @@ import { L } from '@org/orgI18n';
 import { Card, DButton, Pill, SectionHeader, Skeleton, useDir } from '@desktop/ui';
 import { elevation, motion, palette, radii, surface } from '@desktop/desktopTheme';
 import { animate } from '@desktop/globalStyles';
+import { brandCopy, useTimeGreeting } from '@desktop/brandCopy';
+import { useHomeRoute } from '@navigation/homeRoute';
 import {
   AccountStats,
-  RecentOrdersCard,
+  HomeActions,
+  QuickAccess,
   Shortcut,
   WelcomeHero,
-  dashboardCopy,
   dashboardStyles,
+  greetingIcon,
   greetingName,
 } from '@desktop/DashboardParts';
 
@@ -88,8 +96,8 @@ const prefetchIcons = (categories) => {
 const COPY = {
   fa: {
     heroText: 'دستگاه مورد نظرتان را انتخاب کنید؛ مراحل سفارش سیستماتیک قدم‌به‌قدم همراهتان است.',
-    myOrders: 'سفارش‌های من',
     topUp: 'شارژ کیف پول',
+    topUpHint: 'افزایش موجودی کیف پول لوپ',
     categories: 'دسته‌بندی دستگاه‌ها',
     categoriesHint: 'برای شروع سفارش، یک دستگاه را انتخاب کنید',
     start: 'شروع سفارش',
@@ -102,8 +110,8 @@ const COPY = {
   },
   en: {
     heroText: 'Pick a device to start a systematic order — we will walk you through it step by step.',
-    myOrders: 'My orders',
     topUp: 'Top up wallet',
+    topUpHint: 'Add credit to your Loop Wallet',
     categories: 'Device categories',
     categoriesHint: 'Choose a device to start an order',
     start: 'Start order',
@@ -125,7 +133,17 @@ const SystematicCategoryScreen = ({ navigation }) => {
   const token = useSelector((state) => state?.auth?.token);
   const user = useSelector((state) => state?.user?.data);
   const orders = useSelector((state) => state?.orders?.data);
-  const ordersLoading = useSelector((state) => state?.orders?.loading);
+  const greeting = useTimeGreeting(dir.lang);
+  const brand = brandCopy(dir.lang);
+
+  // برای مشتری صفحه‌ی اصلی است؛ سازمان از «انتخاب سیستماتیک» به اینجا می‌آید و فقط دسته‌ها را می‌بیند
+  const isHome = useHomeRoute() === 'SystematicCategoryScreen';
+
+  // «ثبت سفارش خدمات» به دسته‌بندی دستگاه‌ها (همیشه باز) اسکرول می‌کند
+  const scrollRef = useRef(null);
+  const servicesY = useRef(0);
+  const scrollToServices = () =>
+    scrollRef.current?.scrollTo({ y: Math.max(0, servicesY.current - 16), animated: true });
 
   const [folders, setFolders] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -305,23 +323,27 @@ const SystematicCategoryScreen = ({ navigation }) => {
   return (
     <View style={dashboardStyles.screen}>
       <ScreenHeaders title={L('انتخاب سیستماتیک')} onBackPress={handleHeaderBack} />
-      <ScrollView style={dashboardStyles.scroll} contentContainerStyle={dashboardStyles.scrollContent}>
+      <ScrollView ref={scrollRef} style={dashboardStyles.scroll} contentContainerStyle={dashboardStyles.scrollContent}>
         <View style={dashboardStyles.page}>
-          <WelcomeHero
-            badge={dir.rtl ? 'سفارش سیستماتیک' : 'Systematic ordering'}
-            title={dashboardCopy(dir.rtl).hello(greetingName(user))}
-            text={copy.heroText}
-            actions={[
-              { title: copy.myOrders, icon: 'receipt-outline', onPress: () => navigation.navigate('OrdersScreen') },
-              { title: copy.topUp, icon: 'add-circle-outline', onPress: () => navigation.navigate('Increase') },
-            ]}
-          />
+          {isHome && <WelcomeHero
+            greeting={[greeting, greetingName(user)].filter(Boolean).join(dir.rtl ? '، ' : ', ')}
+            greetingIcon={greetingIcon()}
+            title={brand.welcome}
+            text={brand.tagline}
+          />}
 
-          <AccountStats navigation={navigation} orders={orders} />
+          {isHome && (
+            <HomeActions
+              onService={scrollToServices}
+              onSupply={() => navigation.navigate('HardwareSelectionScreen')}
+              onOrders={() => navigation.navigate('OrdersScreen')}
+              orders={orders}
+            />
+          )}
 
-          <View style={[dashboardStyles.columns, dir.row]}>
-            {/* Device categories */}
-            <Card style={[dashboardStyles.mainColumn, animate('loop-fade-up', '380ms', '120ms')]}>
+          {/* Device categories */}
+          <View onLayout={(e) => { servicesY.current = e.nativeEvent.layout.y; }}>
+            <Card style={[styles.services, animate('loop-fade-up', '320ms')]}>
               <SectionHeader
                 title={copy.categories}
                 subtitle={copy.categoriesHint}
@@ -350,16 +372,17 @@ const SystematicCategoryScreen = ({ navigation }) => {
                     ))}
               </View>
             </Card>
-
-            {/* Side column */}
-            <View style={[dashboardStyles.sideColumn, animate('loop-fade-up', '380ms', '180ms')]}>
-              <RecentOrdersCard navigation={navigation} orders={orders} loading={ordersLoading} />
-              <View style={[dashboardStyles.shortcuts, dir.row]}>
-                <Shortcut icon="person-circle-outline" title={copy.account} hint={copy.accountHint} onPress={() => navigation.navigate('Profile')} />
-                <Shortcut icon="headset-outline" title={copy.support} hint={copy.supportHint} onPress={() => navigation.navigate('MessageScreen')} />
-              </View>
-            </View>
           </View>
+
+          {isHome && <AccountStats navigation={navigation} orders={orders} />}
+
+          {isHome && (
+            <QuickAccess>
+              <Shortcut icon="wallet-outline" title={copy.topUp} hint={copy.topUpHint} onPress={() => navigation.navigate('Increase')} />
+              <Shortcut icon="person-circle-outline" title={copy.account} hint={copy.accountHint} onPress={() => navigation.navigate('Profile')} />
+              <Shortcut icon="headset-outline" title={copy.support} hint={copy.supportHint} onPress={() => navigation.navigate('MessageScreen')} />
+            </QuickAccess>
+          )}
         </View>
       </ScrollView>
     </View>
@@ -422,9 +445,10 @@ function CategoryTile({ tile, index, dir, copy }) {
 }
 
 const styles = StyleSheet.create({
+  services: { padding: 24 },
   grid: { flexWrap: 'wrap', gap: 16 },
   tile: {
-    width: 'calc(33.333% - 11px)',
+    width: 'calc(25% - 12px)',
     minWidth: 170,
     flexGrow: 1,
     height: 196,

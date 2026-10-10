@@ -24,6 +24,8 @@ export const sidebarRailWidth = 76;
  */
 export const contentMaxWidth = 1320;
 export const narrowContentWidth = 880;
+/** Column of the `document` layout (the receipt sheet). */
+export const documentWidth = 860;
 /** Side padding of the page area. */
 export const contentGutter = 28;
 

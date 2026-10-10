@@ -5,7 +5,7 @@ import { topBarHeight, topBarInset } from './Breakpoints';
 import { motion, onDark, palette, radii } from './desktopTheme';
 import { animate } from './globalStyles';
 import { shellLabels } from './routeMeta';
-import { formatNumber } from './ui';
+import { Cheetah, cheetahFacing, formatNumber } from './ui';
 import { getFontFamily } from '@theme/Typography';
 
 /**
@@ -26,6 +26,8 @@ import { getFontFamily } from '@theme/Typography';
  * @param {() => void} props.onSignIn
  * @param {'light'|'dark'} props.theme
  * @param {() => void} props.onToggleTheme
+ * @param {boolean} props.musicOn          background music (./backgroundMusic)
+ * @param {() => void} props.onToggleMusic
  * @param {string} props.lang
  */
 export default function DesktopTopBar({
@@ -41,6 +43,8 @@ export default function DesktopTopBar({
   onSignIn,
   theme,
   onToggleTheme,
+  musicOn,
+  onToggleMusic,
   lang,
 }) {
   const rtl = lang === 'fa';
@@ -60,7 +64,7 @@ export default function DesktopTopBar({
             accessibilityLabel={L.back}
             style={({ hovered, pressed }) => [styles.back, hovered && styles.glassHover, pressed && styles.glassPressed]}
           >
-            <Ionicons name={rtl ? 'arrow-forward' : 'arrow-back'} size={18} color={onDark.text} />
+            <Cheetah facing={cheetahFacing(rtl, 'back')} height={28} />
           </Pressable>
         )}
         <View style={styles.titleBlock} key={title}>
@@ -106,6 +110,15 @@ export default function DesktopTopBar({
           style={({ hovered, pressed }) => [styles.round, hovered && styles.glassHover, pressed && styles.glassPressed]}
         >
           <Ionicons name={theme === 'dark' ? 'sunny' : 'moon'} size={17} color={theme === 'dark' ? palette.gold : onDark.text} />
+        </Pressable>
+
+        <Pressable
+          onPress={onToggleMusic}
+          accessibilityRole="button"
+          accessibilityLabel={musicOn ? L.musicOff : L.musicOn}
+          style={({ hovered, pressed }) => [styles.round, hovered && styles.glassHover, pressed && styles.glassPressed]}
+        >
+          <Ionicons name={musicOn ? 'musical-notes' : 'volume-mute'} size={17} color={musicOn ? palette.gold : onDark.muted} />
         </Pressable>
 
         {isLoggedIn ? (
@@ -172,7 +185,7 @@ const styles = StyleSheet.create({
     zIndex: 2,
   },
   start: { alignItems: 'center', gap: 14, flexShrink: 1, minWidth: 0 },
-  back: { ...glass, width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  back: { ...glass, width: 64, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   glassHover: { backgroundColor: onDark.glassStrong, borderColor: 'rgba(255,255,255,0.2)' },
   glassPressed: { transform: 'scale(0.96)' },
   titleBlock: { flexShrink: 1, minWidth: 0 },

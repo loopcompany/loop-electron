@@ -31,19 +31,25 @@ import { gradients, motion, onDark, palette, radii } from './desktopTheme';
 import { animate } from './globalStyles';
 import { useDir } from './ui';
 
-/** Colours on the glass card. */
+/**
+ * Colours on the glass card. Fields are dark inset wells rather than
+ * see-through white, so the box, the text and the placeholder all stand out
+ * against the frosted card and the wallpaper behind it.
+ */
 const glass = {
-  field: 'rgba(255, 255, 255, 0.07)',
-  fieldHover: 'rgba(255, 255, 255, 0.09)',
-  fieldFocus: 'rgba(255, 255, 255, 0.11)',
-  border: 'rgba(255, 255, 255, 0.16)',
-  borderHover: 'rgba(255, 255, 255, 0.3)',
-  focus: 'rgba(255, 215, 0, 0.85)',
-  focusRing: '0 0 0 4px rgba(255, 215, 0, 0.14)',
-  danger: '#ff8f8f',
-  dangerBorder: 'rgba(255, 120, 120, 0.75)',
-  dangerRing: '0 0 0 4px rgba(255, 107, 107, 0.14)',
-  placeholder: 'rgba(226, 234, 247, 0.42)',
+  field: 'rgba(2, 10, 22, 0.58)',
+  fieldHover: 'rgba(2, 10, 22, 0.7)',
+  fieldFocus: 'rgba(4, 16, 34, 0.86)',
+  border: 'rgba(160, 192, 235, 0.28)',
+  borderHover: 'rgba(190, 215, 250, 0.5)',
+  focus: 'rgba(255, 215, 0, 0.95)',
+  focusRing: '0 0 0 4px rgba(255, 215, 0, 0.16), 0 0 24px rgba(255, 215, 0, 0.12)',
+  inset: 'inset 0 2px 6px rgba(0, 0, 0, 0.35), inset 0 0 0 1px rgba(255, 255, 255, 0.02)',
+  danger: '#ff9a9a',
+  dangerBorder: 'rgba(255, 120, 120, 0.85)',
+  dangerRing: '0 0 0 4px rgba(255, 107, 107, 0.16)',
+  placeholder: 'rgba(226, 234, 247, 0.6)',
+  icon: 'rgba(226, 234, 247, 0.72)',
   hairline: 'rgba(255, 255, 255, 0.1)',
 };
 
@@ -239,7 +245,7 @@ export const AuthInput = forwardRef(function AuthInput(
         <Ionicons
           name={icon}
           size={18}
-          color={focused ? palette.gold : invalid ? glass.danger : onDark.muted}
+          color={focused ? palette.gold : invalid ? glass.danger : glass.icon}
           style={multiline ? styles.iconTop : undefined}
         />
       )}
@@ -714,7 +720,8 @@ const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   disabled: { opacity: 0.5, cursor: 'default' },
 
-  scroll: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 44, paddingTop: 80, paddingBottom: 44 },
+  // the card's own top bar (back, language) sits above this scroll (@desktop/DesktopAuthPanel AuthCardBar)
+  scroll: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 44, paddingTop: 12, paddingBottom: 40 },
   scrollWide: { justifyContent: 'flex-start', paddingHorizontal: 40 },
   body: { width: '100%', maxWidth: 460, alignSelf: 'center', gap: 22 },
   bodyWide: { maxWidth: 760 },
@@ -733,7 +740,7 @@ const styles = StyleSheet.create({
     boxShadow: '0 0 34px rgba(255, 215, 0, 0.14)',
   },
   eyebrow: { color: palette.gold, fontSize: 12.5, letterSpacing: 0.4 },
-  title: { color: onDark.text, fontSize: 26, lineHeight: 40 },
+  title: { color: onDark.text, fontSize: 28, lineHeight: 42, textShadow: '0 2px 18px rgba(0, 0, 0, 0.35)' },
   subtitle: { color: onDark.soft, fontSize: 13.5, lineHeight: 24 },
 
   switch: {
@@ -799,7 +806,7 @@ const styles = StyleSheet.create({
   half: { width: 'calc(50% - 8px)', flexGrow: 1, minWidth: 220 },
   full: { width: '100%' },
   labelRow: { alignItems: 'center', justifyContent: 'space-between', gap: 10, minHeight: 20 },
-  label: { color: onDark.soft, fontSize: 13, flexShrink: 1 },
+  label: { color: 'rgba(240, 245, 252, 0.94)', fontSize: 13.5, flexShrink: 1 },
   required: { color: palette.gold },
   hint: { color: onDark.muted, fontSize: 11.5, lineHeight: 19 },
   errorRow: { alignItems: 'center', gap: 6 },
@@ -808,13 +815,13 @@ const styles = StyleSheet.create({
   box: {
     alignItems: 'center',
     gap: 10,
-    minHeight: 50,
-    paddingHorizontal: 14,
-    borderRadius: radii.md,
+    minHeight: 54,
+    paddingHorizontal: 16,
+    borderRadius: 14,
     backgroundColor: glass.field,
     borderWidth: 1,
     borderColor: glass.border,
-    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+    boxShadow: glass.inset,
     transitionProperty: 'border-color, box-shadow, background-color',
     transitionDuration: motion.fast,
   },
@@ -828,8 +835,8 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     minWidth: 0,
-    height: 48,
-    fontSize: 14.5,
+    height: 52,
+    fontSize: 15,
     color: onDark.text,
     backgroundColor: 'transparent',
     outlineStyle: 'none',
@@ -1055,7 +1062,7 @@ const styles = StyleSheet.create({
   alertText: { color: onDark.soft, fontSize: 12.5, lineHeight: 22 },
 
   submit: {
-    height: 52,
+    height: 54,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
@@ -1067,11 +1074,22 @@ const styles = StyleSheet.create({
     transitionDuration: motion.fast,
   },
   submitGold: {
-    backgroundImage: gradients.gold,
-    borderColor: 'rgba(255, 228, 92, 0.85)',
-    boxShadow: '0 10px 28px rgba(233, 179, 8, 0.28)',
+    // a soft sheen across the gold, which slides over on hover
+    backgroundImage: `linear-gradient(110deg, rgba(255,255,255,0) 30%, rgba(255,255,255,0.45) 45%, rgba(255,255,255,0) 60%), ${gradients.gold}`,
+    backgroundSize: '250% 100%, 100% 100%',
+    backgroundPosition: '120% 0, 0 0',
+    backgroundRepeat: 'no-repeat',
+    borderColor: 'rgba(255, 228, 92, 0.9)',
+    boxShadow: '0 12px 30px rgba(233, 179, 8, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.45)',
+    transitionProperty: 'transform, box-shadow, filter, background-position',
+    transitionDuration: '600ms',
   },
-  submitGoldHover: { transform: 'translateY(-1px)', filter: 'brightness(1.05)', boxShadow: '0 14px 34px rgba(233, 179, 8, 0.38)' },
+  submitGoldHover: {
+    transform: 'translateY(-1px)',
+    filter: 'brightness(1.04)',
+    backgroundPosition: '-20% 0, 0 0',
+    boxShadow: '0 16px 38px rgba(233, 179, 8, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.5)',
+  },
   submitGlass: { backgroundColor: 'rgba(255, 255, 255, 0.08)', borderColor: glass.border },
   submitGlassHover: { backgroundColor: 'rgba(255, 255, 255, 0.13)', borderColor: glass.borderHover },
   submitPressed: { transform: 'scale(0.985)' },

@@ -25,21 +25,23 @@ const OPAQUE = new Set(['rgb(2, 3, 5)', 'rgb(250, 250, 250)', 'rgb(246, 248, 252
 export const AUTH_CSS = `
 [data-loop-auth] img[src*="loopbackground"], [data-loop-auth] img[src*="moon."] { opacity: 0 !important; }
 [data-loop-auth] input:not([data-loop-field]), [data-loop-auth] textarea:not([data-loop-field]) {
-  background-color: rgba(255, 255, 255, 0.07) !important;
-  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  background-color: rgba(2, 10, 22, 0.58) !important;
+  border: 1px solid rgba(160, 192, 235, 0.28) !important;
   border-radius: 14px !important;
   color: #ffffff !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+  min-height: 52px;
+  font-size: 15px !important;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.35) !important;
   transition: border-color 140ms, box-shadow 140ms, background-color 140ms !important;
   backdrop-filter: blur(6px);
 }
-[data-loop-auth] input:not([data-loop-field]):hover, [data-loop-auth] textarea:not([data-loop-field]):hover { border-color: rgba(255, 255, 255, 0.3) !important; }
+[data-loop-auth] input:not([data-loop-field]):hover, [data-loop-auth] textarea:not([data-loop-field]):hover { border-color: rgba(190, 215, 250, 0.5) !important; }
 [data-loop-auth] input:not([data-loop-field]):focus, [data-loop-auth] textarea:not([data-loop-field]):focus {
-  background-color: rgba(255, 255, 255, 0.11) !important;
-  border-color: rgba(255, 215, 0, 0.85) !important;
-  box-shadow: 0 0 0 4px rgba(255, 215, 0, 0.16) !important;
+  background-color: rgba(4, 16, 34, 0.86) !important;
+  border-color: rgba(255, 215, 0, 0.95) !important;
+  box-shadow: 0 0 0 4px rgba(255, 215, 0, 0.16), 0 0 24px rgba(255, 215, 0, 0.12) !important;
 }
-[data-loop-auth] input:not([data-loop-field])::placeholder, [data-loop-auth] textarea:not([data-loop-field])::placeholder { color: rgba(226, 234, 247, 0.5) !important; }
+[data-loop-auth] input:not([data-loop-field])::placeholder, [data-loop-auth] textarea:not([data-loop-field])::placeholder { color: rgba(226, 234, 247, 0.6) !important; }
 [data-loop-auth] [data-loop-glass="panel"] {
   background-color: rgba(255, 255, 255, 0.06) !important;
   border: 1px solid rgba(255, 255, 255, 0.16) !important;

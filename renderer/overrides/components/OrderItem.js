@@ -2,9 +2,10 @@
  * DESKTOP OVERRIDE of loop-customer-mobile/components/OrderItem.js
  *
  * One order in the orders / canceled-orders lists, drawn as a desktop card
- * that sits in a grid: status at a glance in the header, the visit time and
- * progress as labelled rows, the technician as a compact strip, and the
- * actions in the footer.
+ * that sits in a grid: status at a glance in the header, a five-step progress
+ * bar (registered → technician → on the way → in progress → done), the visit
+ * time as a labelled row, the technician as a compact strip, and the actions
+ * in the footer.
  *
  * The behaviour is the mobile file's: the same requests (cancel / start /
  * end), the same buttons for each status (`buttonConfig`), the same
@@ -29,6 +30,51 @@ import { DButton, IconTile, Pill, formatNumber, useDir } from '@desktop/ui';
 import { elevation, motion, palette, radii, surface, tone } from '@desktop/desktopTheme';
 import { animate } from '@desktop/globalStyles';
 import { orderStatusMeta } from '@desktop/orderStatus';
+
+const STEPS = {
+    fa: ['ثبت', 'تکنسین', 'در راه', 'انجام', 'تکمیل'],
+    en: ['Placed', 'Technician', 'On the way', 'Working', 'Done'],
+};
+
+/** Where the order is: five segments filled up to the current step. */
+function OrderProgress({ item, dir }) {
+    const done = [
+        true,
+        !!item?.technician_id,
+        !!item?.set_off_at || !!item?.arrived_at,
+        !!item?.started_at,
+        Number(item?.status) === 2,
+    ];
+    const reached = done.lastIndexOf(true);
+    const labels = STEPS[dir.rtl ? 'fa' : 'en'];
+    return (
+        <View style={styles.progress}>
+            <View style={[styles.progressBar, dir.row]}>
+                {labels.map((label, i) => (
+                    <View
+                        key={label}
+                        style={[
+                            styles.progressSeg,
+                            i <= reached && styles.progressSegOn,
+                            i === reached && reached < labels.length - 1 && styles.progressSegCurrent,
+                        ]}
+                    />
+                ))}
+            </View>
+            <View style={[styles.progressLabels, dir.row]}>
+                {labels.map((label, i) => (
+                    <Text
+                        key={label}
+                        style={[styles.progressLabel, i === reached ? dir.bold : dir.light, i <= reached && styles.progressLabelOn]}
+                        numberOfLines={1}
+                    >
+                        {label}
+                    </Text>
+                ))}
+            </View>
+        </View>
+    );
+}
 
 export default function OrderItem({ item, navigation, user }) {
 
@@ -159,6 +205,8 @@ export default function OrderItem({ item, navigation, user }) {
                         </View>
                         <Pill label={meta.label} kind={meta.kind} dot />
                     </View>
+
+                    {!isCanceled && <OrderProgress item={item} dir={dir} />}
 
                     {/* Details */}
                     <View style={styles.info}>
@@ -347,6 +395,14 @@ const styles = StyleSheet.create({
     },
     reasonText: { flex: 1, fontSize: 12.5, color: '#8c2b2b', lineHeight: 21 },
     spacer: { flex: 1 },
+    progress: { gap: 6 },
+    progressBar: { gap: 4 },
+    progressSeg: { flex: 1, height: 6, borderRadius: 3, backgroundColor: surface.sunken },
+    progressSegOn: { backgroundColor: palette.success },
+    progressSegCurrent: { backgroundImage: 'linear-gradient(90deg, #ffe45c 0%, #ffd700 50%, #e9b308 100%)' },
+    progressLabels: { gap: 4 },
+    progressLabel: { flex: 1, fontSize: 10.5, color: surface.faint, textAlign: 'center' },
+    progressLabelOn: { color: surface.title },
     footer: {
         alignItems: 'center',
         justifyContent: 'space-between',

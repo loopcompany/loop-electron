@@ -1,7 +1,30 @@
 {
   "permissions": {
     "allow": [
-      "mcp__claude-in-chrome__tabs_context_mcp"
+      "mcp__claude-in-chrome__tabs_context_mcp",
+      "Bash(npm test)",
+      "Bash(npm run check:overrides)",
+      "Bash(npm run overrides:accept)",
+      "Bash(node --test:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git -C ../loop-customer-mobile log:*)",
+      "Bash(git -C ../loop-customer-mobile diff:*)",
+      "Bash(grep:*)",
+      "Bash(rg:*)",
+      "Bash(ls:*)",
+      "Bash(wc:*)",
+      "Bash(head:*)",
+      "Bash(sed -n:*)",
+      "Read(../loop-customer-mobile/**)"
+    ],
+    "deny": [
+      "Edit(../loop-customer-mobile/**)",
+      "Write(../loop-customer-mobile/**)",
+      "Edit(overrides.lock.json)",
+      "Write(overrides.lock.json)"
     ]
   }
 }

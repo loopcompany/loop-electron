@@ -6,6 +6,7 @@
  */
 import { THEME_VARS, palette } from './desktopTheme';
 import { AUTH_CSS } from './glassAuth';
+import { DOCUMENT_CSS } from './documentLayout';
 
 const vars = (values) => Object.entries(values).map(([name, value]) => `--loop-${name}: ${value};`).join(' ');
 
@@ -83,6 +84,7 @@ img { -webkit-user-drag: none; user-select: none; }
   to { background-position: 400px 0; }
 }
 @keyframes loop-twinkle { 0%, 100% { opacity: 0.85; } 50% { opacity: 0.45; } }
+@keyframes loop-progress { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 `;
 
 let injected = false;
@@ -92,7 +94,7 @@ export function injectGlobalStyles() {
   injected = true;
   const style = document.createElement('style');
   style.id = 'loop-desktop-global';
-  style.textContent = THEME_CSS + CSS + AUTH_CSS;
+  style.textContent = THEME_CSS + CSS + DOCUMENT_CSS + AUTH_CSS;
   document.head.appendChild(style);
 }
 
@@ -114,6 +116,11 @@ export const KEYFRAMES = {
   'loop-spin': { '0%': { transform: [{ rotate: '0deg' }] }, '100%': { transform: [{ rotate: '360deg' }] } },
   'loop-shimmer': { '0%': { backgroundPosition: '-400px 0' }, '100%': { backgroundPosition: '400px 0' } },
   'loop-twinkle': { '0%': { opacity: 0.85 }, '50%': { opacity: 0.45 }, '100%': { opacity: 0.85 } },
+  'loop-progress': { '0%': { transform: [{ scaleX: 0 }] }, '100%': { transform: [{ scaleX: 1 }] } },
+  'loop-drift': {
+    '0%': { transform: [{ scale: 1.02 }, { translateX: 0 }, { translateY: 0 }] },
+    '100%': { transform: [{ scale: 1.09 }, { translateX: -14 }, { translateY: -8 }] },
+  },
 };
 
 /** RNW style fragment that plays one of the keyframes above once. */

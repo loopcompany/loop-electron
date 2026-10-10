@@ -667,13 +667,16 @@ const styles = StyleSheet.create({
   actionHintText: { flex: 1, fontSize: 12.5, color: surface.faint, lineHeight: 21 },
   actions: { gap: 10, flexWrap: 'wrap', alignItems: 'center' },
 
+  // a solid card (it sits on the wallpaper beside the form), warmed with a gold tint
   tips: {
     padding: 18,
     gap: 12,
     borderRadius: radii.lg,
-    backgroundColor: 'rgba(255, 215, 0, 0.07)',
+    backgroundColor: surface.card,
+    backgroundImage: 'linear-gradient(160deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 215, 0, 0.02) 60%)',
     borderWidth: 1,
-    borderColor: 'rgba(233, 179, 8, 0.28)',
+    borderColor: 'rgba(233, 179, 8, 0.35)',
+    boxShadow: elevation.raised,
   },
   tipsHead: { alignItems: 'center', gap: 10 },
   tipsIcon: {

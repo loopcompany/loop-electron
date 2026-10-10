@@ -83,6 +83,13 @@ export const THEME_VARS = {
     link: '#1d5fae',
     scrollbar: 'rgba(14, 42, 84, 0.18)',
     'scrollbar-hover': 'rgba(14, 42, 84, 0.36)',
+    // a navy tint over the wallpaper (./Wallpaper) behind the pages: it stays a
+    // deep, colourful space background (never washed out to white); the cards
+    // on it keep their own light surfaces
+    'wallpaper-veil': 'linear-gradient(180deg, rgba(4, 15, 31, 0.18) 0%, rgba(4, 15, 31, 0.42) 100%)',
+    // text drawn straight on that background (not inside a card)
+    'canvas-ink': '#f4f7fc',
+    'canvas-muted': 'rgba(226, 234, 247, 0.74)',
   },
   dark: {
     canvas: '#08111f',
@@ -101,6 +108,9 @@ export const THEME_VARS = {
     link: '#6fa6f0',
     scrollbar: 'rgba(255, 255, 255, 0.14)',
     'scrollbar-hover': 'rgba(255, 255, 255, 0.28)',
+    'wallpaper-veil': 'linear-gradient(180deg, rgba(4, 12, 24, 0.4) 0%, rgba(4, 12, 24, 0.68) 100%)',
+    'canvas-ink': '#f4f7fc',
+    'canvas-muted': 'rgba(226, 234, 247, 0.7)',
   },
 };
 
@@ -120,6 +130,9 @@ export const surface = {
   /** Brand navy as a text / icon colour (lightened in the dark theme). */
   brandText: v('brand-text'),
   brandTint: v('brand-tint'),
+  /** Text straight on the wallpaper background, outside any card: light in both themes. */
+  canvasText: v('canvas-ink'),
+  canvasMuted: v('canvas-muted'),
   // kept for the screens that read the old toolbar tokens
   toolbar: v('card'),
   toolbarBorder: v('border'),

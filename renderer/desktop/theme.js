@@ -2,7 +2,7 @@
  * Light / dark theme of the desktop app.
  *
  * The mode is 'light', 'dark' or 'system' (follow the OS), remembered per
- * machine. The resolved theme is written to `<html data-loop-theme>`, which
+ * machine; dark until the user picks otherwise. The resolved theme is written to `<html data-loop-theme>`, which
  * switches the CSS variables the desktop tokens are made of
  * (desktopTheme THEME_VARS, emitted by ./globalStyles). Components don't
  * re-render to change colour; only the toggle reads the mode.
@@ -15,13 +15,13 @@ const listeners = new Set();
 const read = () => {
   try {
     const saved = window.localStorage.getItem(KEY);
-    return saved === 'dark' || saved === 'light' || saved === 'system' ? saved : 'light';
+    return saved === 'dark' || saved === 'light' || saved === 'system' ? saved : 'dark';
   } catch {
-    return 'light';
+    return 'dark';
   }
 };
 
-let mode = typeof window !== 'undefined' ? read() : 'light';
+let mode = typeof window !== 'undefined' ? read() : 'dark';
 
 const media = () =>
   typeof window !== 'undefined' && window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;

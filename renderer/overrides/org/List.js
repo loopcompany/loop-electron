@@ -3,11 +3,12 @@
  *
  * The organisation home. On a phone: two icon tiles on the moon artwork.
  * On the desktop: the same calm home as the customer's
- * (@desktop/DashboardParts): a greeting banner, three large actions (order a
- * service, goods / product supply, orders), then the two ways to order —
+ * (@desktop/DashboardParts): a greeting banner, the two ways to order —
  * comprehensive and systematic — as large cards that show their explanation
- * up front instead of behind a "?" badge (always shown; «ثبت سفارش خدمات»
- * scrolls to them), the account at a glance and a quick-access row.
+ * up front instead of behind a "?" badge (first, always shown; «ثبت سفارش
+ * خدمات» scrolls back to them), then three large actions (order a service,
+ * goods / product supply, orders), the account at a glance and a quick-access
+ * row.
  *
  * Same behaviour as the mobile file: the same two destinations, the same
  * title (the organisation's name), and customers are redirected to their
@@ -137,13 +138,6 @@ const List = ({ navigation }) => {
             text={brand.tagline}
           />
 
-          <HomeActions
-            onService={scrollToServices}
-            onSupply={() => navigation.navigate('HardwareSelectionScreen')}
-            onOrders={() => navigation.navigate('OrdersScreen')}
-            orders={orders}
-          />
-
           {/* Two ways to order */}
           <View onLayout={(e) => { servicesY.current = e.nativeEvent.layout.y; }}>
             <Card style={[styles.services, animate('loop-fade-up', '320ms')]}>
@@ -184,6 +178,13 @@ const List = ({ navigation }) => {
               </View>
             </Card>
           </View>
+
+          <HomeActions
+            onService={scrollToServices}
+            onSupply={() => navigation.navigate('HardwareSelectionScreen')}
+            onOrders={() => navigation.navigate('OrdersScreen')}
+            orders={orders}
+          />
 
           <AccountStats navigation={navigation} orders={orders} />
 

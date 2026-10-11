@@ -1,11 +1,15 @@
 /**
  * DESKTOP OVERRIDE of loop-customer-mobile/screens/account/Profile.js
  *
- * The individual user's account page as a desktop settings page
- * (@desktop/FormKit): an identity card (photo, name, user code) with the
- * account switches and sign-out in the side column, and the details grouped
- * into cards — personal, district & addresses, bank, password — with the
- * fields in two columns. On a phone it is one long column of inputs.
+ * The individual user's account page as a desktop settings page: an identity
+ * banner (photo, name, contact, user code, profile-completion ring), then a
+ * tab list beside one focused panel — personal, district & addresses, bank
+ * (with a card preview), security (password with a strength hint, two-step)
+ * and settings (theme, auto-login, update, danger zone). The side column also
+ * lists what is missing from the profile and holds sign-out. A failed save
+ * opens the tab of the first invalid field. On a phone it is one long column
+ * of inputs. The layout pieces are @desktop/ProfileKit, shared with the
+ * OrganizationProfile override (organisation accounts land there).
  *
  * All logic is the mobile file's, copied verbatim: loading and validating
  * the profile, the photo picker, the captcha-guarded password change,
@@ -35,85 +39,34 @@ import { imageUri } from '@services/URL';
 import { createStyles } from '@styles/NewStyles';
 import LocationPicker from '@components/LocationPicker';
 import { fetchUser } from '@slices/userSlice';
-import { checkAppVersion, isNotImplemented } from '@services/AccountSecurityApi';
-import { getAppVersion } from '@services/notifications/deviceInfo';
 import { clearAccountProfileCache } from '@services/receipt/receiptProfile';
 
-import { DButton, IconButton, Pill, useDir } from '@desktop/ui';
-import { Field, FieldGrid, FormPage, FormSection, SelectField, TextField, Toggle } from '@desktop/FormKit';
-import { elevation, gradients, motion, onDark, palette, radii, surface, tone } from '@desktop/desktopTheme';
-import { contentGutter, contentMaxWidth } from '@desktop/Breakpoints';
+import { DButton, IconButton, formatNumber, useDir } from '@desktop/ui';
+import { Field, FieldGrid, SelectField, TextField, Toggle } from '@desktop/FormKit';
+import {
+    ChecklistCard,
+    DangerZone,
+    LinkRows,
+    PanelGroup,
+    PanelNote,
+    ProfileBanner,
+    ProfileLayout,
+    ProfileNav,
+    ProfilePanel,
+    SaveBar,
+    SignOutButton,
+    StrengthMeter,
+    ThemeSwitch,
+    useAccountRows,
+} from '@desktop/ProfileKit';
+import { elevation, gradients, onDark, palette, radii, surface } from '@desktop/desktopTheme';
 
-/**
- * The rows of the mobile AccountActionsCard (components/account/
- * OrganizationAccountSections) as theme-aware desktop rows: the same targets,
- * labels and app-version check.
- */
-function AccountLinks({ navigation }) {
-    const { t } = useTranslation();
-    const dir = useDir();
-    const [checking, setChecking] = useState(false);
-    const version = getAppVersion() || '-';
+const groupCard = (value) =>
+    (value || '').replace(/\D/g, '').slice(0, 16).padEnd(16, '•').replace(/(.{4})(?=.)/g, '$1 ');
 
-    const checkVersion = async () => {
-        setChecking(true);
-        const result = await checkAppVersion();
-        setChecking(false);
-        if (!result.ok) {
-            showToastOrAlert(
-                isNotImplemented(result)
-                    ? t('Checking for updates will be available soon.')
-                    : result.message || t('The operation failed. Please try again.')
-            );
-            return;
-        }
-        const info = result.data || {};
-        if (info.update_available && info.update_url) {
-            showAlert(
-                t('Update available'),
-                t('Version {{version}} of the app is available.', { version: info.latest_version || '' }),
-                [
-                    ...(info.force ? [] : [{ text: t('Later'), style: 'cancel' }]),
-                    { text: t('Update'), onPress: () => Linking.openURL(info.update_url) },
-                ]
-            );
-        } else {
-            showToastOrAlert(t('You are using the latest version.'));
-        }
-    };
+// فیلدهایی که validateForm خطا می‌گیرد → تبی که آن فیلد در آن است
+const ERROR_TABS = [['name', 'personal'], ['last_name', 'personal'], ['email', 'personal'], ['region_id', 'address']];
 
-    const rows = [
-        { icon: 'shield-half-outline', title: t('Account security'), subtitle: t('Two-step verification, devices, sessions, alerts'), onPress: () => navigation.navigate('AccountSecurity') },
-        { icon: 'shield-checkmark-outline', title: t('Two-step verification'), onPress: () => navigation.navigate('AccountSecurity', { section: 'two_factor' }) },
-        { icon: 'cloud-download-outline', title: t('Update the app'), subtitle: `${t('Version')} ${version}`, onPress: checking ? undefined : checkVersion },
-        { icon: 'trash-outline', title: t('Delete account'), danger: true, onPress: () => navigation.navigate('AccountSecurity', { section: 'delete' }) },
-    ];
-
-    return (
-        <View style={styles.links}>
-            {rows.map((row) => {
-                const c = row.danger ? tone.danger : tone.brand;
-                return (
-                    <Pressable
-                        key={row.icon}
-                        onPress={row.onPress}
-                        accessibilityRole="button"
-                        style={({ hovered }) => [styles.link, dir.row, hovered && styles.linkHover, row.danger && hovered && styles.linkDangerHover]}
-                    >
-                        <View style={[styles.linkIcon, { backgroundColor: c.bg }]}>
-                            <Ionicons name={row.icon} size={18} color={c.fg} />
-                        </View>
-                        <View style={styles.linkBody}>
-                            <Text style={[styles.linkTitle, dir.bold, dir.align, row.danger && { color: palette.danger }]} numberOfLines={1}>{row.title}</Text>
-                            {!!row.subtitle && <Text style={[styles.linkSub, dir.light, dir.align]} numberOfLines={2}>{row.subtitle}</Text>}
-                        </View>
-                        <Ionicons name={dir.rtl ? 'chevron-back' : 'chevron-forward'} size={16} color={surface.faint} />
-                    </Pressable>
-                );
-            })}
-        </View>
-    );
-}
 
 export default function Profile() {
     const { t, i18n } = useTranslation();
@@ -666,264 +619,360 @@ export default function Profile() {
         setCaptcha(n);
     };
 
+    // دسکتاپ: تب فعال؛ اگر ذخیره به خاطر فیلدی در تب دیگر رد شد، همان تب باز می‌شود
+    const [tab, setTab] = useState('personal');
+    const accountRows = useAccountRows(navigation);
+    useEffect(() => {
+        const failed = ERROR_TABS.find(([key]) => errorTxt?.[key]);
+        if (failed) setTab(failed[1]);
+    }, [errorTxt]);
+
     // Show loading while checking user type
     if (!user?.account_type) {
         return <Loader />;
     }
 
-    // Show OrganizationProfile for organization users
-    if (userType !== 'individual') { 
-        // این مسیر چیدمان dashboard دارد؛ صفحه‌ی سازمان هنوز همان صفحه‌ی موبایل
-        // است، پس مثل بقیه‌ی صفحه‌های موبایلی در کارت روشن (paper) می‌نشیند.
-        return (
-            <View style={styles.orgStage}>
-                <View dataSet={{ loopPaper: '' }} style={styles.orgFrame}>
-                    <OrganizationProfile />
-                </View>
-            </View>
-        );
+    // Show OrganizationProfile for organization users (its own desktop override)
+    if (userType !== 'individual') {
+        return <OrganizationProfile />;
     }
 
     const name = [profileData.name, profileData.last_name].filter(Boolean).join(' ');
     const initial = (profileData.name || '').trim().charAt(0);
     const copy = fa
         ? {
-            subtitle: 'اطلاعات حساب، آدرس‌ها و تنظیمات امنیتی‌تان را از اینجا مدیریت کنید. این اطلاعات روی سفارش‌ها و رسیدها نمایش داده می‌شود.',
-            personal: 'اطلاعات شخصی', personalHint: 'نام و راه‌های تماس با شما',
-            address: 'منطقه و آدرس‌ها', addressHint: 'منطقه برای ثبت سفارش الزامی است',
-            bank: 'اطلاعات بانکی', bankHint: 'برای بازگشت وجه (اختیاری)',
-            password: 'تغییر رمز عبور', passwordHint: 'رمز فعلی و کد امنیتی را وارد کنید',
-            settings: 'تنظیمات حساب', individual: 'کاربر حقیقی', userCode: 'کد کاربری',
-            photo: 'تغییر عکس', readonly: 'شماره‌ی موبایل قابل تغییر نیست',
-            saveHint: 'تغییرات اطلاعات شخصی، آدرس‌ها و عکس پروفایل با این دکمه ذخیره می‌شوند.',
-            secure: 'حساب امن',
+            individual: 'کاربر حقیقی', userCode: 'کد کاربری', member: 'حساب کاربری لوپ',
+            readonly: 'شماره‌ی موبایل قابل تغییر نیست',
+            completion: 'تکمیل پروفایل', complete: 'پروفایل شما کامل است', left: (n) => `${formatNumber(n, 'fa')} مورد باقی مانده`,
+            completeBadge: 'پروفایل کامل',
+            todo: 'برای تکمیل پروفایل', todoDone: 'همه‌ی اطلاعات اصلی ثبت شده است. سفارش‌ها و رسیدها با همین اطلاعات صادر می‌شوند.',
+            items: { photo: 'عکس پروفایل', name: 'نام و نام خانوادگی', email: 'ایمیل', birth: 'تاریخ تولد', district: 'منطقه', address: 'آدرس منزل یا محل کار' },
+            tabs: {
+                personal: ['اطلاعات شخصی', 'نام، تماس و تاریخ تولد'],
+                address: ['منطقه و آدرس‌ها', 'برای ثبت سفارش الزامی است'],
+                bank: ['اطلاعات بانکی', 'برای بازگشت وجه'],
+                security: ['امنیت و رمز عبور', 'رمز عبور و تأیید دومرحله‌ای'],
+                settings: ['تنظیمات حساب', 'ظاهر، ورود خودکار، نسخه'],
+            },
+            contact: 'راه‌های تماس', contactHint: 'برای هماهنگی سفارش‌ها با این شماره‌ها تماس گرفته می‌شود',
+            identity: 'هویت', identityHint: 'همان‌طور که روی رسیدها نوشته می‌شود',
+            districtHint: 'کارشناس بر اساس منطقه‌ی شما اعزام می‌شود',
+            addresses: 'آدرس‌ها', addressesHint: 'آدرس منزل و محل کار برای انتخاب سریع هنگام سفارش',
+            bankIntro: 'این اطلاعات اختیاری است و فقط برای بازگشت وجه به حساب شما استفاده می‌شود.',
+            cardHolder: 'دارنده‌ی کارت',
+            password: 'تغییر رمز عبور', passwordHint: 'رمز فعلی، رمز جدید و کد امنیتی را وارد کنید',
+            passwordRule: 'حداقل ۸ کاراکتر؛ ترکیب حروف بزرگ و کوچک، عدد و نماد امن‌تر است.',
+            protection: 'محافظت از حساب', protectionHint: 'تأیید دومرحله‌ای، دستگاه‌ها و نشست‌های فعال',
+            appearance: 'ظاهر برنامه', appearanceHint: 'پوسته‌ی روشن، تیره یا هماهنگ با ویندوز',
+            login: 'ورود', loginHint: 'روی این دستگاه بدون رمز وارد شوید',
+            app: 'برنامه', appHint: 'نسخه و به‌روزرسانی',
+            danger: 'ناحیه‌ی حساس', dangerHint: 'این کارها قابل بازگشت نیستند',
+            logoutAll: 'خروج از همه‌ی دستگاه‌ها',
+            save: 'ذخیره‌ی تغییرات', saveHint: 'تغییرات اطلاعات شخصی، آدرس‌ها، اطلاعات بانکی و عکس با این دکمه ذخیره می‌شوند.',
         }
         : {
-            subtitle: 'Manage your details, addresses and security here. They appear on your orders and receipts.',
-            personal: 'Personal details', personalHint: 'Your name and how to reach you',
-            address: 'District & addresses', addressHint: 'A district is required to place orders',
-            bank: 'Bank details', bankHint: 'For refunds (optional)',
-            password: 'Change password', passwordHint: 'Enter your current password and the security code',
-            settings: 'Account settings', individual: 'Individual user', userCode: 'User code',
-            photo: 'Change photo', readonly: 'Your mobile number can’t be changed',
-            saveHint: 'Personal details, addresses and the profile photo are saved with this button.',
-            secure: 'Secure account',
+            individual: 'Individual user', userCode: 'User code', member: 'Loop account',
+            readonly: 'Your mobile number can’t be changed',
+            completion: 'Profile completion', complete: 'Your profile is complete', left: (n) => `${n} item${n === 1 ? '' : 's'} left`,
+            completeBadge: 'Complete profile',
+            todo: 'Finish your profile', todoDone: 'All the main details are in. Orders and receipts use them.',
+            items: { photo: 'Profile photo', name: 'Full name', email: 'Email', birth: 'Birth date', district: 'District', address: 'Home or work address' },
+            tabs: {
+                personal: ['Personal details', 'Name, contact, birth date'],
+                address: ['District & addresses', 'Required to place orders'],
+                bank: ['Bank details', 'For refunds'],
+                security: ['Security & password', 'Password and two-step'],
+                settings: ['Account settings', 'Appearance, auto-login, version'],
+            },
+            contact: 'Contact', contactHint: 'We call these numbers to arrange your orders',
+            identity: 'Identity', identityHint: 'As it appears on your receipts',
+            districtHint: 'Experts are dispatched by your district',
+            addresses: 'Addresses', addressesHint: 'Home and work, to pick quickly when ordering',
+            bankIntro: 'Optional — only used to refund money to your account.',
+            cardHolder: 'Card holder',
+            password: 'Change password', passwordHint: 'Enter your current password, a new one and the security code',
+            passwordRule: 'At least 8 characters; mixing cases, digits and symbols is safer.',
+            protection: 'Account protection', protectionHint: 'Two-step verification, devices and sessions',
+            appearance: 'Appearance', appearanceHint: 'Light, dark or follow Windows',
+            login: 'Sign-in', loginHint: 'Sign in on this device without a password',
+            app: 'App', appHint: 'Version and updates',
+            danger: 'Danger zone', dangerHint: 'These can’t be undone',
+            logoutAll: 'Log out of all devices',
+            save: 'Save changes', saveHint: 'Personal details, addresses, bank details and the photo are saved with this button.',
         };
+
+    // پیشرفت پروفایل: فقط اطلاعاتی که روی سفارش و رسید اثر دارند
+    const checklist = [
+        { key: 'photo', done: !!profileImage, onPress: pickProfileImage },
+        { key: 'name', done: !!(profileData.name && profileData.last_name), tab: 'personal' },
+        { key: 'email', done: !!profileData.email, tab: 'personal' },
+        { key: 'birth', done: !!birthDate, tab: 'personal' },
+        { key: 'district', done: !!profileData.region_id, tab: 'address' },
+        { key: 'address', done: !!(profileData.home_address || profileData.work_address), tab: 'address' },
+    ];
+    const percent = Math.round((checklist.filter((item) => item.done).length / checklist.length) * 100);
+    const missing = checklist.filter((item) => !item.done);
+
+    const tabIcons = { personal: 'person-outline', address: 'location-outline', bank: 'card-outline', security: 'shield-checkmark-outline', settings: 'settings-outline' };
+    const tabs = [
+        { key: 'personal', error: !!(errorTxt?.name || errorTxt?.last_name || errorTxt?.email), done: checklist.slice(1, 4).every((i) => i.done) },
+        { key: 'address', error: !!errorTxt?.region_id, done: checklist.slice(4).every((i) => i.done) },
+        { key: 'bank', done: !!(profileData.card_number || profileData.sheba_number) },
+        { key: 'security' },
+        { key: 'settings' },
+    ].map((item) => ({ ...item, icon: tabIcons[item.key], title: copy.tabs[item.key][0], hint: copy.tabs[item.key][1] }));
+    const active = tabs.find((item) => item.key === tab) || tabs[0];
+    const editable = ['personal', 'address', 'bank'].includes(active.key);
+
+    const setField = (key) => (text) => {
+        if (errorTxt?.[key]) setErrorTxt(prev => ({ ...prev, [key]: '' }));
+        setProfileData(prev => ({ ...prev, [key]: text }));
+    };
 
     return (
         <View style={styles.screen}>
             <ScreenHeaders title={t("My Profile")} />
-            <FormPage
-                hero={{
-                    icon: 'person-circle-outline',
-                    title: t("My Profile"),
-                    subtitle: copy.subtitle,
-                    badges: [
-                        { icon: 'person-outline', label: copy.individual },
-                        { icon: 'shield-checkmark-outline', label: copy.secure },
-                    ],
-                }}
-                actionsHint={copy.saveHint}
-                actions={
-                    <DButton
-                        title={isLoading ? t('Saving...') : t('Save Profile Information')}
-                        icon="checkmark-circle-outline"
-                        variant="gold"
-                        size="lg"
-                        onPress={updateProfile}
-                        disabled={isLoading}
-                        loading={isLoading}
+            <ProfileLayout
+                banner={
+                    <ProfileBanner
+                        image={getImageUrl(profileImage)}
+                        initial={initial}
+                        onPickImage={pickProfileImage}
+                        kicker={copy.member}
+                        name={name || t('My Profile')}
+                        pills={[
+                            { label: copy.individual, icon: 'person' },
+                            ...(percent === 100 ? [{ label: copy.completeBadge, kind: 'success', icon: 'checkmark-circle' }] : []),
+                        ]}
+                        meta={[
+                            { icon: 'call-outline', text: profileData.phone },
+                            { icon: 'mail-outline', text: profileData.email },
+                        ]}
+                        code={{ label: copy.userCode, value: user?.code }}
+                        progress={{ percent, title: copy.completion, hint: missing.length ? copy.left(missing.length) : copy.complete }}
                     />
                 }
-                aside={
+                side={
                     <>
-                        <View style={styles.identity}>
-                            <View style={styles.stars} pointerEvents="none" />
-                            <Pressable onPress={pickProfileImage} accessibilityRole="button" accessibilityLabel={copy.photo} style={styles.avatarRing}>
-                                {({ hovered }) => (
-                                    <>
-                                        {profileImage ? (
-                                            <Image source={{ uri: getImageUrl(profileImage) }} style={styles.avatar} />
-                                        ) : (
-                                            <View style={[styles.avatar, styles.avatarEmpty]}>
-                                                {initial ? (
-                                                    <Text style={[styles.avatarInitial, dir.bold]}>{initial}</Text>
-                                                ) : (
-                                                    <Ionicons name="person" size={46} color={palette.navy700} />
-                                                )}
-                                            </View>
-                                        )}
-                                        <View style={[styles.avatarOverlay, hovered && styles.avatarOverlayOn]}>
-                                            <Ionicons name="camera" size={22} color="#ffffff" />
-                                            <Text style={[styles.avatarOverlayText, dir.bold]}>{copy.photo}</Text>
-                                        </View>
-                                        <View style={styles.cameraBadge}>
-                                            <Ionicons name="camera" size={14} color={palette.navy900} />
-                                        </View>
-                                    </>
-                                )}
-                            </Pressable>
-                            <Text style={[styles.identityName, dir.bold]} numberOfLines={1}>{name || t('My Profile')}</Text>
-                            <Pill label={copy.individual} kind="gold" icon="person" size="sm" style={styles.center} />
-                            {!!user?.code && (
-                                <View style={styles.codeBox}>
-                                    <Text style={[styles.codeLabel, dir.light]}>{copy.userCode}</Text>
-                                    <Text style={[styles.code, dir.bold]} selectable>{user.code}</Text>
-                                </View>
-                            )}
-                            {!!profileData.phone && (
-                                <View style={[styles.identityRow, dir.row]}>
-                                    <Ionicons name="call-outline" size={15} color={onDark.muted} />
-                                    <Text style={[styles.identityText, dir.light]}>{profileData.phone}</Text>
-                                </View>
-                            )}
-                        </View>
-
-                        <View style={styles.settings}>
-                            <Text style={[styles.settingsTitle, dir.bold, dir.align]}>{copy.settings}</Text>
-                            <Toggle
-                                icon="flash-outline"
-                                value={autoLoginEnabled}
-                                onChange={() => toggleAutoLogin()}
-                                label={t('Automatic login (without password)')}
-                            />
-                            <AccountLinks navigation={navigation} />
-                        </View>
-
-                        <DButton
-                            title={isLoggingOut ? t('Logging out...') : t('Log Out')}
-                            icon="log-out-outline"
-                            variant="danger"
-                            size="lg"
-                            block
-                            onPress={logoutWithConfirmation}
-                            disabled={isLoggingOut}
+                        <ProfileNav tabs={tabs} active={active.key} onChange={setTab} />
+                        <ChecklistCard
+                            title={copy.todo}
+                            percent={percent}
+                            doneText={copy.todoDone}
+                            items={missing.map((item) => ({ key: item.key, label: copy.items[item.key], onPress: item.onPress || (() => setTab(item.tab)) }))}
                         />
+                        <SignOutButton title={isLoggingOut ? t('Logging out...') : t('Log Out')} onPress={logoutWithConfirmation} disabled={isLoggingOut} />
                     </>
                 }
             >
-                <FormSection index={0} icon="person-outline" title={copy.personal} subtitle={copy.personalHint}>
-                    <FieldGrid>
-                        <Field label={t('First Name')} error={errorTxt?.name && t(errorTxt?.name)}>
-                            <TextField icon="person-outline" invalid={!!errorTxt?.name} placeholder={t('First Name')} value={profileData.name} onChangeText={(text) => setProfileData(prev => ({ ...prev, name: text }))} />
-                        </Field>
-                        <Field label={t('Last Name')} error={errorTxt?.last_name && t(errorTxt?.last_name)}>
-                            <TextField icon="people-outline" invalid={!!errorTxt?.last_name} placeholder={t('Last Name')} value={profileData.last_name} onChangeText={(text) => setProfileData(prev => ({ ...prev, last_name: text }))} />
-                        </Field>
-                        <Field label={t('Mobile Number')} hint={copy.readonly}>
-                            <TextField icon="phone-portrait-outline" value={profileData.phone} editable={false} selectTextOnFocus={false} placeholder={t('Mobile Number')} />
-                        </Field>
-                        <Field label={t('Birth Date')}>
-                            <SelectField value={birthDate} placeholder={t('Birth Date')} onPress={() => setDatePickerModal(true)} />
-                        </Field>
-                        <Field label={t('Email Address')} error={errorTxt?.email && t(errorTxt?.email)}>
-                            <TextField icon="mail-outline" invalid={!!errorTxt?.email} placeholder={t('Email Address')} keyboardType="email-address" value={profileData.email} onChangeText={(text) => setProfileData(prev => ({ ...prev, email: text }))} />
-                        </Field>
-                        <Field label={t('Second Mobile Number')}>
-                            <TextField icon="phone-portrait-outline" placeholder={t('Second Mobile Number')} keyboardType="number-pad" value={profileData.mobile_number} onChangeText={(text) => setProfileData(prev => ({ ...prev, mobile_number: text }))} />
-                        </Field>
-                        <Field label={t('Landline Number')}>
-                            <TextField icon="call-outline" unit="021" placeholder={t('Landline Number')} keyboardType="number-pad" value={profileData.phone_number} onChangeText={(text) => setProfileData(prev => ({ ...prev, phone_number: text }))} />
-                        </Field>
-                        <Field label={t('Postal Code')}>
-                            <TextField icon="mail-unread-outline" placeholder={t('Postal Code')} keyboardType="number-pad" value={profileData.postal_code} onChangeText={(text) => setProfileData(prev => ({ ...prev, postal_code: text }))} />
-                        </Field>
-                    </FieldGrid>
-                </FormSection>
-
-                <FormSection index={1} icon="location-outline" title={copy.address} subtitle={copy.addressHint}>
-                    <FieldGrid>
-                        <Field label={t('District')} required full error={errorTxt?.region_id && t(errorTxt?.region_id)}>
-                            <LocationPicker
-                                selectedProvince={null}
-                                selectedCity={null}
-                                selectedRegion={profileData.region_id}
-                                onProvinceChange={() => {}}
-                                onCityChange={() => {}}
-                                onRegionChange={(region) => {
-                                    setProfileData(prev => ({ ...prev, region_id: region }))
-                                }}
-                                errors={{}}
-                                required={true}
-                            />
-                        </Field>
-                        <Field label={t('Home Address')}>
-                            <TextField icon="home-outline" multiline rows={3} placeholder={t('Home Address')} value={profileData.home_address} onChangeText={(text) => setProfileData(prev => ({ ...prev, home_address: text }))} />
-                        </Field>
-                        <Field label={t('Work Address')}>
-                            <TextField icon="business-outline" multiline rows={3} placeholder={t('Work Address')} value={profileData.work_address} onChangeText={(text) => setProfileData(prev => ({ ...prev, work_address: text }))} />
-                        </Field>
-                    </FieldGrid>
-                </FormSection>
-
-                <FormSection index={2} icon="card-outline" title={copy.bank} subtitle={copy.bankHint}>
-                    <FieldGrid>
-                        <Field label={t('User Card Number')}>
-                            <TextField icon="card-outline" placeholder={t('User Card Number (optional)')} keyboardType="number-pad" value={profileData.card_number} onChangeText={(text) => setProfileData(prev => ({ ...prev, card_number: text }))} />
-                        </Field>
-                        <Field label={t('User SHEBA Number')}>
-                            <TextField icon="business-outline" unit="IR" placeholder={t('User SHEBA Number (optional)')} value={profileData.sheba_number} onChangeText={(text) => setProfileData(prev => ({ ...prev, sheba_number: text }))} />
-                        </Field>
-                    </FieldGrid>
-                </FormSection>
-
-                <FormSection
-                    index={3}
-                    icon="key-outline"
-                    title={copy.password}
-                    subtitle={copy.passwordHint}
-                    right={
-                        <DButton
-                            title={isLoadingPassword ? t('Changing...') : t('Change Password')}
-                            icon="key"
-                            variant="outline"
-                            onPress={changePassword}
-                            disabled={isLoadingPassword}
-                            loading={isLoadingPassword}
-                        />
+                <ProfilePanel
+                    key={active.key}
+                    icon={active.icon}
+                    title={active.title}
+                    hint={active.hint}
+                    footer={
+                        editable && (
+                            <SaveBar hint={copy.saveHint}>
+                                <DButton
+                                    title={isLoading ? t('Saving...') : copy.save}
+                                    icon="checkmark-circle-outline"
+                                    variant="gold"
+                                    size="lg"
+                                    onPress={updateProfile}
+                                    disabled={isLoading}
+                                    loading={isLoading}
+                                />
+                            </SaveBar>
+                        )
                     }
                 >
-                    <FieldGrid>
-                        <Field label={t('Current Password')} error={passwordErrors.currentPassword}>
-                            <TextField
-                                icon="lock-closed-outline"
-                                invalid={!!passwordErrors.currentPassword}
-                                placeholder={t('Current Password')}
-                                secureTextEntry
-                                value={passwordData.currentPassword}
-                                onChangeText={(text) => {
-                                    if (passwordErrors.currentPassword) setPasswordErrors(prev => ({ ...prev, currentPassword: '' }));
-                                    setPasswordData(prev => ({ ...prev, currentPassword: text }));
-                                }}
-                            />
-                        </Field>
-                        <Field label={t('New Password')} error={passwordErrors.newPassword}>
-                            <TextField
-                                icon="key-outline"
-                                invalid={!!passwordErrors.newPassword}
-                                placeholder={t('New Password')}
-                                secureTextEntry
-                                value={passwordData.newPassword}
-                                onChangeText={(text) => {
-                                    if (passwordErrors.newPassword) setPasswordErrors(prev => ({ ...prev, newPassword: '' }));
-                                    setPasswordData(prev => ({ ...prev, newPassword: text }));
-                                }}
-                            />
-                        </Field>
-                        <Field label={t('Security Code')} full>
-                            <View style={[styles.captchaRow, dir.row]}>
-                                <View style={styles.flex}>
-                                    <TextField icon="shield-checkmark-outline" placeholder={t('Security Code')} value={captchaInput} onChangeText={setCaptchaInput} />
+                    {active.key === 'personal' && (
+                        <>
+                            <PanelGroup title={copy.identity} hint={copy.identityHint} icon="id-card-outline">
+                                <FieldGrid>
+                                    <Field label={t('First Name')} required error={errorTxt?.name && t(errorTxt?.name)}>
+                                        <TextField icon="person-outline" invalid={!!errorTxt?.name} placeholder={t('First Name')} value={profileData.name} onChangeText={setField('name')} />
+                                    </Field>
+                                    <Field label={t('Last Name')} required error={errorTxt?.last_name && t(errorTxt?.last_name)}>
+                                        <TextField icon="people-outline" invalid={!!errorTxt?.last_name} placeholder={t('Last Name')} value={profileData.last_name} onChangeText={setField('last_name')} />
+                                    </Field>
+                                    <Field label={t('Birth Date')}>
+                                        <SelectField value={birthDate} placeholder={t('Birth Date')} onPress={() => setDatePickerModal(true)} />
+                                    </Field>
+                                    <Field label={t('Email Address')} required error={errorTxt?.email && t(errorTxt?.email)}>
+                                        <TextField icon="mail-outline" invalid={!!errorTxt?.email} placeholder={t('Email Address')} keyboardType="email-address" value={profileData.email} onChangeText={setField('email')} />
+                                    </Field>
+                                </FieldGrid>
+                            </PanelGroup>
+                            <PanelGroup title={copy.contact} hint={copy.contactHint} icon="call-outline">
+                                <FieldGrid>
+                                    <Field label={t('Mobile Number')} hint={copy.readonly}>
+                                        <TextField icon="lock-closed-outline" value={profileData.phone} editable={false} selectTextOnFocus={false} placeholder={t('Mobile Number')} />
+                                    </Field>
+                                    <Field label={t('Second Mobile Number')}>
+                                        <TextField icon="phone-portrait-outline" placeholder={t('Second Mobile Number')} keyboardType="number-pad" value={profileData.mobile_number} onChangeText={setField('mobile_number')} />
+                                    </Field>
+                                    <Field label={t('Landline Number')}>
+                                        <TextField icon="call-outline" unit="021" placeholder={t('Landline Number')} keyboardType="number-pad" value={profileData.phone_number} onChangeText={setField('phone_number')} />
+                                    </Field>
+                                    <Field label={t('Postal Code')}>
+                                        <TextField icon="mail-unread-outline" placeholder={t('Postal Code')} keyboardType="number-pad" value={profileData.postal_code} onChangeText={setField('postal_code')} />
+                                    </Field>
+                                </FieldGrid>
+                            </PanelGroup>
+                        </>
+                    )}
+
+                    {active.key === 'address' && (
+                        <>
+                            <PanelGroup title={t('District')} hint={copy.districtHint} icon="map-outline">
+                                <Field required error={errorTxt?.region_id && t(errorTxt?.region_id)}>
+                                    <LocationPicker
+                                        selectedProvince={null}
+                                        selectedCity={null}
+                                        selectedRegion={profileData.region_id}
+                                        onProvinceChange={() => {}}
+                                        onCityChange={() => {}}
+                                        onRegionChange={(region) => {
+                                            setField('region_id')(region);
+                                        }}
+                                        errors={{}}
+                                        required={true}
+                                    />
+                                </Field>
+                            </PanelGroup>
+                            <PanelGroup title={copy.addresses} hint={copy.addressesHint} icon="home-outline">
+                                <FieldGrid>
+                                    <Field label={t('Home Address')}>
+                                        <TextField icon="home-outline" multiline rows={4} placeholder={t('Home Address')} value={profileData.home_address} onChangeText={setField('home_address')} />
+                                    </Field>
+                                    <Field label={t('Work Address')}>
+                                        <TextField icon="business-outline" multiline rows={4} placeholder={t('Work Address')} value={profileData.work_address} onChangeText={setField('work_address')} />
+                                    </Field>
+                                </FieldGrid>
+                            </PanelGroup>
+                        </>
+                    )}
+
+                    {active.key === 'bank' && (
+                        <View style={[styles.bankRow, dir.row]}>
+                            <View style={styles.bankCard}>
+                                <View style={styles.stars} pointerEvents="none" />
+                                <View style={[styles.bankTop, dir.row]}>
+                                    <View style={styles.chip} />
+                                    <Ionicons name="wifi" size={20} color={onDark.muted} style={styles.contactless} />
                                 </View>
-                                <Pressable onPress={generateCaptcha} accessibilityRole="button" style={styles.captcha}>
-                                    <Text style={[styles.captchaText, dir.bold]}>{captcha}</Text>
-                                </Pressable>
-                                <IconButton icon="refresh" label={t('Security Code')} onPress={generateCaptcha} color={palette.brandBright} size={46} />
+                                <Text style={[styles.bankNumber, dir.bold]}>{groupCard(profileData.card_number)}</Text>
+                                <View style={[styles.bankBottom, dir.row]}>
+                                    <View style={styles.flex}>
+                                        <Text style={[styles.bankLabel, dir.light, dir.align]}>{copy.cardHolder}</Text>
+                                        <Text style={[styles.bankName, dir.bold, dir.align]} numberOfLines={1}>{name || '—'}</Text>
+                                    </View>
+                                    <Text style={[styles.bankLogo, dir.bold]}>LOOP</Text>
+                                </View>
                             </View>
-                        </Field>
-                    </FieldGrid>
-                </FormSection>
-            </FormPage>
+                            <View style={[styles.flex, styles.bankFields]}>
+                                <PanelNote icon="lock-closed-outline">{copy.bankIntro}</PanelNote>
+                                <Field label={t('User Card Number')}>
+                                    <TextField icon="card-outline" placeholder={t('User Card Number (optional)')} keyboardType="number-pad" value={profileData.card_number} onChangeText={setField('card_number')} />
+                                </Field>
+                                <Field label={t('User SHEBA Number')}>
+                                    <TextField icon="business-outline" unit="IR" placeholder={t('User SHEBA Number (optional)')} value={profileData.sheba_number} onChangeText={setField('sheba_number')} />
+                                </Field>
+                            </View>
+                        </View>
+                    )}
+
+                    {active.key === 'security' && (
+                        <>
+                            <PanelGroup title={copy.password} hint={copy.passwordHint} icon="key-outline">
+                                <FieldGrid>
+                                    <Field label={t('Current Password')} error={passwordErrors.currentPassword}>
+                                        <TextField
+                                            icon="lock-closed-outline"
+                                            invalid={!!passwordErrors.currentPassword}
+                                            placeholder={t('Current Password')}
+                                            secureTextEntry
+                                            value={passwordData.currentPassword}
+                                            onChangeText={(text) => {
+                                                if (passwordErrors.currentPassword) setPasswordErrors(prev => ({ ...prev, currentPassword: '' }));
+                                                setPasswordData(prev => ({ ...prev, currentPassword: text }));
+                                            }}
+                                        />
+                                    </Field>
+                                    <Field label={t('New Password')} error={passwordErrors.newPassword}>
+                                        <TextField
+                                            icon="key-outline"
+                                            invalid={!!passwordErrors.newPassword}
+                                            placeholder={t('New Password')}
+                                            secureTextEntry
+                                            value={passwordData.newPassword}
+                                            onChangeText={(text) => {
+                                                if (passwordErrors.newPassword) setPasswordErrors(prev => ({ ...prev, newPassword: '' }));
+                                                setPasswordData(prev => ({ ...prev, newPassword: text }));
+                                            }}
+                                        />
+                                        <StrengthMeter value={passwordData.newPassword} />
+                                    </Field>
+                                    <Field label={t('Security Code')} full hint={copy.passwordRule}>
+                                        <View style={[styles.captchaRow, dir.row]}>
+                                            <View style={styles.flex}>
+                                                <TextField icon="shield-checkmark-outline" placeholder={t('Security Code')} value={captchaInput} onChangeText={setCaptchaInput} />
+                                            </View>
+                                            <Pressable onPress={generateCaptcha} accessibilityRole="button" style={styles.captcha}>
+                                                <Text style={[styles.captchaText, dir.bold]}>{captcha}</Text>
+                                            </Pressable>
+                                            <IconButton icon="refresh" label={t('Security Code')} onPress={generateCaptcha} color={palette.brandBright} size={46} />
+                                        </View>
+                                    </Field>
+                                </FieldGrid>
+                                <View style={[styles.groupActions, dir.row]}>
+                                    <DButton
+                                        title={isLoadingPassword ? t('Changing...') : t('Change Password')}
+                                        icon="key"
+                                        variant="primary"
+                                        onPress={changePassword}
+                                        disabled={isLoadingPassword}
+                                        loading={isLoadingPassword}
+                                    />
+                                </View>
+                            </PanelGroup>
+                            <PanelGroup title={copy.protection} hint={copy.protectionHint} icon="finger-print-outline">
+                                <LinkRows rows={[accountRows.security, accountRows.twoFactor]} />
+                            </PanelGroup>
+                        </>
+                    )}
+
+                    {active.key === 'settings' && (
+                        <>
+                            <PanelGroup title={copy.appearance} hint={copy.appearanceHint} icon="color-palette-outline">
+                                <ThemeSwitch />
+                            </PanelGroup>
+                            <PanelGroup title={copy.login} hint={copy.loginHint} icon="flash-outline">
+                                <Toggle
+                                    icon="flash-outline"
+                                    value={autoLoginEnabled}
+                                    onChange={() => toggleAutoLogin()}
+                                    label={t('Automatic login (without password)')}
+                                />
+                            </PanelGroup>
+                            <PanelGroup title={copy.app} hint={copy.appHint} icon="apps-outline">
+                                <LinkRows rows={[accountRows.update]} />
+                            </PanelGroup>
+                            <DangerZone>
+                                <PanelGroup title={copy.danger} hint={copy.dangerHint} icon="warning-outline">
+                                    <LinkRows
+                                        rows={[
+                                            { icon: 'exit-outline', title: copy.logoutAll, danger: true, onPress: isLoggingOut ? undefined : logoutFromAllDevicesWithConfirmation },
+                                            accountRows.remove,
+                                        ]}
+                                    />
+                                </PanelGroup>
+                            </DangerZone>
+                        </>
+                    )}
+                </ProfilePanel>
+            </ProfileLayout>
 
             <DatePickerModal
                 birthDate={birthDate}
@@ -942,121 +991,35 @@ export default function Profile() {
 const styles = StyleSheet.create({
     screen: { flex: 1, backgroundColor: 'transparent' },
     flex: { flex: 1, minWidth: 0 },
-    center: { alignSelf: 'center' },
-    orgStage: { flex: 1, paddingHorizontal: contentGutter, paddingBottom: 24 },
-    orgFrame: {
-        flex: 1,
-        width: '100%',
-        maxWidth: contentMaxWidth,
-        alignSelf: 'center',
-        borderRadius: radii.xl,
-        overflow: 'hidden',
-        backgroundColor: surface.card,
-        boxShadow: elevation.raised,
-        borderWidth: 1,
-        borderColor: surface.border,
-    },
+    stars: { ...StyleSheet.absoluteFillObject, backgroundImage: gradients.stars },
+    groupActions: { justifyContent: 'flex-end' },
 
-    identity: {
-        alignItems: 'center',
-        gap: 10,
-        padding: 26,
+    /* bank */
+    bankRow: { gap: 24, alignItems: 'flex-start' },
+    bankCard: {
+        width: 340,
+        height: 210,
+        flexShrink: 0,
+        padding: 22,
+        justifyContent: 'space-between',
         borderRadius: radii.xl,
         overflow: 'hidden',
         backgroundImage: gradients.hero,
         boxShadow: elevation.floating,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.08)',
+        borderColor: onDark.hairline,
     },
-    stars: { ...StyleSheet.absoluteFillObject, backgroundImage: gradients.stars },
-    avatarRing: {
-        width: 124,
-        height: 124,
-        borderRadius: 62,
-        padding: 4,
-        backgroundImage: gradients.gold,
-        boxShadow: '0 0 40px rgba(255, 215, 0, 0.28)',
-        cursor: 'pointer',
-        marginBottom: 6,
-    },
-    avatar: { width: '100%', height: '100%', borderRadius: 58, backgroundColor: '#ffffff' },
-    avatarEmpty: { alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff6cc' },
-    avatarInitial: { fontSize: 46, color: palette.navy800 },
-    avatarOverlay: {
-        position: 'absolute',
-        top: 4,
-        left: 4,
-        right: 4,
-        bottom: 4,
-        borderRadius: 58,
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 4,
-        backgroundColor: 'rgba(4, 15, 31, 0.6)',
-        opacity: 0,
-        transitionProperty: 'opacity',
-        transitionDuration: motion.base,
-    },
-    avatarOverlayOn: { opacity: 1 },
-    avatarOverlayText: { color: '#ffffff', fontSize: 11.5 },
-    cameraBadge: {
-        position: 'absolute',
-        bottom: 4,
-        right: 4,
-        width: 32,
-        height: 32,
-        borderRadius: 16,
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundImage: gradients.gold,
-        borderWidth: 3,
-        borderColor: palette.navy850,
-    },
-    identityName: { color: onDark.text, fontSize: 20, textAlign: 'center' },
-    codeBox: {
-        alignItems: 'center',
-        marginTop: 6,
-        paddingHorizontal: 20,
-        paddingVertical: 8,
-        borderRadius: radii.md,
-        backgroundColor: 'rgba(255,255,255,0.06)',
-        borderWidth: 1,
-        borderColor: 'rgba(255, 215, 0, 0.25)',
-    },
-    codeLabel: { color: onDark.muted, fontSize: 11 },
-    code: { color: palette.gold, fontSize: 18, letterSpacing: 2 },
-    identityRow: { alignItems: 'center', gap: 6 },
-    identityText: { color: onDark.soft, fontSize: 13 },
+    bankTop: { alignItems: 'center', justifyContent: 'space-between' },
+    chip: { width: 44, height: 32, borderRadius: 7, backgroundImage: gradients.gold, opacity: 0.9 },
+    contactless: { transform: 'rotate(90deg)' },
+    bankNumber: { color: onDark.text, fontSize: 21, letterSpacing: 2.5, textAlign: 'center', writingDirection: 'ltr' },
+    bankBottom: { alignItems: 'flex-end', gap: 12 },
+    bankLabel: { color: onDark.muted, fontSize: 11 },
+    bankName: { color: onDark.text, fontSize: 14.5, marginTop: 2 },
+    bankLogo: { color: palette.gold, fontSize: 16, letterSpacing: 3 },
+    bankFields: { gap: 16 },
 
-    settings: {
-        gap: 12,
-        padding: 18,
-        borderRadius: radii.lg,
-        backgroundColor: surface.card,
-        borderWidth: 1,
-        borderColor: surface.border,
-        boxShadow: elevation.card,
-    },
-    settingsTitle: { fontSize: 14.5, color: surface.title },
-
-    links: { gap: 4, marginHorizontal: -8 },
-    link: {
-        alignItems: 'center',
-        gap: 12,
-        paddingVertical: 10,
-        paddingHorizontal: 8,
-        borderRadius: radii.md,
-        cursor: 'pointer',
-        transitionProperty: 'background-color',
-        transitionDuration: motion.fast,
-    },
-    linkHover: { backgroundColor: surface.hover },
-    linkDangerHover: { backgroundColor: tone.danger.bg },
-    linkIcon: { width: 36, height: 36, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
-    linkBody: { flex: 1, gap: 2 },
-    linkTitle: { fontSize: 13.5, color: surface.title },
-    linkSub: { fontSize: 12, color: surface.muted, lineHeight: 19 },
-
+    /* captcha */
     captchaRow: { alignItems: 'center', gap: 10 },
     captcha: {
         height: 48,

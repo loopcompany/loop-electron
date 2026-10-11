@@ -74,7 +74,7 @@ const LAYOUTS = {
   DiscountCodeScreen: 'narrow',
   DiscountDetail: 'narrow',
   AddNewAddress: 'narrow',
-  OrganizationProfile: 'narrow',
+  OrganizationProfile: 'dashboard',
   AccountSecurity: 'narrow',
   Invoice: 'narrow',
   Preview: 'narrow',

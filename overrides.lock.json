@@ -26,6 +26,7 @@
   "screens/TransactionsScreen.js": "3875bd8ce87943c1b0eb5aadeb95607906cb20b499be62daca432f952c84d761",
   "screens/Welcome.js": "bde2663bf69492c72bcbd5ff8b910c7704d335fb530e85115ec4f4be05686839",
   "screens/account/Increase.js": "b30be5d1cb6344b294d9a81c3969d2514dec1f912d36fa6d32d62854c349a2b3",
+  "screens/account/OrganizationProfile.js": "9b82c80ddebbb55722e9d0d78bd47d73762c81480aaffe992d6874124f3f8204",
   "screens/account/Profile.js": "050d35d768bc7df1c8e62aff773e3695f3c16e2d20f0dca49817f4a1dfe4974c",
   "screens/account/Wallet.js": "c3fbbefd8564ff55501406ad2e216e61bb0cb0b969441d5604e917ac523a11cc",
   "screens/auth/LoginScreen.js": "2a8aa21e9469d387fa268a3ae12b983c57e98b1a00142134fa5415b03f591dfd",

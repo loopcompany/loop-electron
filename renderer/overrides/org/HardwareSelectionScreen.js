@@ -5,10 +5,16 @@
  * other forms of the app: the category as icon choices, the used / sealed
  * quantities as steppers, the need and notes as fields, and a live summary
  * beside them. Same data flow as the mobile file: the same state and
- * defaults, «ثبت سفارش» opens `OrderSummaryScreen` with the same params
- * (source 'hardware', title, summary lines) — that screen submits the order —
- * and «لغو سفارش» goes back. The two «پیش رسید» buttons do nothing on the
- * phone either, so they are left out here.
+ * defaults, «ثبت سفارش» opens `OrderSummaryScreen` (source 'hardware', title,
+ * summary lines) — that screen submits the order — and «لغو سفارش» goes back.
+ * The two «پیش رسید» buttons do nothing on the phone either, so they are left
+ * out here.
+ *
+ * Desktop fix: the mobile file sends no category, address, date or time, so
+ * OrderSummaryScreen always refused it («دسته‌بندی سفارش نامعتبر است») and the
+ * API requires all four anyway. Here the form also asks for the delivery
+ * address and day / time slot, and the order goes out under the organisation
+ * «جامع» category (3), the backend category that covers equipment supply.
  *
  * When the mobile file changes, `npm run check:overrides` fails: port the
  * change here, then run `npm run overrides:accept`.
@@ -19,7 +25,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 
 import ScreenHeaders from '@components/ScreenHeaders';
-import { L } from './orgI18n';
+import SchedulePicker from '@components/SchedulePicker';
+import SavedAddressPicker from '@components/SavedAddressPicker';
+import { showToastOrAlert } from '@helpers/Common';
+import { TIME_SLOT_OPTIONS } from './deviceCatalog';
+import { L, LO } from './orgI18n';
 
 import { DButton, formatNumber, useDir } from '@desktop/ui';
 import { ChoiceGroup, Field, FieldGrid, FormPage, FormSection, TextField, TipsCard } from '@desktop/FormKit';
@@ -54,6 +64,13 @@ const COPY = {
     needPlaceholder: 'مثلاً: لپ‌تاپ برای کار اداری، رم ۱۶ گیگ، SSD',
     notes: 'توضیحات',
     notesPlaceholder: 'برند، مدل، بودجه یا هر نکته‌ی دیگر…',
+    delivery: 'زمان تحویل',
+    deliveryHint: 'روز و بازه‌ی ساعتی مناسب برای تحویل کالا',
+    address: 'آدرس تحویل',
+    addressHint: 'کالا به کدام آدرس ارسال شود؟',
+    needQuantity: 'حداقل یک کالا (نو یا کارکرده) انتخاب کنید.',
+    needSchedule: 'روز و ساعت تحویل را انتخاب کنید.',
+    needAddress: 'آدرس تحویل را انتخاب یا اضافه کنید.',
     submit: 'ثبت سفارش',
     cancel: 'لغو سفارش',
     actionsHint: 'با «ثبت سفارش» خلاصه و هزینه‌ی سفارش را می‌بینید و بعد تأیید می‌کنید.',
@@ -82,6 +99,13 @@ const COPY = {
     needPlaceholder: 'e.g. an office laptop, 16 GB RAM, SSD',
     notes: 'Notes',
     notesPlaceholder: 'Brand, model, budget or anything else…',
+    delivery: 'Delivery time',
+    deliveryHint: 'A day and time slot that suits you for delivery',
+    address: 'Delivery address',
+    addressHint: 'Where should the goods go?',
+    needQuantity: 'Choose at least one item (new or used).',
+    needSchedule: 'Choose a delivery day and time.',
+    needAddress: 'Choose or add a delivery address.',
     submit: 'Place order',
     cancel: 'Cancel order',
     actionsHint: '“Place order” shows the summary and cost before you confirm.',
@@ -110,6 +134,9 @@ const HardwareSelectionScreen = ({ navigation }) => {
     'کارکرده': 0,
     'اکبند': 2
   });
+  const [deliveryDate, setDeliveryDate] = useState('');
+  const [timeSlot, setTimeSlot] = useState(null);
+  const [addressId, setAddressId] = useState(null);
 
   const categories = [
     'لپ تاپ',
@@ -128,9 +155,22 @@ const HardwareSelectionScreen = ({ navigation }) => {
     }));
   };
 
-  const submitOrder = () =>
+  const total = Object.values(quantities).reduce((sum, n) => sum + n, 0);
+
+  const submitOrder = () => {
+    const missing =
+      (total <= 0 && copy.needQuantity) ||
+      ((!deliveryDate || !timeSlot) && copy.needSchedule) ||
+      (addressId == null && copy.needAddress);
+    if (missing) {
+      showToastOrAlert(missing);
+      return;
+    }
     navigation.navigate('OrderSummaryScreen', {
       source: 'hardware',
+      categoryId: 3,
+      schedule: { date: deliveryDate, slot: timeSlot },
+      addressId,
       orderTitle: `سفارش خدمات سخت‌افزاری - ${selectedCategory}`,
       summaryLines: [
         { label: 'دسته‌بندی', value: selectedCategory },
@@ -141,6 +181,7 @@ const HardwareSelectionScreen = ({ navigation }) => {
         ...(description.trim() ? [{ label: 'توضیحات', value: description }] : []),
       ],
     });
+  };
 
   const cancelOrder = () => {
     if (Platform.OS == 'web') {
@@ -149,8 +190,6 @@ const HardwareSelectionScreen = ({ navigation }) => {
       navigation.goBack()
     }
   };
-
-  const total = Object.values(quantities).reduce((sum, n) => sum + n, 0);
 
   return (
     <View style={styles.screen}>
@@ -215,6 +254,20 @@ const HardwareSelectionScreen = ({ navigation }) => {
               <TextField multiline rows={4} value={description} onChangeText={setDescription} placeholder={copy.notesPlaceholder} />
             </Field>
           </FieldGrid>
+        </FormSection>
+
+        <FormSection index={3} icon="calendar-outline" title={copy.delivery} subtitle={copy.deliveryHint}>
+          <SchedulePicker
+            date={deliveryDate}
+            onChangeDate={setDeliveryDate}
+            slot={timeSlot}
+            onChangeSlot={setTimeSlot}
+            slots={LO(TIME_SLOT_OPTIONS)}
+          />
+        </FormSection>
+
+        <FormSection index={4} icon="location-outline" title={copy.address} subtitle={copy.addressHint}>
+          <SavedAddressPicker value={addressId} onChange={(id) => setAddressId(id ?? null)} navigation={navigation} />
         </FormSection>
       </FormPage>
     </View>

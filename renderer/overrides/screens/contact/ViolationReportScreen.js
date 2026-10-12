@@ -27,8 +27,8 @@ import { AsideAction, Field, FieldGrid, FormPage, FormSection, QuickChips, Selec
 const COPY = {
   fa: {
     subtitle: 'اگر از تکنسین، پشتیبانی یا یک تراکنش رضایت نداشتید، جزئیات را بنویسید؛ گزارش شما مستقیم به واحد نظارت لوپ می‌رسد.',
-    what: 'چه اتفاقی افتاده؟',
-    whatHint: 'نوع تخلف و طرف مربوط را مشخص کنید',
+    what: 'موضوع گزارش:',
+    whatHint: 'موضوع تخلف یا انتقاد و بخش مربوطه را مشخص کنید.',
     detail: 'جزئیات و مبلغ',
     detailHint: 'تاریخ، مبلغ و شرح کامل ماجرا',
     chips: ['تکنسین', 'پشتیبانی لوپ', 'تراکنش'],
@@ -43,8 +43,8 @@ const COPY = {
   },
   en: {
     subtitle: 'Not happy with a technician, support or a transaction? Tell us — your report goes straight to Loop’s oversight team.',
-    what: 'What happened?',
-    whatHint: 'The kind of violation and who was involved',
+    what: 'Report subject:',
+    whatHint: 'The subject of the violation or criticism, and the section involved.',
     detail: 'Details and amount',
     detailHint: 'Date, amount and the full story',
     chips: ['Technician', 'Loop support', 'Transaction'],

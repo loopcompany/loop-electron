@@ -916,6 +916,16 @@ const OrganizationProfile = () => {
     { key: 'settings' },
   ].map((item) => ({ ...item, icon: tabIcons[item.key], title: copy.tabs[item.key][0], hint: copy.tabs[item.key][1] }));
   const active = tabs.find((item) => item.key === tab) || tabs[0];
+
+  // «برای تکمیل پروفایل»: هر مورد تب خودش را باز می‌کند؛ «لوگوی سازمان» مستقیم
+  // انتخاب تصویر را باز می‌کند (و اگر لازم باشد حالت ویرایش را روشن می‌کند)
+  const openChecklistItem = (item) => {
+    setTab(item.tab);
+    if (item.key === 'logo') {
+      if (!isEditing) toggleEditing();
+      pickImage();
+    }
+  };
   const infoTab = ['org', 'manager', 'contact'].includes(active.key);
 
   return (
@@ -968,7 +978,7 @@ const OrganizationProfile = () => {
               title={copy.todo}
               percent={percent}
               doneText={copy.todoDone}
-              items={missing.map((item) => ({ key: item.key, label: copy.items[item.key], onPress: () => setTab(item.tab) }))}
+              items={missing.map((item) => ({ key: item.key, label: copy.items[item.key], onPress: () => openChecklistItem(item) }))}
             />
             <SignOutButton title={t('Log out of account')} onPress={logoutWithConfirmation} disabled={isLoggingOut} />
           </>

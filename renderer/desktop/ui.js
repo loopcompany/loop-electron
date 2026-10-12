@@ -4,7 +4,7 @@
  * They follow the language direction (Persian is RTL, English LTR) and take
  * their colours from ./desktopTheme.
  */
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -33,6 +33,25 @@ export function useDir() {
       back: rtl ? 'arrow-forward' : 'arrow-back',
     };
   }, [lang, t]);
+}
+
+/**
+ * Columns for a grid that should show `columns` items per row but never let
+ * one get narrower than `minItemWidth`: measures the grid (pass `onLayout` to
+ * it) and drops columns while the items would be squeezed — small window,
+ * open sidebar, narrow wizard card.
+ *
+ * @returns {{ cols: number, width: string, onLayout: Function }} `width` is the CSS width of one item
+ */
+export function useFitColumns(columns, minItemWidth, gap) {
+  const [gridWidth, setGridWidth] = useState(0);
+  const onLayout = useCallback((e) => setGridWidth(e.nativeEvent.layout.width), []);
+  let cols = Math.max(1, columns);
+  if (gridWidth) {
+    while (cols > 1 && (gridWidth - gap * (cols - 1)) / cols < minItemWidth) cols -= 1;
+  }
+  const width = cols === 1 ? '100%' : `calc(${100 / cols}% - ${(gap * (cols - 1)) / cols}px)`;
+  return { cols, width, onLayout };
 }
 
 /** Persian digits and thousands separators, as the rest of the app shows money. */

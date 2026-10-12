@@ -58,7 +58,6 @@ export const NAV_GROUPS = [
     id: 'support',
     routes: [
       'ViolationReportScreen',
-      'FeedbackSurveyScreen',
       'LearnMoreScreen',
       'AboutScreen',
       'OrganizationTermsScreen',

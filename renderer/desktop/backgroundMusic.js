@@ -8,7 +8,8 @@
  * Turning it off pauses it; the choice is remembered between runs
  * (`loop.music`). The window allows autoplay (electron/main.js
  * `autoplayPolicy`); if the page is ever opened somewhere that does not, it
- * starts on the first click or key press instead.
+ * starts on the first click or key press instead. It is held while the splash
+ * logo motion plays its own sound (`holdBackgroundMusic`, Landing override).
  */
 import { useSyncExternalStore } from 'react';
 import { Asset } from 'expo-asset';
@@ -21,6 +22,7 @@ let audio = null;
 let enabled = readPreference();
 let fadeTimer = null;
 let waitingForGesture = false;
+let held = false;
 const listeners = new Set();
 
 function readPreference() {
@@ -72,7 +74,7 @@ function playOnFirstGesture() {
     window.removeEventListener('pointerdown', start, true);
     window.removeEventListener('keydown', start, true);
     waitingForGesture = false;
-    if (enabled) play();
+    if (enabled && !held) play();
   };
   window.addEventListener('pointerdown', start, true);
   window.addEventListener('keydown', start, true);
@@ -80,7 +82,7 @@ function playOnFirstGesture() {
 
 /** Starts the music if the user has not turned it off. Safe to call more than once. */
 export function startBackgroundMusic() {
-  if (typeof window === 'undefined' || !enabled) return;
+  if (typeof window === 'undefined' || !enabled || held) return;
   if (audio && !audio.paused) return;
   play();
 }
@@ -93,12 +95,29 @@ export function toggleBackgroundMusic() {
     // only a preference
   }
   if (enabled) {
-    play();
+    if (!held) play();
   } else if (audio) {
     clearInterval(fadeTimer);
     audio.pause();
   }
   listeners.forEach((listener) => listener());
+}
+
+/**
+ * Keeps the music silent (e.g. while the splash video plays its own sound).
+ * Returns the release function, which starts the music if it is switched on —
+ * shaped for `useEffect(() => holdBackgroundMusic(), [])`.
+ */
+export function holdBackgroundMusic() {
+  held = true;
+  if (audio && !audio.paused) {
+    clearInterval(fadeTimer);
+    audio.pause();
+  }
+  return () => {
+    held = false;
+    startBackgroundMusic();
+  };
 }
 
 const subscribe = (listener) => {

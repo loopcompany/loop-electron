@@ -4,8 +4,12 @@ import { useTranslation } from 'react-i18next';
 import { Image, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { showAlert, showToastOrAlert } from '@helpers/Common';
-import { checkAppVersion, isNotImplemented } from '@services/AccountSecurityApi';
+import { isNotImplemented } from '@services/AccountSecurityApi';
+import { API_ENDPOINTS } from '@services/ApiEndpoints';
+import { request } from '@services/apiResponse';
+import axios from '@services/axiosConfig';
 import { getAppVersion } from '@services/notifications/deviceInfo';
+import { uri } from '@services/URL';
 
 import { contentGutter, contentMaxWidth } from './Breakpoints';
 import { elevation, gradients, motion, onDark, palette, radii, surface, tone } from './desktopTheme';
@@ -32,11 +36,17 @@ const COPY = {
     light: 'روشن', dark: 'تیره', system: 'سیستم',
     strength: ['', 'ضعیف', 'متوسط', 'خوب', 'قوی'],
     photo: 'تغییر عکس',
+    upToDate: 'شما از آخرین نسخه لوپ استفاده می‌کنید.',
+    newVersion: 'نسخه جدیدی از لوپ منتشر شده است. لطفاً به‌روزرسانی کنید.',
+    newVersionTitle: 'نسخه‌ی جدید',
   },
   en: {
     light: 'Light', dark: 'Dark', system: 'System',
     strength: ['', 'Weak', 'Fair', 'Good', 'Strong'],
     photo: 'Change photo',
+    upToDate: 'You are using the latest version of Loop.',
+    newVersion: 'A new version of Loop has been released. Please update.',
+    newVersionTitle: 'New version',
   },
 };
 
@@ -313,19 +323,37 @@ export function DangerZone({ children }) {
 
 /* ---------------------------------------------------------------- rows */
 
+/** The installed desktop app's version (electron/preload.js); the mobile one outside Electron. */
+const desktopVersion = () =>
+  (typeof window !== 'undefined' && window.loopDesktop?.appVersion) || getAppVersion() || '';
+
+/**
+ * The mobile `checkAppVersion` asks about the phone build (`platform: web`
+ * and the Expo version); the desktop asks about itself.
+ */
+const checkDesktopVersion = () =>
+  request(() =>
+    axios.get(`${uri}${API_ENDPOINTS.APP.VERSION}`, {
+      skipGlobalErrorAlert: true,
+      params: { platform: 'windows', current_version: desktopVersion() },
+    })
+  );
+
 /**
  * The rows of the mobile AccountActionsCard (components/account/
- * OrganizationAccountSections): the same targets, labels and app-version
- * check, keyed so each tab can show its own.
+ * OrganizationAccountSections): the same targets and labels, keyed so each
+ * tab can show its own. «به‌روزرسانی» checks the desktop build and answers
+ * with one of two plain messages: up to date, or a new version to install.
  */
 export function useAccountRows(navigation, { isOrganization } = {}) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const copy = COPY[i18n.language === 'fa' ? 'fa' : 'en'];
   const [checking, setChecking] = useState(false);
-  const version = getAppVersion() || '-';
+  const version = desktopVersion() || '-';
 
   const checkVersion = async () => {
     setChecking(true);
-    const result = await checkAppVersion();
+    const result = await checkDesktopVersion();
     setChecking(false);
     if (!result.ok) {
       showToastOrAlert(
@@ -336,17 +364,13 @@ export function useAccountRows(navigation, { isOrganization } = {}) {
       return;
     }
     const info = result.data || {};
-    if (info.update_available && info.update_url) {
-      showAlert(
-        t('Update available'),
-        t('Version {{version}} of the app is available.', { version: info.latest_version || '' }),
-        [
-          ...(info.force ? [] : [{ text: t('Later'), style: 'cancel' }]),
-          { text: t('Update'), onPress: () => Linking.openURL(info.update_url) },
-        ]
-      );
+    if (info.update_available) {
+      showAlert(copy.newVersionTitle, copy.newVersion, [
+        ...(info.force && info.update_url ? [] : [{ text: t('Later'), style: 'cancel' }]),
+        ...(info.update_url ? [{ text: t('Update'), onPress: () => Linking.openURL(info.update_url) }] : []),
+      ]);
     } else {
-      showToastOrAlert(t('You are using the latest version.'));
+      showToastOrAlert(copy.upToDate);
     }
   };
 

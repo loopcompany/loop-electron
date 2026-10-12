@@ -79,6 +79,7 @@ import { usePageMeta } from '@desktop/pageTitle';
 import { bandHeight, elevation, gradients, motion, radii, surface } from '@desktop/desktopTheme';
 import { injectGlobalStyles } from '@desktop/globalStyles';
 import { iconForRoute, shellLabels } from '@desktop/routeMeta';
+import { tip } from '@desktop/tooltip';
 // Create Context
 const MenuContext = createContext();
 
@@ -528,7 +529,8 @@ export const MenuProvider = ({ children }) => {
             { id: 13, title: t("Service / Product Faults"), screen: "ProductIssueScreen", apple_check: userData?.apple_check, image: `${imageUri}/userfolder/ProductIssueScreen.png` },
             { id: 14, title: t("Rate List"), screen: "RateCategory", apple_check: userData?.apple_check, image: `${imageUri}/userfolder/RateCategory.png` },
             { id: 15, title: t("Report/Track Violation"), screen: "ViolationReportScreen", apple_check: userData?.apple_check, image: `${imageUri}/userfolder/ViolationReportScreen.png` },
-            { id: 16, title: t("Feedback and Suggestions"), screen: "FeedbackSurveyScreen", image: `${imageUri}/userfolder/FeedbackSurveyScreen.png` },
+            // id 16 «نظرسنجی / عملکرد» (FeedbackSurveyScreen) is left out on the desktop: the
+            // survey is only asked at the successful end of an order (orders/Details → rating).
             { id: 17, title: t("Warranty / Guarantee"), screen: "WarrantyScreen", apple_check: userData?.apple_check, image: `${imageUri}/userfolder/WarrantyScreen.png` },
             { id: 18, title: t("Note"), screen: "NotesScreen", image: `${imageUri}/userfolder/NotesScreen.png` },
             { id: 19, title: t("FAQ"), screen: "LearnMoreScreen", apple_check: userData?.apple_check, image: `${imageUri}/userfolder/LearnMoreScreen.png` },
@@ -887,6 +889,27 @@ export const MenuProvider = ({ children }) => {
                                 </Text>
                             </Pressable>
                         )}
+                        {/* موسیقی از همان لحظه‌ی باز شدن برنامه پخش می‌شود؛ صفحه‌های بدون نوار
+                            بالا (لوگو، خوش‌آمد، منوی ورود، فرم‌های ورود) هم دکمه‌ی قطع آن را دارند */}
+                        {!framed && (
+                            <Pressable
+                                onPress={toggleBackgroundMusic}
+                                accessibilityRole="button"
+                                accessibilityLabel={musicOn ? shellText.musicOff : shellText.musicOn}
+                                {...tip(musicOn ? shellText.musicOff : shellText.musicOn)}
+                                style={({ hovered }) => [
+                                    styles.floatingMusic,
+                                    i18n.language === 'fa' ? styles.floatingMusicLeft : styles.floatingMusicRight,
+                                    hovered && styles.floatingBackHover,
+                                ]}
+                            >
+                                <Ionicons
+                                    name={musicOn ? 'volume-high' : 'volume-mute'}
+                                    size={19}
+                                    color={musicOn ? '#ffd700' : 'rgba(255, 255, 255, 0.7)'}
+                                />
+                            </Pressable>
+                        )}
                     </View>
                     {showAuthPanel && <DesktopAuthPanel lang={i18n.language} compact={screenLayout === 'authWide'} />}
                     {showSidebar && (
@@ -1149,6 +1172,25 @@ const createLocalStyles = (NewStyles, language) => StyleSheet.create({
     floatingBackLeft: { left: 18 },
     floatingBackHover: { backgroundColor: 'rgba(6, 23, 45, 0.8)' },
     floatingBackText: { color: '#ffffff', fontSize: 13 },
+    floatingMusic: {
+        position: 'absolute',
+        bottom: 18,
+        zIndex: 20,
+        width: 42,
+        height: 42,
+        borderRadius: 13,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: 'rgba(6, 23, 45, 0.55)',
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.16)',
+        backdropFilter: 'blur(10px)',
+        cursor: 'pointer',
+        transitionProperty: 'background-color',
+        transitionDuration: motion.fast,
+    },
+    floatingMusicLeft: { left: 18 },
+    floatingMusicRight: { right: 18 },
     // کارت صفحه: روی نوار ستاره‌ای می‌نشیند و پهنایش به نوع صفحه بستگی دارد
     frameCard: {
         alignSelf: 'center',

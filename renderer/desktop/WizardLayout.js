@@ -9,6 +9,7 @@ import { elevation, gradients, motion, onDark, palette, radii, surface } from '.
 import { animate } from './globalStyles';
 import { Cheetah, DButton, cheetahFacing, formatNumber, useDir } from './ui';
 import { contentGutter, contentMaxWidth } from './Breakpoints';
+import { tip } from './tooltip';
 
 const COPY = {
   fa: {
@@ -45,6 +46,10 @@ const COPY = {
  *
  * The flow owns its state; this only lays it out.
  *
+ * When the page is narrow (small window, open sidebar) the stepper folds into
+ * a rail of numbered dots (names on hover), the summary moves into its dialog
+ * and the footer drops its dots, so the step itself keeps the room it needs.
+ *
  * @param {object} props
  * @param {string} props.title
  * @param {string} [props.subtitle]
@@ -60,8 +65,12 @@ export default function WizardLayout({ title, subtitle, image, steps, currentId,
   const dir = useDir();
   const copy = COPY[dir.rtl ? 'fa' : 'en'];
   const { height } = useWindowDimensions();
-  // the summary sits under the stepper; only very short windows fold it into a dialog
-  const showSummary = !!summary && height >= 640;
+  const [pageWidth, setPageWidth] = useState(0);
+  const [mainWidth, setMainWidth] = useState(0);
+  const compact = pageWidth > 0 && pageWidth < COMPACT_BELOW;
+  const footerDots = !mainWidth || mainWidth >= FOOTER_DOTS_FROM;
+  // the summary sits under the stepper; short windows and the folded rail move it into a dialog
+  const showSummary = !!summary && height >= 640 && !compact;
   const bodyRef = useRef(null);
   const [summaryOpen, setSummaryOpen] = useState(false);
 
@@ -94,7 +103,7 @@ export default function WizardLayout({ title, subtitle, image, steps, currentId,
     );
 
   return (
-    <View style={styles.page}>
+    <View style={styles.page} onLayout={(e) => setPageWidth(e.nativeEvent.layout.width)}>
       {/* Header */}
       <View style={[styles.hero, dir.row, animate('loop-fade-up', '320ms')]}>
         <View style={styles.heroStars} pointerEvents="none" />
@@ -107,7 +116,7 @@ export default function WizardLayout({ title, subtitle, image, steps, currentId,
           {!!subtitle && <Text style={[styles.heroSubtitle, dir.light, dir.align]}>{subtitle}</Text>}
           <Text style={[styles.heroTitle, dir.bold, dir.align]} numberOfLines={1}>{title}</Text>
         </View>
-        <View style={styles.progressBlock}>
+        <View style={[styles.progressBlock, compact && styles.progressBlockCompact]}>
           <View style={[styles.progressLabelRow, dir.row]}>
             <Text style={[styles.progressText, dir.light]}>{copy.progress(n(filledCount), n(total))}</Text>
             <Text style={[styles.progressPct, dir.bold]}>{n(Math.round(progress * 100))}٪</Text>
@@ -145,10 +154,10 @@ export default function WizardLayout({ title, subtitle, image, steps, currentId,
 
       <View style={[styles.columns, dir.row]}>
         {/* Steps, and the live summary under them */}
-        <View style={styles.side}>
+        <View style={[styles.side, compact && styles.sideCompact]}>
         {/* Stepper */}
-        <View style={[styles.stepper, animate('loop-fade-up', '340ms', '60ms')]}>
-          <Text style={[styles.stepperTitle, dir.bold, dir.align]}>{copy.steps}</Text>
+        <View style={[styles.stepper, compact && styles.stepperCompact, animate('loop-fade-up', '340ms', '60ms')]}>
+          {!compact && <Text style={[styles.stepperTitle, dir.bold, dir.align]}>{copy.steps}</Text>}
           <ScrollView style={styles.flex} contentContainerStyle={styles.stepperList} showsVerticalScrollIndicator={false}>
             {steps.map((step, i) => {
               const active = step.id === currentId;
@@ -157,10 +166,26 @@ export default function WizardLayout({ title, subtitle, image, steps, currentId,
                   key={step.id}
                   onPress={() => onSelect(step.id)}
                   accessibilityRole="tab"
+                  accessibilityLabel={step.title}
                   accessibilityState={{ selected: active }}
-                  style={({ hovered }) => [styles.step, dir.row, hovered && !active && styles.stepHover, active && styles.stepActive]}
+                  {...tip(compact ? step.title : null)}
+                  style={({ hovered }) => [
+                    styles.step,
+                    dir.row,
+                    compact && styles.stepCompact,
+                    hovered && !active && styles.stepHover,
+                    active && styles.stepActive,
+                  ]}
                 >
-                  {i < total - 1 && <View style={[styles.rail, dir.rtl ? styles.railRtl : styles.railLtr, step.done && styles.railDone]} />}
+                  {i < total - 1 && (
+                    <View
+                      style={[
+                        styles.rail,
+                        compact ? styles.railCompact : dir.rtl ? styles.railRtl : styles.railLtr,
+                        step.done && styles.railDone,
+                      ]}
+                    />
+                  )}
                   <View style={[styles.dot, step.done && styles.dotDone, active && !step.done && styles.dotActive]}>
                     {step.done ? (
                       <Ionicons name="checkmark" size={14} color={palette.white} />
@@ -168,15 +193,17 @@ export default function WizardLayout({ title, subtitle, image, steps, currentId,
                       <Text style={[styles.dotText, dir.bold, active && styles.dotTextActive]}>{n(i + 1)}</Text>
                     )}
                   </View>
-                  <View style={styles.flex}>
-                    <Text style={[styles.stepTitle, active ? dir.bold : dir.light, dir.align, active && styles.stepTitleActive]} numberOfLines={2}>
-                      {step.title}
-                    </Text>
-                    {step.required && !step.done && (
-                      <Text style={[styles.stepRequired, dir.light, dir.align]}>{copy.required}</Text>
-                    )}
-                  </View>
-                  {!!step.icon && (
+                  {!compact && (
+                    <View style={styles.flex}>
+                      <Text style={[styles.stepTitle, active ? dir.bold : dir.light, dir.align, active && styles.stepTitleActive]} numberOfLines={2}>
+                        {step.title}
+                      </Text>
+                      {step.required && !step.done && (
+                        <Text style={[styles.stepRequired, dir.light, dir.align]}>{copy.required}</Text>
+                      )}
+                    </View>
+                  )}
+                  {!!step.icon && !compact && (
                     <View style={[styles.stepIconChip, !active && styles.stepIconDim]}>
                       <Image source={step.icon} style={styles.stepIcon} resizeMode="contain" />
                     </View>
@@ -206,7 +233,10 @@ export default function WizardLayout({ title, subtitle, image, steps, currentId,
         </View>
 
         {/* Current step */}
-        <View style={[styles.main, animate('loop-fade-up', '340ms', '100ms')]}>
+        <View
+          style={[styles.main, animate('loop-fade-up', '340ms', '100ms')]}
+          onLayout={(e) => setMainWidth(e.nativeEvent.layout.width)}
+        >
           {current && (
             <View style={[styles.mainHeader, dir.row]}>
               {!!current.icon && (
@@ -235,14 +265,18 @@ export default function WizardLayout({ title, subtitle, image, steps, currentId,
               disabled={isFirst}
               onPress={() => onSelect(steps[index - 1].id)}
             />
-            <View style={[styles.dots, dir.row]}>
-              {steps.map((step) => (
-                <View
-                  key={step.id}
-                  style={[styles.miniDot, step.done && styles.miniDotDone, step.id === currentId && styles.miniDotActive]}
-                />
-              ))}
-            </View>
+            {footerDots ? (
+              <View style={[styles.dots, dir.row]}>
+                {steps.map((step) => (
+                  <View
+                    key={step.id}
+                    style={[styles.miniDot, step.done && styles.miniDotDone, step.id === currentId && styles.miniDotActive]}
+                  />
+                ))}
+              </View>
+            ) : (
+              <Text style={[styles.footerStep, dir.bold]}>{copy.stepOf(n(index + 1), n(total))}</Text>
+            )}
             {!isLast ? (
               <DButton
                 title={copy.next}
@@ -261,6 +295,11 @@ export default function WizardLayout({ title, subtitle, image, steps, currentId,
     </View>
   );
 }
+
+/** Page width (px) below which the stepper folds into a rail of numbered dots. */
+const COMPACT_BELOW = 900;
+/** Step card width (px) from which the footer has room for one dot per step. */
+const FOOTER_DOTS_FROM = 620;
 
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0, minHeight: 0 },
@@ -303,6 +342,7 @@ const styles = StyleSheet.create({
   heroSubtitle: { color: palette.gold, fontSize: 12.5 },
   heroTitle: { color: onDark.text, fontSize: 22, lineHeight: 34 },
   progressBlock: { width: 320, gap: 8 },
+  progressBlockCompact: { width: 220 },
   progressLabelRow: { alignItems: 'center', justifyContent: 'space-between' },
   progressText: { color: onDark.soft, fontSize: 12.5 },
   progressPct: { color: palette.gold, fontSize: 14 },
@@ -322,6 +362,7 @@ const styles = StyleSheet.create({
   columns: { flex: 1, minHeight: 0, gap: 16, alignItems: 'stretch' },
 
   side: { width: 310, flexShrink: 0, gap: 12, minHeight: 0 },
+  sideCompact: { width: 64 },
   stepper: {
     flex: 1.4,
     minHeight: 0,
@@ -333,6 +374,7 @@ const styles = StyleSheet.create({
     borderColor: surface.border,
     boxShadow: elevation.card,
   },
+  stepperCompact: { paddingHorizontal: 8, paddingTop: 10 },
   stepperTitle: { fontSize: 13, color: surface.faint, paddingHorizontal: 6, paddingBottom: 10 },
   stepperList: { gap: 2, paddingBottom: 8 },
   step: {
@@ -346,11 +388,13 @@ const styles = StyleSheet.create({
     transitionProperty: 'background-color',
     transitionDuration: motion.fast,
   },
+  stepCompact: { justifyContent: 'center', paddingHorizontal: 0, minHeight: 44 },
   stepHover: { backgroundColor: surface.cardMuted },
   stepActive: { backgroundColor: 'rgba(29, 95, 174, 0.08)' },
   rail: { position: 'absolute', top: 40, bottom: -14, width: 2, backgroundColor: surface.border },
   railRtl: { right: 21 },
   railLtr: { left: 21 },
+  railCompact: { top: 36, bottom: -8, left: '50%', marginLeft: -1 },
   railDone: { backgroundColor: 'rgba(31, 157, 85, 0.45)' },
   dot: {
     width: 28,
@@ -419,7 +463,8 @@ const styles = StyleSheet.create({
   miniDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: surface.borderStrong },
   miniDotDone: { backgroundColor: palette.success },
   miniDotActive: { width: 20, backgroundColor: palette.brandBright },
-  footerSpacer: { width: 200 },
+  footerSpacer: { width: 120 },
+  footerStep: { flexShrink: 1, fontSize: 12.5, color: surface.muted, textAlign: 'center' },
 
   summary: {
     flex: 1,

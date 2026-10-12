@@ -12,7 +12,9 @@ paths:
 
 ## Main process (`electron/`)
 
-- CommonJS (`require`), Node ≥ 20.19.4, Electron 44.
+- CommonJS (`require`), Node ≥ 20.19.4, Electron 44. The Windows 7/8 installers run the same code
+  on **Electron 22** and the 32-bit Win10 one on Electron 43 (`scripts/dist-win.js`) — feature-detect
+  newer APIs (`protocol.handle`, `navigationHistory`, `event.url`) and keep a fallback.
 - **Security is non-negotiable:** `contextIsolation: true`, `sandbox: true`, no `nodeIntegration`,
   permission requests allowlisted (notifications, geolocation, clipboard, fullscreen), everything
   else denied. Never open a second Electron window — external links go to the OS

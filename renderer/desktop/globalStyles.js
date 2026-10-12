@@ -7,6 +7,7 @@
 import { THEME_VARS, palette } from './desktopTheme';
 import { AUTH_CSS } from './glassAuth';
 import { DOCUMENT_CSS } from './documentLayout';
+import { installTooltips } from './tooltip';
 
 const vars = (values) => Object.entries(values).map(([name, value]) => `--loop-${name}: ${value};`).join(' ');
 
@@ -96,6 +97,7 @@ export function injectGlobalStyles() {
   style.id = 'loop-desktop-global';
   style.textContent = THEME_CSS + CSS + DOCUMENT_CSS + AUTH_CSS;
   document.head.appendChild(style);
+  installTooltips();
 }
 
 /**

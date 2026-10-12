@@ -43,7 +43,7 @@ const COPY = {
     empty: 'نرخ‌نامه هنوز منتشر نشده است',
     emptyHint: 'قیمت خدمات به‌زودی در این بخش قرار می‌گیرد.',
     emptyCategory: 'برای این دسته هنوز نرخی ثبت نشده است',
-    refresh: 'به‌روزرسانی',
+    refresh: 'به‌روزرسانی نرخ‌ها',
     toman: 'تومان',
   },
   en: {
@@ -61,7 +61,7 @@ const COPY = {
     empty: 'The rate list isn’t published yet',
     emptyHint: 'Service prices will appear here soon.',
     emptyCategory: 'No rates in this category yet',
-    refresh: 'Refresh',
+    refresh: 'Refresh rates',
     toman: 'Toman',
   },
 };

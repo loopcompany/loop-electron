@@ -16,9 +16,9 @@
     "start": "node scripts/electron.js",
     "build:web": "node scripts/build-web.js",
     "pack": "npm run build:web && electron-builder --dir",
-    "dist:win": "npm run build:web && electron-builder --win nsis --x64",
+    "dist:win": "npm run build:web && node scripts/dist-win.js nsis",
     "test": "node --test test/*.test.js",
-    "dist:win:portable": "npm run build:web && electron-builder --win zip --x64",
+    "dist:win:portable": "npm run build:web && node scripts/dist-win.js zip",
     "check:overrides": "node scripts/check-overrides.js",
     "overrides:accept": "node scripts/check-overrides.js --accept"
   },

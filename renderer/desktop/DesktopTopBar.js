@@ -1,10 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
-import { topBarHeight, topBarInset } from './Breakpoints';
+import { sidebarWidth, topBarHeight, topBarInset } from './Breakpoints';
 import { motion, onDark, palette, radii } from './desktopTheme';
 import { animate } from './globalStyles';
 import { shellLabels } from './routeMeta';
+import { tip } from './tooltip';
 import { Cheetah, cheetahFacing, formatNumber } from './ui';
 import { getFontFamily } from '@theme/Typography';
 
@@ -12,6 +14,10 @@ import { getFontFamily } from '@theme/Typography';
  * The bar across the top of every page, drawn on the starry band: back,
  * where you are, the page title, and the things a user reaches for from
  * anywhere (search / command palette, wallet balance, messages).
+ *
+ * The title always keeps room to be read: when the bar gets narrow (small
+ * window, open sidebar) the search box folds into an icon first, then the
+ * wallet drops its caption. Every button names itself on hover (./tooltip).
  *
  * @param {object} props
  * @param {string} props.title
@@ -54,22 +60,31 @@ export default function DesktopTopBar({
   const bold = { fontFamily: getFontFamily('bold', lang) };
   const light = { fontFamily: getFontFamily('light', lang) };
 
+  // the bar's own width (window minus sidebar); estimated until first layout
+  const { width: windowWidth } = useWindowDimensions();
+  const [barWidth, setBarWidth] = useState(null);
+  const width = barWidth ?? windowWidth - sidebarWidth;
+  const compactSearch = width < COMPACT_SEARCH_BELOW;
+  const compactWallet = width < COMPACT_WALLET_BELOW;
+
   return (
-    <View style={[styles.bar, row]}>
+    <View style={[styles.bar, row]} onLayout={(e) => setBarWidth(e.nativeEvent.layout.width)}>
       <View style={[styles.start, row]}>
         {onBack && (
           <Pressable
             onPress={onBack}
             accessibilityRole="button"
             accessibilityLabel={L.back}
-            style={({ hovered, pressed }) => [styles.back, hovered && styles.glassHover, pressed && styles.glassPressed]}
+            {...tip(L.back)}
+            style={({ hovered, pressed }) => [styles.back, row, hovered && styles.glassHover, pressed && styles.glassPressed]}
           >
-            <Cheetah facing={cheetahFacing(rtl, 'back')} height={28} />
+            <Cheetah facing={cheetahFacing(rtl, 'back')} height={26} />
+            <Text style={[styles.backText, bold]}>{L.back}</Text>
           </Pressable>
         )}
         <View style={styles.titleBlock} key={title}>
           {!!crumb && (
-            <Pressable onPress={onCrumb} disabled={!onCrumb} style={[styles.crumbRow, row]}>
+            <Pressable onPress={onCrumb} disabled={!onCrumb} {...tip(onCrumb ? crumb : null)} style={[styles.crumbRow, row]}>
               {({ hovered }) => (
                 <>
                   <Text style={[styles.crumb, light, hovered && onCrumb && styles.crumbHover]} numberOfLines={1}>
@@ -80,7 +95,11 @@ export default function DesktopTopBar({
               )}
             </Pressable>
           )}
-          <Text style={[styles.title, bold, align, animate('loop-fade-up', '280ms')]} numberOfLines={1}>
+          <Text
+            style={[styles.title, bold, align, animate('loop-fade-up', '280ms')]}
+            numberOfLines={1}
+            {...tip(title)}
+          >
             {title}
           </Text>
         </View>
@@ -91,22 +110,32 @@ export default function DesktopTopBar({
           onPress={onSearch}
           accessibilityRole="button"
           accessibilityLabel={L.search}
-          style={({ hovered }) => [styles.search, row, hovered && styles.glassHover]}
+          {...tip(`${L.search} (Ctrl+K)`)}
+          style={({ hovered }) => [
+            compactSearch ? styles.round : styles.search,
+            row,
+            hovered && styles.glassHover,
+          ]}
         >
-          <Ionicons name="search" size={16} color={onDark.muted} />
-          <Text style={[styles.searchText, light, align]} numberOfLines={1}>
-            {L.search}
-          </Text>
-          <View style={styles.kbd}>
-            <Text style={[styles.kbdText, bold]}>Ctrl</Text>
-            <Text style={[styles.kbdText, bold]}>K</Text>
-          </View>
+          <Ionicons name="search" size={compactSearch ? 17 : 16} color={compactSearch ? onDark.text : onDark.muted} />
+          {!compactSearch && (
+            <>
+              <Text style={[styles.searchText, light, align]} numberOfLines={1}>
+                {L.search}
+              </Text>
+              <View style={styles.kbd}>
+                <Text style={[styles.kbdText, bold]}>Ctrl</Text>
+                <Text style={[styles.kbdText, bold]}>K</Text>
+              </View>
+            </>
+          )}
         </Pressable>
 
         <Pressable
           onPress={onToggleTheme}
           accessibilityRole="button"
           accessibilityLabel={theme === 'dark' ? L.lightMode : L.darkMode}
+          {...tip(theme === 'dark' ? L.lightMode : L.darkMode)}
           style={({ hovered, pressed }) => [styles.round, hovered && styles.glassHover, pressed && styles.glassPressed]}
         >
           <Ionicons name={theme === 'dark' ? 'sunny' : 'moon'} size={17} color={theme === 'dark' ? palette.gold : onDark.text} />
@@ -116,9 +145,10 @@ export default function DesktopTopBar({
           onPress={onToggleMusic}
           accessibilityRole="button"
           accessibilityLabel={musicOn ? L.musicOff : L.musicOn}
+          {...tip(musicOn ? L.musicOff : L.musicOn)}
           style={({ hovered, pressed }) => [styles.round, hovered && styles.glassHover, pressed && styles.glassPressed]}
         >
-          <Ionicons name={musicOn ? 'musical-notes' : 'volume-mute'} size={17} color={musicOn ? palette.gold : onDark.muted} />
+          <Ionicons name={musicOn ? 'volume-high' : 'volume-mute'} size={17} color={musicOn ? palette.gold : onDark.muted} />
         </Pressable>
 
         {isLoggedIn ? (
@@ -127,13 +157,14 @@ export default function DesktopTopBar({
               onPress={onWallet}
               accessibilityRole="link"
               accessibilityLabel={L.wallet}
+              {...tip(L.wallet)}
               style={({ hovered }) => [styles.wallet, row, hovered && styles.glassHover]}
             >
               <View style={styles.walletIcon}>
                 <Ionicons name="wallet" size={15} color={palette.navy900} />
               </View>
               <View>
-                <Text style={[styles.walletLabel, light, align]}>{L.wallet}</Text>
+                {!compactWallet && <Text style={[styles.walletLabel, light, align]}>{L.wallet}</Text>}
                 <Text style={[styles.walletValue, bold, align]} numberOfLines={1}>
                   {formatNumber(walletBalance ?? 0, lang)}{' '}
                   <Text style={[styles.walletUnit, light]}>{L.toman}</Text>
@@ -144,6 +175,7 @@ export default function DesktopTopBar({
               onPress={onMessages}
               accessibilityRole="link"
               accessibilityLabel={L.support_}
+              {...tip(L.support_)}
               style={({ hovered, pressed }) => [styles.round, hovered && styles.glassHover, pressed && styles.glassPressed]}
             >
               <Ionicons name="chatbubble-ellipses-outline" size={18} color={onDark.text} />
@@ -153,6 +185,7 @@ export default function DesktopTopBar({
           <Pressable
             onPress={onSignIn}
             accessibilityRole="button"
+            {...tip(L.signIn)}
             style={({ hovered }) => [styles.signIn, row, hovered && styles.signInHover]}
           >
             <Ionicons name="log-in-outline" size={17} color={palette.navy900} />
@@ -163,6 +196,10 @@ export default function DesktopTopBar({
     </View>
   );
 }
+
+/** Bar widths (px) below which the search box, then the wallet caption, fold away. */
+const COMPACT_SEARCH_BELOW = 1060;
+const COMPACT_WALLET_BELOW = 820;
 
 const glass = {
   backgroundColor: onDark.glass,
@@ -185,10 +222,20 @@ const styles = StyleSheet.create({
     zIndex: 2,
   },
   start: { alignItems: 'center', gap: 14, flexShrink: 1, minWidth: 0 },
-  back: { ...glass, width: 64, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  back: {
+    ...glass,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    flexShrink: 0,
+  },
+  backText: { color: onDark.text, fontSize: 12.5 },
   glassHover: { backgroundColor: onDark.glassStrong, borderColor: 'rgba(255,255,255,0.2)' },
   glassPressed: { transform: 'scale(0.96)' },
-  titleBlock: { flexShrink: 1, minWidth: 0 },
+  titleBlock: { flexShrink: 1, minWidth: 140 },
   crumbRow: { alignItems: 'center', gap: 4, alignSelf: 'flex-start' },
   crumb: { color: onDark.muted, fontSize: 11.5 },
   crumbHover: { color: palette.gold },

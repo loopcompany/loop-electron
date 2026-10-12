@@ -3,7 +3,10 @@
  *   1. checks renderer/overrides against the mobile project (check-overrides)
  *   2. links renderer/node_modules, copies public/ from the mobile project
  *   3. `expo export -p web` in renderer/ → ./web-build
- *   4. copies the app icon → ./build/icon.png (electron-builder makes the .ico)
+ *
+ * The app icon is ./build/icon.ico (16–256 px) with ./build/icon.png (512 px) for
+ * the window — the mobile icon with rounded corners, generated once and kept
+ * in this repo (the mobile project is not read for it at build time).
  *
  * The mobile project is only read, never written.
  */
@@ -30,8 +33,5 @@ if (!fs.existsSync(path.join(OUT_DIR, 'index.html'))) {
   console.error('[loop] export finished but web-build/index.html is missing.');
   process.exit(1);
 }
-
-fs.mkdirSync(path.join(ROOT, 'build'), { recursive: true });
-fs.copyFileSync(path.join(MOBILE_DIR, 'assets', 'icon.png'), path.join(ROOT, 'build', 'icon.png'));
 
 console.log(`[loop] web build ready: ${OUT_DIR}`);

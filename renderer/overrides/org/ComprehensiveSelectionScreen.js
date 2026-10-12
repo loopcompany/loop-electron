@@ -53,7 +53,7 @@ import { RECEIPT_STATE, receiptFromComprehensive } from '@services/receipt';
 import useReceiptSources from '@hooks/useReceiptSources';
 
 import WizardLayout from '@desktop/WizardLayout';
-import { useDir } from '@desktop/ui';
+import { useDir, useFitColumns } from '@desktop/ui';
 import { elevation, motion, palette, radii, surface, tone } from '@desktop/desktopTheme';
 
 const DELIVERY_MODE_OPTIONS = [
@@ -632,7 +632,7 @@ const ComprehensiveSelectionScreen = ({ navigation, route }) => {
       case 'procurement':
         return (
           <>
-            <Grid columns={2}>
+            <Grid columns={2} minItemWidth={340}>
               {PROCUREMENT_ITEMS.map((item) => {
                 const entry = procurementItems[item.id] || { new: 0, used: 0, desc: '' };
                 return (
@@ -836,13 +836,16 @@ const ComprehensiveSelectionScreen = ({ navigation, route }) => {
   );
 };
 
-/** Lays children out in equal columns. */
-function Grid({ columns, children, style }) {
+/**
+ * Lays children out in equal columns — fewer when the step card is too
+ * narrow for `columns` items of `minItemWidth` (small window, open sidebar).
+ */
+function Grid({ columns, minItemWidth = columns >= 4 ? 120 : 240, children, style }) {
   const dir = useDir();
   const gap = 12;
-  const width = `calc(${100 / columns}% - ${(gap * (columns - 1)) / columns}px)`;
+  const { width, onLayout } = useFitColumns(columns, minItemWidth, gap);
   return (
-    <View style={[styles.grid, dir.row, { gap }, style]}>
+    <View style={[styles.grid, dir.row, { gap }, style]} onLayout={onLayout}>
       {React.Children.toArray(children).map((child, i) => (
         <View key={child.key ?? i} style={{ width }}>{child}</View>
       ))}

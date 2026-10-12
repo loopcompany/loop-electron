@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { useTranslation } from 'react-i18next';
@@ -207,16 +208,26 @@ export function QuickAccess({ children }) {
     <View style={[styles.quick, animate('loop-fade-up', '380ms', '320ms')]}>
       <View style={[styles.quickHead, dir.row]}>
         <Text style={[styles.quickTitle, dir.bold, dir.align]}>{copy.quick}</Text>
-        <Text style={[styles.quickHint, dir.light, dir.align]} numberOfLines={1}>{copy.quickHint}</Text>
+        <Text style={[styles.quickHint, dir.light, dir.align]} numberOfLines={2}>{copy.quickHint}</Text>
       </View>
       <View style={[dashboardStyles.shortcuts, dir.row]}>{children}</View>
     </View>
   );
 }
 
-/** Wallet, open orders, completed orders and club points. */
+/** A stat card needs this much width to show its label and value whole. */
+const STAT_MIN_WIDTH = 230;
+const STAT_GAP = 16;
+
+/**
+ * Wallet, open orders, completed orders and club points: four across when
+ * they fit, two by two when the window is small or the sidebar is open.
+ */
 export function AccountStats({ navigation, orders }) {
   const dir = useDir();
+  const [rowWidth, setRowWidth] = useState(0);
+  const cols = !rowWidth || rowWidth >= 4 * STAT_MIN_WIDTH + 3 * STAT_GAP ? 4 : 2;
+  const cardWidth = rowWidth ? Math.floor((rowWidth - (cols - 1) * STAT_GAP) / cols) : undefined;
   const copy = dashboardCopy(dir.rtl);
   const user = useSelector((state) => state?.user?.data);
   const walletBalance = useSelector(selectWalletBalance);
@@ -232,18 +243,23 @@ export function AccountStats({ navigation, orders }) {
   ];
 
   return (
-    <View style={[styles.stats, dir.row]}>
+    <View style={[styles.stats, dir.row]} onLayout={(e) => setRowWidth(e.nativeEvent.layout.width)}>
       {stats.map((stat, i) => (
         <Card
           key={stat.key}
           onPress={() => navigation.navigate(stat.route)}
           accessibilityLabel={stat.label}
-          style={[styles.stat, animate('loop-fade-up', '360ms', `${60 + i * 50}ms`)]}
+          style={[
+            styles.stat,
+            // a fixed basis: `flex: 1` alone would mean basis 0 and collapse the card
+            cardWidth ? { flexGrow: 0, flexShrink: 0, flexBasis: cardWidth, width: cardWidth } : null,
+            animate('loop-fade-up', '360ms', `${60 + i * 50}ms`),
+          ]}
         >
           <View style={[styles.statRow, dir.row]}>
             <IconTile icon={stat.icon} kind={stat.kind} size={46} />
             <View style={styles.flex}>
-              <Text style={[styles.statLabel, dir.light, dir.align]} numberOfLines={1}>{stat.label}</Text>
+              <Text style={[styles.statLabel, dir.light, dir.align]} numberOfLines={2}>{stat.label}</Text>
               <Text style={[styles.statValue, dir.bold, dir.align]} numberOfLines={1}>
                 {formatNumber(stat.value, dir.lang)}
                 {!!stat.unit && <Text style={[styles.statUnit, dir.light]}> {stat.unit}</Text>}
@@ -428,14 +444,14 @@ const styles = StyleSheet.create({
   actionCtaText: { color: palette.navy900, fontSize: 14 },
 
   quick: { gap: 12 },
-  quickHead: { alignItems: 'baseline', gap: 12 },
+  quickHead: { alignItems: 'center', flexWrap: 'wrap', columnGap: 12, rowGap: 2 },
   quickTitle: { fontSize: 15, color: surface.canvasText },
-  quickHint: { flex: 1, fontSize: 12, color: surface.canvasMuted },
+  quickHint: { flexShrink: 1, fontSize: 12, lineHeight: 20, color: surface.canvasMuted },
 
-  stats: { gap: 16 },
+  stats: { gap: STAT_GAP, flexWrap: 'wrap' },
   stat: { flex: 1, minWidth: 0, paddingVertical: 18 },
   statRow: { alignItems: 'center', gap: 14 },
-  statLabel: { fontSize: 12.5, color: surface.faint },
+  statLabel: { fontSize: 12.5, lineHeight: 19, color: surface.faint },
   statValue: { fontSize: 21, color: surface.title, lineHeight: 30 },
   statUnit: { fontSize: 12, color: surface.faint },
 

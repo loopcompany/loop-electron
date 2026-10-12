@@ -8,7 +8,12 @@
  *
  * Same requests and rules as the mobile file: `getTicketsList` on focus,
  * `sendTicketMessage` with the same empty / 5000-character checks and the
- * same alerts, the contact link from the contacts slice.
+ * same alerts.
+ *
+ * Desktop additions: the thread opens with a welcome from support, and the
+ * user's first message is followed by an automatic «sent, we'll review it»
+ * reply (both drawn here, not stored on the server). The support card shows
+ * the support phone number itself (click copies it) instead of a Call button.
  *
  * When the mobile file changes, `npm run check:overrides` fails: port the
  * change here, then run `npm run overrides:accept`.
@@ -20,7 +25,6 @@ import {
   StyleSheet,
   ScrollView,
   TextInput,
-  Linking,
   Image,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
@@ -29,14 +33,17 @@ import { useTranslation } from 'react-i18next';
 import ScreenHeaders from '@components/ScreenHeaders';
 import { getTicketsList, sendTicketMessage } from '@services/Api';
 import { formatDateTime, showAlert } from '@helpers/Common';
-import { useSelector } from 'react-redux';
 
 import { Card, DButton, IconButton, Pill, Skeleton, formatNumber, useDir } from '@desktop/ui';
 import { elevation, gradients, motion, onDark, palette, radii, surface } from '@desktop/desktopTheme';
 import { animate, loop } from '@desktop/globalStyles';
 import { contentGutter, contentMaxWidth } from '@desktop/Breakpoints';
+import { tip as hoverTip } from '@desktop/tooltip';
 
 const MAX_LENGTH = 5000;
+
+/** Loop support's phone line, shown on the support card. */
+const SUPPORT_PHONE = '91693909';
 
 const COPY = {
   fa: {
@@ -47,9 +54,13 @@ const COPY = {
     unread: (n) => `${n} پیام خوانده‌نشده`,
     total: (n) => `${n} پیام`,
     shortcut: 'Ctrl + Enter برای ارسال',
-    startTitle: 'گفتگو را شروع کنید',
     refresh: 'به‌روزرسانی',
     tips: ['شماره‌ی سفارش را در پیام بنویسید', 'مشکل را با جزئیات توضیح دهید', 'پاسخ‌ها همین‌جا نمایش داده می‌شوند'],
+    supportName: 'پشتیبانی لوپ',
+    welcome: 'سلام، به پشتیبانی لوپ خوش آمدید. لطفاً موضوع موردنظر خود را با ما در میان بگذارید.',
+    received: 'پیام شما با موفقیت ارسال شد. تیم پشتیبانی لوپ در اولین فرصت درخواست شما را بررسی خواهد کرد.',
+    copyPhone: 'کپی شماره‌ی تماس',
+    copied: 'شماره کپی شد',
   },
   en: {
     thread: 'Conversation with support',
@@ -59,13 +70,40 @@ const COPY = {
     unread: (n) => `${n} unread`,
     total: (n) => `${n} messages`,
     shortcut: 'Ctrl + Enter to send',
-    startTitle: 'Start the conversation',
     refresh: 'Refresh',
     tips: ['Include your order number', 'Describe the problem in detail', 'Replies show up right here'],
+    supportName: 'Loop support',
+    welcome: 'Hello, welcome to Loop support. Please tell us what you need help with.',
+    received: 'Your message was sent successfully. The Loop support team will review your request as soon as possible.',
+    copyPhone: 'Copy phone number',
+    copied: 'Number copied',
   },
 };
 
 const byDate = (a, b) => new Date(a?.created_at).getTime() - new Date(b?.created_at).getTime();
+
+/**
+ * The thread as shown: support's welcome first, then the messages, with the
+ * automatic reply right after the user's first message.
+ */
+const withSupportNotes = (messages, copy) => {
+  const thread = [{ id: 'loop-welcome', auto: true, message: copy.welcome, role_label: copy.supportName }];
+  let replied = false;
+  for (const msg of messages) {
+    thread.push(msg);
+    if (!replied && msg.is_mine) {
+      replied = true;
+      thread.push({
+        id: 'loop-received',
+        auto: true,
+        message: copy.received,
+        role_label: copy.supportName,
+        created_at: msg.created_at,
+      });
+    }
+  }
+  return thread;
+};
 
 export default function MessageScreen() {
   const { t } = useTranslation();
@@ -78,8 +116,18 @@ export default function MessageScreen() {
   const [sending, setSending] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [focused, setFocused] = useState(false);
-  const contact = useSelector(state => state.contacts?.data?.data?.contact);
+  const [phoneCopied, setPhoneCopied] = useState(false);
   const threadRef = useRef(null);
+
+  const copyPhone = () => {
+    try {
+      navigator.clipboard?.writeText(SUPPORT_PHONE);
+      setPhoneCopied(true);
+      setTimeout(() => setPhoneCopied(false), 1600);
+    } catch {
+      // clipboard is optional
+    }
+  };
 
   const fetchMessages = async () => {
     try {
@@ -184,16 +232,8 @@ export default function MessageScreen() {
                   <Skeleton width={i % 2 ? 320 : 260} height={70} radius={18} />
                 </View>
               ))
-            ) : messages.length === 0 ? (
-              <View style={styles.emptyThread}>
-                <View style={styles.emptyIcon}>
-                  <Ionicons name="chatbubbles-outline" size={34} color={palette.brandBright} />
-                </View>
-                <Text style={[styles.emptyTitle, dir.bold]}>{copy.startTitle}</Text>
-                <Text style={[styles.emptyText, dir.light]}>{t('No messages received yet')}</Text>
-              </View>
             ) : (
-              messages.map((msg, i) => {
+              withSupportNotes(messages, copy).map((msg, i) => {
                 const mine = !!msg.is_mine;
                 // the user's own messages sit at the reading end, support's at the start
                 const side = mine ? (dir.rtl ? 'flex-start' : 'flex-end') : (dir.rtl ? 'flex-end' : 'flex-start');
@@ -207,13 +247,15 @@ export default function MessageScreen() {
                           color={mine ? onDark.soft : palette.brandBright}
                         />
                         <Text style={[styles.role, dir.bold, mine && styles.roleMine]}>{msg.role_label}</Text>
-                        {!msg.is_read && !mine && <Pill label={t('New')} kind="gold" size="sm" />}
+                        {!msg.is_read && !mine && !msg.auto && <Pill label={t('New')} kind="gold" size="sm" />}
                       </View>
                       <Text style={[styles.messageText, dir.light, dir.align, mine && styles.messageTextMine]} selectable>
                         {msg.message}
                       </Text>
                       <View style={[styles.meta, dir.row]}>
-                        <Text style={[styles.time, dir.light, mine && styles.timeMine]}>{formatDateTime(msg.created_at)}</Text>
+                        {!!msg.created_at && (
+                          <Text style={[styles.time, dir.light, mine && styles.timeMine]}>{formatDateTime(msg.created_at)}</Text>
+                        )}
                         {mine && (
                           <Ionicons
                             name={msg.is_read ? 'checkmark-done' : 'checkmark'}
@@ -274,15 +316,15 @@ export default function MessageScreen() {
             </View>
             <Text style={[styles.teamTitle, dir.bold]}>{copy.team}</Text>
             <Text style={[styles.teamHint, dir.light]}>{copy.teamHint}</Text>
-            <DButton
-              title={t('Call')}
-              icon="call"
-              variant="gold"
-              block
-              onPress={() => {
-                Linking.openURL(`${contact?.link}`);
-              }}
-            />
+            <View {...hoverTip(copy.copyPhone)}>
+              <DButton
+                title={phoneCopied ? copy.copied : formatPhone(SUPPORT_PHONE, dir.lang)}
+                icon={phoneCopied ? 'checkmark' : 'call'}
+                variant="gold"
+                block
+                onPress={copyPhone}
+              />
+            </View>
           </View>
 
           <Card style={styles.tipsCard}>
@@ -310,6 +352,9 @@ export default function MessageScreen() {
 }
 
 const spin = loop('loop-spin', '800ms');
+
+/** Digits as the UI language writes them, without thousands separators. */
+const formatPhone = (phone, lang) => (lang === 'fa' ? phone.replace(/\d/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[d]) : phone);
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: 'transparent' },
@@ -383,19 +428,6 @@ const styles = StyleSheet.create({
   meta: { alignItems: 'center', gap: 6, alignSelf: 'flex-end' },
   time: { fontSize: 11, color: surface.faint },
   timeMine: { color: onDark.muted },
-  emptyThread: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 40 },
-  emptyIcon: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: surface.card,
-    boxShadow: elevation.card,
-    marginBottom: 6,
-  },
-  emptyTitle: { fontSize: 15.5, color: surface.title },
-  emptyText: { fontSize: 13, color: surface.faint },
 
   composer: { padding: 16, borderTopWidth: 1, borderTopColor: surface.border, backgroundColor: surface.card },
   inputWrap: {

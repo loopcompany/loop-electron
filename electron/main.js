@@ -183,9 +183,10 @@ function wireNavigation(webContents) {
     else if (decision === 'external') openExternal(url);
   };
 
-  webContents.on('will-navigate', (event) => onNavigate(event, event.url));
-  webContents.on('will-redirect', (event) => {
-    if (event.isMainFrame) onNavigate(event, event.url);
+  // Electron 22 (Windows 7/8 build) passes url / isMainFrame as arguments, not on the event.
+  webContents.on('will-navigate', (event, url) => onNavigate(event, event.url ?? url));
+  webContents.on('will-redirect', (event, url, _isInPlace, isMainFrame) => {
+    if (event.isMainFrame ?? isMainFrame) onNavigate(event, event.url ?? url);
   });
 
   webContents.setWindowOpenHandler(({ url }) => {
@@ -202,7 +203,7 @@ function wireShortcuts(webContents) {
     if (input.type !== 'keyDown') return;
     const ctrl = input.control || input.meta;
     const key = input.key;
-    const history = webContents.navigationHistory;
+    const history = webContents.navigationHistory ?? webContents; // Electron 22 has no navigationHistory
 
     let handled = true;
     if (key === 'F5' || (ctrl && key.toLowerCase() === 'r')) {

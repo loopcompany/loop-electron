@@ -7,6 +7,7 @@ import { chrome, elevation, gradients, motion, onDark, palette, radii } from './
 import { NAV_GROUPS, iconForRoute, shellLabels } from './routeMeta';
 import { formatNumber } from './ui';
 import { brandCopy } from './brandCopy';
+import { tip } from './tooltip';
 import { getFontFamily } from '@theme/Typography';
 
 /**
@@ -99,6 +100,7 @@ export default function DesktopSidebar({
       accessibilityRole="link"
       accessibilityLabel={title}
       accessibilityState={{ selected: active }}
+      {...tip(title)}
       style={({ hovered, pressed }) => [
         styles.item,
         row,
@@ -161,7 +163,7 @@ export default function DesktopSidebar({
     >
       {/* Brand + fold button */}
       <View style={[styles.brand, row, collapsed && styles.brandCollapsed]}>
-        <Pressable onPress={onHome} accessibilityRole="link" style={[styles.brandLink, row, !collapsed && styles.brandLinkWide]}>
+        <Pressable onPress={onHome} accessibilityRole="link" {...tip(L.home)} style={[styles.brandLink, row, !collapsed && styles.brandLinkWide]}>
           <View style={styles.brandMark}>
             <Image source={require('@assets/images/start.png')} style={styles.brandLogo} />
           </View>
@@ -179,6 +181,7 @@ export default function DesktopSidebar({
             onPress={onToggleCollapsed}
             accessibilityRole="button"
             accessibilityLabel={L.collapse}
+            {...tip(L.collapse)}
             style={({ hovered }) => [styles.fold, hovered && styles.itemHover]}
           >
             <Ionicons name={rtl ? 'chevron-forward' : 'chevron-back'} size={16} color={onDark.muted} />
@@ -191,6 +194,7 @@ export default function DesktopSidebar({
           onPress={onToggleCollapsed}
           accessibilityRole="button"
           accessibilityLabel={L.expand}
+          {...tip(L.expand)}
           style={({ hovered }) => [styles.unfold, hovered && styles.itemHover]}
         >
           <Ionicons name={rtl ? 'chevron-back' : 'chevron-forward'} size={16} color={onDark.muted} />
@@ -203,6 +207,7 @@ export default function DesktopSidebar({
           onPress={isLoggedIn ? onNewOrder : onSignIn}
           accessibilityRole="button"
           accessibilityLabel={isLoggedIn ? L.newOrder : L.signIn}
+          {...tip(isLoggedIn ? L.newOrder : L.signIn)}
           style={({ hovered, pressed }) => [
             styles.cta,
             row,
@@ -237,6 +242,7 @@ export default function DesktopSidebar({
           <Pressable
             onPress={onProfile}
             accessibilityLabel={L.profile}
+            {...tip(L.profile)}
             style={({ hovered }) => [styles.profile, row, collapsed && styles.profileCollapsed, hovered && styles.profileHover]}
           >
             <View style={styles.avatarRing}>
@@ -275,6 +281,7 @@ export default function DesktopSidebar({
                 disabled={isLoggingOut}
                 accessibilityRole="button"
                 accessibilityLabel={isLoggingOut ? t('Logging out...') : L.logout}
+                {...tip(L.logout)}
                 style={({ hovered }) => [styles.logout, hovered && styles.logoutHover, isLoggingOut && styles.disabled]}
               >
                 <Ionicons name="log-out-outline" size={17} color="rgba(255, 140, 140, 0.9)" />
@@ -291,7 +298,7 @@ export default function DesktopSidebar({
         )}
 
         {isLoggedIn && !!userCode && !collapsed && (
-          <Pressable onPress={copyCode} accessibilityRole="button" style={({ hovered }) => [styles.codeRow, row, hovered && styles.itemHover]}>
+          <Pressable onPress={copyCode} accessibilityRole="button" {...tip(L.userCode)} style={({ hovered }) => [styles.codeRow, row, hovered && styles.itemHover]}>
             <Ionicons name={copied ? 'checkmark-circle' : 'qr-code-outline'} size={14} color={copied ? '#7ee2a8' : chrome.itemText} />
             <Text style={[styles.codeText, light, textAlign]}>{copied ? L.copy : L.userCode}</Text>
             <Text style={[styles.codeValue, bold]} selectable>
@@ -305,6 +312,7 @@ export default function DesktopSidebar({
             onPress={onSupport}
             accessibilityRole="button"
             accessibilityLabel={L.support_}
+            {...tip(L.support_)}
             style={({ hovered }) => [styles.footerButton, row, hovered && styles.itemHover]}
           >
             <Ionicons name="headset-outline" size={16} color={chrome.itemText} />
@@ -314,6 +322,7 @@ export default function DesktopSidebar({
             onPress={onToggleLanguage}
             accessibilityRole="button"
             accessibilityLabel={L.switchLanguage}
+            {...tip(L.switchLanguage)}
             style={({ hovered }) => [styles.footerButton, row, hovered && styles.itemHover]}
           >
             <Ionicons name="language-outline" size={16} color={chrome.itemText} />

@@ -10,50 +10,76 @@ const COPY = {
     tagline: 'خدمات و راهکارهای فناوری، در یک فضای یکپارچه',
     welcome: 'به جوهر آینده (لوپ) خوش آمدید',
     morning: 'صبح بخیر',
-    day: 'روز بخیر',
+    noon: 'ظهر بخیر',
+    evening: 'عصر بخیر',
     night: 'شب بخیر',
   },
   en: {
     tagline: 'Technology services and solutions, in one unified space',
     welcome: 'Welcome to the essence of the future (Loop)',
     morning: 'Good morning',
-    day: 'Good afternoon',
-    night: 'Good evening',
+    noon: 'Good afternoon',
+    evening: 'Good evening',
+    night: 'Good night',
   },
 };
 
 export const brandCopy = (lang) => COPY[lang === 'fa' ? 'fa' : 'en'];
 
-// صبح ۴ تا ۱۲، روز ۱۲ تا ۱۸، شب ۱۸ تا ۴ — by the computer's clock (which
-// Windows keeps in sync with internet time)
-const MORNING = 4;
-const DAY = 12;
-const NIGHT = 18;
+// صبح ۵:۰۰ تا ۱۱:۵۹، ظهر ۱۲:۰۰ تا ۱۴:۵۹، عصر ۱۵:۰۰ تا ۱۸:۵۹، شب ۱۹:۰۰ تا ۴:۵۹
+// Read on Iran's clock, not the computer's time zone: Windows keeps UTC in
+// sync with internet time, but a PC left on the default (US) zone showed
+// «شب بخیر» at 13:52 Tehran time.
+const PERIODS = [
+  [5, 'morning'],
+  [12, 'noon'],
+  [15, 'evening'],
+  [19, 'night'],
+];
+const BOUNDARIES = PERIODS.map(([h]) => h);
+
+/** [hour, minute] on Iran's clock; the computer's own clock if Intl can't. */
+let tehranTime;
+try {
+  const fmt = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Tehran',
+    hour: 'numeric',
+    minute: 'numeric',
+    hourCycle: 'h23',
+  });
+  tehranTime = (date) => {
+    const parts = fmt.formatToParts(date);
+    const get = (type) => Number(parts.find((p) => p.type === type)?.value);
+    return [get('hour') % 24, get('minute')];
+  };
+} catch {
+  tehranTime = (date) => [date.getHours(), date.getMinutes()];
+}
 
 const periodOf = (date) => {
-  const h = date.getHours();
-  if (h >= MORNING && h < DAY) return 'morning';
-  if (h >= DAY && h < NIGHT) return 'day';
-  return 'night';
+  const [h] = tehranTime(date);
+  let period = 'night';
+  for (const [from, name] of PERIODS) if (h >= from) period = name;
+  return period;
 };
 
-/** ms until the greeting next changes */
+/** ms until the greeting next changes (to the next whole hour that is a boundary) */
 const msToNextPeriod = (now) => {
-  const next = new Date(now);
-  const h = now.getHours();
-  const boundary = h < MORNING ? MORNING : h < DAY ? DAY : h < NIGHT ? NIGHT : MORNING + 24;
-  next.setHours(boundary, 0, 5, 0);
-  return next - now;
+  const [h, m] = tehranTime(now);
+  const next = BOUNDARIES.find((b) => b > h) ?? BOUNDARIES[0] + 24;
+  const msIntoHour = (m * 60 + now.getSeconds()) * 1000 + now.getMilliseconds();
+  return (next - h) * 3600000 - msIntoHour + 5000;
 };
 
 export const timeGreeting = (lang, date = new Date()) => brandCopy(lang)[periodOf(date)];
 
-/** Ionicons name for the greeting: sun by day, moon at night. */
-export const greetingIcon = (date = new Date()) => (periodOf(date) === 'night' ? 'moon' : 'sunny');
+/** Ionicons name for the greeting: sun by day, sun-and-cloud in the evening, moon at night. */
+export const greetingIcon = (date = new Date()) =>
+  ({ morning: 'sunny', noon: 'sunny', evening: 'partly-sunny', night: 'moon' })[periodOf(date)];
 
 /**
- * «صبح بخیر» / «روز بخیر» / «شب بخیر» for now; switches by itself when the
- * app stays open across 12:00, 18:00 or 04:00 (one timer, no polling).
+ * «صبح بخیر» / «ظهر بخیر» / «عصر بخیر» / «شب بخیر» for now; switches by itself
+ * when the app stays open across 05:00, 12:00, 15:00 or 19:00 (one timer, no polling).
  */
 export function useTimeGreeting(lang) {
   const [period, setPeriod] = useState(() => periodOf(new Date()));

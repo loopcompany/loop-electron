@@ -2,7 +2,7 @@
  * DESKTOP OVERRIDE of loop-customer-mobile/screens/Welcome.js
  *
  * The greeting shown every time the app opens, full-window on the Loop
- * wallpaper: «صبح بخیر / روز بخیر / شب بخیر» by the computer's clock, «به جوهر
+ * wallpaper: «صبح / ظهر / عصر / شب بخیر» by Iran's clock, «به جوهر
  * آینده (لوپ) خوش آمدید» and the tagline, with a thin line filling up until
  * the entry menu takes over. Same data flow as the mobile file: waits for
  * `auth.isRestored`, then replaces itself with `OrderMenuScreen` after 4 s;

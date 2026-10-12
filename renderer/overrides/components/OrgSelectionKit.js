@@ -30,7 +30,7 @@ import { L } from '@org/orgI18n';
 import i18n from 'i18next';
 
 import { elevation, gradients, motion, palette, radii, surface } from '@desktop/desktopTheme';
-import { DButton, formatNumber } from '@desktop/ui';
+import { DButton, formatNumber, useFitColumns } from '@desktop/ui';
 
 const rtl = () => langIsRTL(i18n.language);
 const dirRow = () => ({ flexDirection: rtl() ? 'row-reverse' : 'row' });
@@ -196,6 +196,11 @@ export const RadioList = ({ options, value, onChange }) => (
   </View>
 );
 
+// کمترین پهنای هر گزینه / کاشی؛ اگر جا کم باشد تعداد ستون‌ها کم می‌شود تا متن‌ها
+// روی هم نیفتند (پنجره‌ی کوچک یا منوی باز).
+const OPTION_MIN_WIDTH = 170;
+const TILE_MIN_WIDTH = 120;
+
 // گزینه‌های قابل انتخاب: کارت با تیک، تک یا چندانتخابی، با حالت قفل.
 export const SelectableOptions = ({ options, value, onChange, multi = false, columns = 2, disabled = false }) => {
   const isSelected = (id) => (multi ? Array.isArray(value) && value.includes(id) : value === id);
@@ -210,10 +215,10 @@ export const SelectableOptions = ({ options, value, onChange, multi = false, col
   };
 
   const gap = 10;
-  const itemWidth = columns === 1 ? '100%' : `calc(${100 / columns}% - ${(gap * (columns - 1)) / columns}px)`;
+  const { width: itemWidth, onLayout } = useFitColumns(columns, OPTION_MIN_WIDTH, gap);
 
   return (
-    <View style={[k.optionGrid, dirRow(), { gap }]}>
+    <View style={[k.optionGrid, dirRow(), { gap }]} onLayout={onLayout}>
       {options.map((opt) => {
         const selected = isSelected(opt.id);
         const locked = disabled || opt.disabled;
@@ -525,9 +530,9 @@ export const SummaryBox = ({ title, lines }) => {
 
 export const BrandGrid = ({ brands, value, onChange, columns = 3 }) => {
   const gap = 12;
-  const width = `calc(${100 / columns}% - ${(gap * (columns - 1)) / columns}px)`;
+  const { width, onLayout } = useFitColumns(columns, TILE_MIN_WIDTH, gap);
   return (
-    <View style={[k.optionGrid, dirRow(), { gap }]}>
+    <View style={[k.optionGrid, dirRow(), { gap }]} onLayout={onLayout}>
       {brands.map((brand) => {
         const selected = value === brand.id;
         return (
@@ -562,9 +567,9 @@ export const BrandGrid = ({ brands, value, onChange, columns = 3 }) => {
 
 export const IconOptionGrid = ({ options, value, onChange, columns = 3, imageSize = 72 }) => {
   const gap = 12;
-  const width = `calc(${100 / columns}% - ${(gap * (columns - 1)) / columns}px)`;
+  const { width, onLayout } = useFitColumns(columns, TILE_MIN_WIDTH, gap);
   return (
-    <View style={[k.optionGrid, dirRow(), { gap }]}>
+    <View style={[k.optionGrid, dirRow(), { gap }]} onLayout={onLayout}>
       {options.map((opt) => {
         const selected = value === opt.id;
         return (
@@ -748,9 +753,10 @@ const k = StyleSheet.create({
   tileTitleActive: { color: surface.brandText },
   bigCard: { padding: 14, gap: 10 },
   bigCardTop: { alignItems: 'center', gap: 14 },
-  procurementCounters: { gap: 10 },
+  procurementCounters: { gap: 10, flexWrap: 'wrap' },
   labeled: {
     flex: 1,
+    minWidth: 150,
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 8,

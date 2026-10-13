@@ -4,6 +4,7 @@ import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { BrandStory } from './EntryLayout';
 import { motion, onDark } from './desktopTheme';
 import { Cheetah, cheetahFacing } from './ui';
+import { SITE_LABEL, SITE_URL, openLink } from './links';
 import { getFontFamily } from '@theme/Typography';
 
 const BAR_COPY = {
@@ -69,7 +70,10 @@ export default function DesktopAuthPanel({ lang, compact }) {
     <View style={[styles.panel, compact && styles.panelCompact]}>
       <BrandStory style={styles.story} compact={compact} />
       <Text style={[styles.footer, { fontFamily: getFontFamily('light', lang) }]}>
-        www.clpiran.com{version ? `  ·  v${version}` : ''}
+        <Text accessibilityRole="link" onPress={() => openLink(SITE_URL)} style={styles.siteLink}>
+          {SITE_LABEL}
+        </Text>
+        {version ? `  ·  v${version}` : ''}
       </Text>
     </View>
   );
@@ -125,6 +129,7 @@ const styles = StyleSheet.create({
   langText: { color: onDark.soft, fontSize: 12.5 },
   mark: { width: 36, height: 36, borderRadius: 11, boxShadow: '0 0 18px rgba(255, 215, 0, 0.25)' },
   story: { alignSelf: 'center', width: '100%' },
+  siteLink: { cursor: 'pointer', textDecorationLine: 'underline', textDecorationColor: 'rgba(255, 255, 255, 0.25)' },
   footer: {
     position: 'absolute',
     bottom: 18,

@@ -27,7 +27,7 @@ win:
 # A short, branded setup: Welcome (Loop sidebar) → install folder → progress → Finish
 # (with "Run Loop"). build/installer.nsh skips the per-user / per-machine page.
 # Artwork: build/icon.ico (16–256 px, rounded navy icon), installerSidebar.bmp 164×314,
-# installerHeader.bmp 150×57 — made from the mobile app icon and the desktop wallpaper.
+# installerHeader.bmp 150×57 — the app icon, a Latin "Loop" wordmark and the desktop wallpaper's planet.
 nsis:
   artifactName: Loop-Setup-${version}.${ext}
   oneClick: false

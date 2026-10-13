@@ -10,6 +10,7 @@ import { selectWalletBalance } from '@slices/walletSlice';
 
 import { elevation, gradients, motion, onDark, palette, radii, surface } from './desktopTheme';
 import { animate } from './globalStyles';
+import HelpButton from './HelpButton';
 import { orderStatusMeta } from './orderStatus';
 import { Card, DButton, IconTile, Pill, SectionHeader, Skeleton, formatNumber, useDir } from './ui';
 import { contentGutter, contentMaxWidth } from './Breakpoints';
@@ -46,6 +47,37 @@ const COPY = {
     openOrders: (n) => `${n} سفارش جاری`,
     quick: 'دسترسی سریع',
     quickHint: 'بقیه‌ی امکانات از ستون کناری و جستجو (Ctrl+K) هم در دسترس است',
+    help: {
+      service: {
+        title: 'راهنمای ثبت سفارش خدمات',
+        text: 'برای تعمیر، نصب، عیب‌یابی یا پشتیبانی دستگاه‌ها از اینجا شروع کنید.',
+        points: [
+          'روش ثبت سفارش و سپس دستگاه موردنظر را انتخاب کنید.',
+          'مرحله‌به‌مرحله مشخصات دستگاه، ایرادها و خدمات لازم را وارد کنید.',
+          'زمان مراجعه و آدرس را مشخص کنید.',
+          'پیش‌رسید (برآورد هزینه) را ببینید و سفارش را ثبت کنید.',
+        ],
+      },
+      supply: {
+        title: 'راهنمای تامین کالا / محصول',
+        text: 'برای خرید قطعات، کالا و تجهیزات؛ مثل پرینتر، لوازم جانبی یا قطعات یدکی.',
+        points: [
+          'دسته‌بندی کالا را انتخاب کنید.',
+          'تعداد آکبند یا کارکرده‌ی هر مورد و توضیحات لازم را بنویسید.',
+          'زمان و آدرس تحویل را مشخص کنید.',
+          'کارشناسان لوپ قیمت را استعلام و به شما اعلام می‌کنند.',
+        ],
+      },
+      orders: {
+        title: 'راهنمای سفارشات',
+        text: 'همه‌ی سفارش‌های شما در یک جا.',
+        points: [
+          'وضعیت هر سفارش (در انتظار، در حال انجام، انجام‌شده) را ببینید.',
+          'جزئیات، پیش‌رسید و رسید هر سفارش را باز کنید و پرداخت را انجام دهید.',
+          'سفارش‌های نیمه‌کاره (پیش‌نویس‌ها) را از همین‌جا ادامه دهید.',
+        ],
+      },
+    },
   },
   en: {
     hello: (name) => (name ? `Welcome back, ${name}` : 'Welcome to Loop'),
@@ -71,6 +103,37 @@ const COPY = {
     openOrders: (n) => `${n} open`,
     quick: 'Quick access',
     quickHint: 'Everything else is in the sidebar and in search (Ctrl+K)',
+    help: {
+      service: {
+        title: 'About ordering a service',
+        text: 'Start here for repairs, installation, troubleshooting or support for your devices.',
+        points: [
+          'Pick how to order, then the device.',
+          'Enter the device details, its problems and the services it needs, step by step.',
+          'Set the visit time and the address.',
+          'See the pre-invoice (cost estimate) and place the order.',
+        ],
+      },
+      supply: {
+        title: 'About goods / product supply',
+        text: 'Buy parts, goods and equipment — a printer, accessories or spare parts.',
+        points: [
+          'Pick the goods category.',
+          'Enter how many new or used of each you need, with any notes.',
+          'Set the delivery time and address.',
+          'Loop’s experts check prices and get back to you.',
+        ],
+      },
+      orders: {
+        title: 'About orders',
+        text: 'All your orders in one place.',
+        points: [
+          'See where each order stands (pending, in progress, done).',
+          'Open each order’s details, pre-invoice and receipt, and pay.',
+          'Pick up unfinished orders (drafts) right here.',
+        ],
+      },
+    },
   },
 };
 
@@ -180,7 +243,10 @@ export function HomeActions({ onService, onSupply, onOrders, orders, serviceOpen
                 <View style={[styles.actionIcon, (hovered || action.active) && styles.actionIconHover]}>
                   <Ionicons name={action.icon} size={30} color={palette.gold} />
                 </View>
-                {!!action.badge && <Pill label={action.badge} kind="gold" size="sm" dot />}
+                <View style={[styles.actionTags, dir.row]}>
+                  {!!action.badge && <Pill label={action.badge} kind="gold" size="sm" dot />}
+                  <HelpButton help={copy.help[action.key]} />
+                </View>
               </View>
               <Text style={[styles.actionTitle, dir.bold, dir.align]}>{action.title}</Text>
               <Text style={[styles.actionText, dir.light, dir.align]}>{action.text}</Text>
@@ -412,6 +478,7 @@ const styles = StyleSheet.create({
   actionPressed: { transform: 'scale(0.99)' },
   actionStars: { ...StyleSheet.absoluteFillObject, backgroundImage: gradients.stars },
   actionTop: { alignItems: 'flex-start', justifyContent: 'space-between' },
+  actionTags: { alignItems: 'center', gap: 8 },
   actionIcon: {
     width: 64,
     height: 64,

@@ -33,7 +33,10 @@ import { palette, radii, tone } from '@desktop/desktopTheme';
 
 const COPY = {
   fa: {
-    subtitle: 'اگر خدمت یا کالایی که دریافت کرده‌اید ایراد دارد، سفارش را انتخاب کنید و مشکل را شرح دهید؛ کارشناسان لوپ پیگیری می‌کنند.',
+    title: 'گزارش ایرادات سفارش / محصول',
+    subtitle: 'لطفاً ایراد یا مغایرت مشاهده‌شده در سفارش یا محصول را شرح دهید تا موضوع بررسی و پیگیری شود.',
+    submitted: 'گزارش ایرادات سفارش / محصول با موفقیت ثبت شد',
+    submitError: 'خطا در ثبت گزارش ایرادات سفارش / محصول',
     find: 'انتخاب سفارش',
     findHint: 'شماره‌ی سفارش را جستجو کنید یا از فهرست سفارش‌هایتان انتخاب کنید',
     selected: (id) => `سفارش #${id} انتخاب شد — اطلاعاتش در بخش بعد پر شده است.`,
@@ -51,7 +54,10 @@ const COPY = {
     guarantee: 'تحت ضمانت لوپ',
   },
   en: {
-    subtitle: 'If a service or product you received has a problem, pick the order and describe it — Loop’s experts will follow up.',
+    title: 'Order / Product Issue Report',
+    subtitle: 'Please describe the issue or discrepancy you noticed in the order or product so it can be reviewed and followed up.',
+    submitted: 'Your order / product issue report was submitted',
+    submitError: 'Could not submit the order / product issue report',
     find: 'Find the order',
     findHint: 'Search the order number or pick it from your orders',
     selected: (id) => `Order #${id} selected — its details are filled in below.`,
@@ -173,7 +179,7 @@ export default function ProductIssueScreen({ navigation }) {
       const response = await faultReportAPI.create(payload);
 
       if (response.success) {
-        showToastOrAlert(response.message || t('Fault report successfully submitted'));
+        showToastOrAlert(response.message || copy.submitted);
 
         // Reset form
         setForm({
@@ -196,7 +202,7 @@ export default function ProductIssueScreen({ navigation }) {
       // Detailed error handling: surface server message, validation errors or fallback to generic
       console.error('Error submitting fault report:', error);
       const resp = error.response?.data;
-      let errorMessage = t('Error submitting fault report');
+      let errorMessage = copy.submitError;
 
       if (resp) {
         // Prefer the server message
@@ -236,11 +242,11 @@ export default function ProductIssueScreen({ navigation }) {
 
   return (
     <View style={styles.screen}>
-      <ScreenHeaders title={t('Service / Product Fault')} />
+      <ScreenHeaders title={copy.title} />
       <FormPage
         hero={{
           icon: 'construct-outline',
-          title: t('Service / Product Fault'),
+          title: copy.title,
           subtitle: copy.subtitle,
           badges: [{ icon: 'shield-checkmark-outline', label: copy.guarantee }],
         }}

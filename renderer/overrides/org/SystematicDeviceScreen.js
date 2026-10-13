@@ -93,15 +93,15 @@ const isStepFilled = (step, value) => {
       return hasSelection || hasExtra || hasPhotos || hasNote;
     }
     case 'checklist':
-      return Boolean(value?.selected?.length);
+      return Boolean(value?.selected?.length || (value?.note || '').trim());
     case 'note':
       return Boolean((value?.note || '').trim());
     case 'photo':
       return Boolean(value?.photos?.length || (value?.note || '').trim());
     case 'procurement':
-      return Object.values(value || {}).some((entry) => entry.new > 0 || entry.used > 0);
+      return Object.values(value || {}).some((entry) => entry.new > 0 || entry.used > 0 || (entry.desc || '').trim());
     case 'hardwareCounters':
-      return Object.values(value || {}).some((entry) => entry.count > 0);
+      return Object.values(value || {}).some((entry) => entry.count > 0 || (entry.desc || '').trim());
     case 'schedule':
       return Boolean(value?.date && value?.slot);
     case 'technician':
@@ -163,13 +163,12 @@ const SystematicDeviceScreen = ({ navigation, route }) => {
           break;
         case 'options': {
           const hasSelection = step.multi ? Boolean(value.selected?.length) : Boolean(value.selected);
+          // دسکتاپ: چندانتخابی‌ها با نام گزینه‌ها (هر کدام یک خط، برای توضیحات
+          // سفارش و تطبیق نرخ)، نه با تعدادشان.
           if (hasSelection) {
-            lines.push({
-              label: L(step.title),
-              value: step.multi
-                ? value.selected.length
-                : titleOf(LO(step.options), value.selected),
-            });
+            (step.multi ? value.selected : [value.selected]).forEach((id) =>
+              lines.push({ label: L(step.title), value: titleOf(LO(step.options), id) })
+            );
           }
           if (step.extra && value[step.extra.id]) {
             lines.push({ label: L(step.extra.title), value: titleOf(LO(step.extra.options), value[step.extra.id]) });
@@ -183,7 +182,12 @@ const SystematicDeviceScreen = ({ navigation, route }) => {
           break;
         }
         case 'checklist':
-          lines.push({ label: L(step.title), value: value.selected.length });
+          (value.selected || []).forEach((id) =>
+            lines.push({ label: L(step.title), value: titleOf(LO(step.options), id) })
+          );
+          if ((value.note || '').trim()) {
+            lines.push({ label: `${L(step.title)} - ${L('توضیحات')}`, value: value.note.trim() });
+          }
           break;
         case 'note':
           lines.push({ label: L(step.title), value: value.note });
@@ -200,11 +204,18 @@ const SystematicDeviceScreen = ({ navigation, route }) => {
           Object.entries(value).forEach(([itemId, entry]) => {
             if (entry.new > 0) lines.push({ label: `${titleOf(LO(PROCUREMENT_ITEMS), itemId)} / ${L('آکبند')}`, value: entry.new });
             if (entry.used > 0) lines.push({ label: `${titleOf(LO(PROCUREMENT_ITEMS), itemId)} / ${L('کارکرده')}`, value: entry.used });
+            // دسکتاپ: توضیح هر قلم (مثلاً «ماوس» زیر «لوازم جانبی») هم در خلاصه می‌آید
+            if ((entry.desc || '').trim()) {
+              lines.push({ label: `${titleOf(LO(PROCUREMENT_ITEMS), itemId)} - ${L('توضیحات')}`, value: entry.desc.trim() });
+            }
           });
           break;
         case 'hardwareCounters':
           Object.entries(value).forEach(([itemId, entry]) => {
             if (entry.count > 0) lines.push({ label: titleOf(LO(HARDWARE_ITEMS), itemId), value: entry.count });
+            if ((entry.desc || '').trim()) {
+              lines.push({ label: `${titleOf(LO(HARDWARE_ITEMS), itemId)} - ${L('توضیحات')}`, value: entry.desc.trim() });
+            }
           });
           break;
         case 'technician':

@@ -3,7 +3,8 @@
  *
  * The splash logo motion, played WITH sound on desktop (the mobile file mutes
  * it on web because browsers block unmuted autoplay; the Electron window
- * allows it — `autoplayPolicy` in electron/main.js). The background music is
+ * allows it — `autoplayPolicy` in electron/main.js) — silent from the start
+ * when the user switched the music off. The background music is
  * held while the logo motion plays so the two never overlap, and starts once
  * the splash is gone. Same data flow as the mobile file: the same requests,
  * auth check, timeouts and navigation.
@@ -33,7 +34,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useEvent } from 'expo';
 import { getSmsHash } from '@screens/auth/OtpRetriever';
 import { setHashApp } from '@slices/hashAppSlice';
-import { holdBackgroundMusic } from '@desktop/backgroundMusic';
+import { holdBackgroundMusic, isBackgroundMusicOn } from '@desktop/backgroundMusic';
 
 // اگر ویدیوی اسپلش اصلاً شروع به پخش نکند (کدک، شبکه، autoplay) کاربر برای
 // همیشه روی صفحه‌ی سیاه می‌ماند. این سقف فقط تا «شروع پخش» است.
@@ -64,8 +65,9 @@ export default function Landing({ navigation }) {
   const playbackArmedRef = React.useRef(false);
   const player = useVideoPlayer(require('@assets/video/InShot_20260626_171217014.mp4'), player => {
     console.log("player ready");
-    // desktop: the logo motion plays with its sound (not muted like mobile web)
-    player.muted = false;
+    // desktop: the logo motion plays with its sound (not muted like mobile web),
+    // unless the user switched the music off — then it starts silent too
+    player.muted = !isBackgroundMusicOn();
     player.play();
   });
 

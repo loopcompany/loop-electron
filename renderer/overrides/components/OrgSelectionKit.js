@@ -31,6 +31,7 @@ import i18n from 'i18next';
 
 import { elevation, gradients, motion, palette, radii, surface } from '@desktop/desktopTheme';
 import { DButton, formatNumber, useFitColumns } from '@desktop/ui';
+import { groupSummaryLines } from '@desktop/WizardLayout';
 
 const rtl = () => langIsRTL(i18n.language);
 const dirRow = () => ({ flexDirection: rtl() ? 'row-reverse' : 'row' });
@@ -515,10 +516,10 @@ export const SummaryBox = ({ title, lines }) => {
         <Text style={[k.summaryTitle, bold(), align()]}>{title}</Text>
       </View>
       <View style={[k.summaryGrid, dirRow()]}>
-        {lines.map((line, idx) => (
+        {groupSummaryLines(lines, i18n.language !== 'en').map((line, idx) => (
           <View key={idx} style={[k.summaryLine, dirRow()]}>
             <Text style={[k.summaryLabel, light(), align()]} numberOfLines={2}>{line.label}</Text>
-            <Text style={[k.summaryValue, bold()]} numberOfLines={2}>
+            <Text style={[k.summaryValue, bold()]} numberOfLines={3}>
               {typeof line.value === 'number' ? num(line.value) : line.value}
             </Text>
           </View>
@@ -851,7 +852,7 @@ const k = StyleSheet.create({
     borderBottomColor: 'rgba(255,255,255,0.08)',
   },
   summaryLabel: { flex: 1, fontSize: 12.5, color: 'rgba(226, 234, 247, 0.78)' },
-  summaryValue: { fontSize: 13, color: palette.gold },
+  summaryValue: { flexShrink: 1, maxWidth: '60%', fontSize: 13, color: palette.gold },
 
   brand: {
     alignItems: 'center',

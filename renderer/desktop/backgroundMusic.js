@@ -120,6 +120,11 @@ export function holdBackgroundMusic() {
   };
 }
 
+/** `true` while the music is switched on (read once, e.g. by the splash). */
+export function isBackgroundMusicOn() {
+  return enabled;
+}
+
 const subscribe = (listener) => {
   listeners.add(listener);
   return () => listeners.delete(listener);

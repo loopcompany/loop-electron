@@ -39,6 +39,27 @@ const COPY = {
 };
 
 /**
+ * Summary lines come one per chosen item (the order description and the
+ * price matching need them that way); on screen, consecutive lines with the
+ * same label are shown as one row listing all the values.
+ *
+ * @param {Array<{label: string, value: any}>} lines
+ * @param {boolean} rtl
+ */
+export function groupSummaryLines(lines, rtl) {
+  const sep = rtl ? '، ' : ', ';
+  return lines.reduce((rows, line) => {
+    const last = rows[rows.length - 1];
+    if (last && last.label === line.label && typeof line.value === 'string' && typeof last.value === 'string') {
+      rows[rows.length - 1] = { ...last, value: `${last.value}${sep}${line.value}` };
+    } else {
+      rows.push(line);
+    }
+    return rows;
+  }, []);
+}
+
+/**
  * The desktop frame for the step-by-step order flows (systematic,
  * comprehensive): the steps as a vertical stepper, the current step in a
  * large card with Previous / Next, and a live summary of the choices so far.
@@ -92,10 +113,10 @@ export default function WizardLayout({ title, subtitle, image, steps, currentId,
     summary.lines.length === 0 ? (
       <Text style={[styles.summaryEmpty, light && styles.onLight, dir.light]}>{copy.summaryEmpty}</Text>
     ) : (
-      summary.lines.map((line, i) => (
+      groupSummaryLines(summary.lines, dir.rtl).map((line, i) => (
         <View key={i} style={[styles.summaryLine, light && styles.summaryLineLight, dir.row]}>
           <Text style={[styles.summaryLabel, light && styles.summaryLabelLight, dir.light, dir.align]}>{line.label}</Text>
-          <Text style={[styles.summaryValue, light && styles.summaryValueLight, dir.bold, { textAlign: dir.rtl ? 'left' : 'right' }]} numberOfLines={2}>
+          <Text style={[styles.summaryValue, light && styles.summaryValueLight, dir.bold, { textAlign: dir.rtl ? 'left' : 'right' }]} numberOfLines={4}>
             {typeof line.value === 'number' ? n(line.value) : String(line.value ?? '')}
           </Text>
         </View>

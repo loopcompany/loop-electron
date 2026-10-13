@@ -31,6 +31,7 @@ import { CUSTOMER_HOME_ROUTE } from '@navigation/homeRoute';
 import { Card, Pill, SectionHeader, useDir } from '@desktop/ui';
 import { elevation, gradients, motion, onDark, palette, radii, surface } from '@desktop/desktopTheme';
 import { animate } from '@desktop/globalStyles';
+import HelpButton from '@desktop/HelpButton';
 import { brandCopy, useTimeGreeting } from '@desktop/brandCopy';
 import {
   AccountStats,
@@ -70,6 +71,28 @@ const COPY = {
     chooseHint: 'یکی از دو مسیر زیر را انتخاب کنید',
     start: 'شروع',
     badges: { comprehensive: 'همه‌ی خدمات در یک فرم', systematic: 'دستگاه‌به‌دستگاه' },
+    help: {
+      comprehensive: {
+        title: 'راهنمای انتخاب جامع',
+        text: 'همه‌ی نیازهای سازمان را یکجا و در یک فرم ثبت کنید؛ مناسب وقتی که چند نوع خدمت یا چند دستگاه را با هم لازم دارید.',
+        points: [
+          'خدمات نرم‌افزاری (نصب سیستم‌عامل و نرم‌افزار)، خدمات سخت‌افزاری و تامین کالا را با تعداد هر مورد وارد کنید.',
+          'شیوه‌ی ارائه‌ی خدمت، وضعیت تجهیزات و سطح خدمات را مشخص کنید.',
+          'زمان مراجعه، آدرس و مشخصات رابط سازمان را وارد کنید.',
+          'پیش‌رسید بگیرید یا سفارش را ثبت کنید؛ کارشناسان لوپ پیگیری می‌کنند.',
+        ],
+      },
+      systematic: {
+        title: 'راهنمای انتخاب سیستماتیک',
+        text: 'سفارش را برای یک نوع دستگاه، مرحله‌به‌مرحله ثبت کنید؛ مناسب وقتی که می‌دانید مشکل یا نیاز مربوط به کدام دستگاه است.',
+        points: [
+          'نوع دستگاه را انتخاب کنید (کیس، لپ‌تاپ، پرینتر و ...).',
+          'برند، مدل، ایرادها و خدمات موردنیاز همان دستگاه را در هر مرحله مشخص کنید.',
+          'خلاصه‌ی انتخاب‌ها همیشه کنار فرم دیده می‌شود و پیش‌نویس خودکار ذخیره می‌شود.',
+          'در مرحله‌ی آخر پیش‌رسید بگیرید یا سفارش را ثبت کنید.',
+        ],
+      },
+    },
     profile: 'پروفایل سازمان',
     profileHint: 'اطلاعات، اعضا و آدرس‌ها',
     support: 'پشتیبانی لوپ',
@@ -84,6 +107,28 @@ const COPY = {
     chooseHint: 'Pick one of the two ways below',
     start: 'Start',
     badges: { comprehensive: 'Every service in one form', systematic: 'Device by device' },
+    help: {
+      comprehensive: {
+        title: 'About the comprehensive order',
+        text: 'Order everything your organisation needs in one form — best when you need several services or devices at once.',
+        points: [
+          'Enter software services (OS and software installs), hardware services and goods supply, with a count for each.',
+          'Choose how the service is delivered, the equipment status and the service level.',
+          'Set the visit time, the address and your organisation’s contact person.',
+          'Get a pre-invoice or place the order; Loop’s experts follow up.',
+        ],
+      },
+      systematic: {
+        title: 'About the systematic order',
+        text: 'Order for one kind of device, step by step — best when you know which device the problem or need is about.',
+        points: [
+          'Pick the device type (case, laptop, printer, ...).',
+          'Set the brand, model, problems and services for that device, one step at a time.',
+          'Your choices are summed up beside the form, and the draft saves itself.',
+          'At the last step, get a pre-invoice or place the order.',
+        ],
+      },
+    },
     profile: 'Organisation profile',
     profileHint: 'Details, members and addresses',
     support: 'Loop support',
@@ -163,7 +208,10 @@ const List = ({ navigation }) => {
                           <View style={[styles.optionImageWrap, hovered && styles.optionImageHover]}>
                             <Image source={item.image} style={styles.optionImage} />
                           </View>
-                          <Pill label={copy.badges[item.id]} kind="gold" size="sm" />
+                          <View style={[styles.optionTags, dir.row]}>
+                            <Pill label={copy.badges[item.id]} kind="gold" size="sm" />
+                            <HelpButton help={copy.help[item.id]} />
+                          </View>
                         </View>
                         <Text style={[styles.optionTitle, dir.bold, dir.align]}>{L(item.title)}</Text>
                         <Text style={[styles.optionText, dir.light, dir.align]}>{L(item.hint)}</Text>
@@ -222,6 +270,7 @@ const styles = StyleSheet.create({
   optionPressed: { transform: 'scale(0.99)' },
   optionStars: { ...StyleSheet.absoluteFillObject, backgroundImage: gradients.stars },
   optionTop: { alignItems: 'flex-start', justifyContent: 'space-between' },
+  optionTags: { alignItems: 'center', gap: 8 },
   optionImageWrap: {
     width: 84,
     height: 84,

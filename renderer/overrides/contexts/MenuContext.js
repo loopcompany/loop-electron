@@ -526,7 +526,7 @@ export const MenuProvider = ({ children }) => {
             { id: 9, title: t("Selected Addresses"), screen: "AddressScreen", image: `${imageUri}/userfolder/AddressScreen.png` },
             { id: 10, title: t("Training Course Registration"), screen: "TrainingRegistrationScreen", image: `${imageUri}/userfolder/TrainingRegistrationScreen.png` },
             { id: 23, title: t("Promotional codes"), screen: "UserDiscounts", apple_check: userData?.apple_check, image: `${imageUri}/userfolder/Club.png` },
-            { id: 13, title: t("Service / Product Faults"), screen: "ProductIssueScreen", apple_check: userData?.apple_check, image: `${imageUri}/userfolder/ProductIssueScreen.png` },
+            { id: 13, title: i18n.language === 'en' ? 'Order / Product Issue Report' : 'گزارش ایرادات سفارش / محصول', screen: "ProductIssueScreen", apple_check: userData?.apple_check, image: `${imageUri}/userfolder/ProductIssueScreen.png` },
             { id: 14, title: t("Rate List"), screen: "RateCategory", apple_check: userData?.apple_check, image: `${imageUri}/userfolder/RateCategory.png` },
             { id: 15, title: t("Report/Track Violation"), screen: "ViolationReportScreen", apple_check: userData?.apple_check, image: `${imageUri}/userfolder/ViolationReportScreen.png` },
             // id 16 «نظرسنجی / عملکرد» (FeedbackSurveyScreen) is left out on the desktop: the
@@ -805,7 +805,7 @@ export const MenuProvider = ({ children }) => {
             <SafeAreaView edges={{ top: 'off', bottom: 'additive' }} style={{ flex: 1 }}>
                 {hasCustomTitleBar() && (
                     <DesktopTitleBar
-                        appName={i18n.language === 'fa' ? 'لوپ' : 'Loop'}
+                        appName="Loop"
                         pageTitle={topBarTitle}
                         lang={i18n.language}
                     />

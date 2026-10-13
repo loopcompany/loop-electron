@@ -369,6 +369,11 @@ const ComprehensiveSelectionScreen = ({ navigation, route }) => {
     return null;
   };
 
+  // دسکتاپ: توضیحی که کاربر زیر هر قلم نوشته (مثلاً «ماوس» زیر «لوازم جانبی»)
+  // هم در خلاصه و توضیحات سفارش می‌آید.
+  const descLine = (item, entry) =>
+    (entry?.desc || '').trim() ? [{ label: `${L(item.title)} - ${L('توضیحات')}`, value: entry.desc.trim() }] : [];
+
   const softwareSummaryLines = useMemo(() => {
     const lines = [];
     // تعداد لپ‌تاپ/کیسِ «نصب سیستم عامل» هم باید در خلاصه بیاید - قبلاً فقط
@@ -389,14 +394,16 @@ const ComprehensiveSelectionScreen = ({ navigation, route }) => {
     SOFTWARE_ITEMS.forEach((item) => {
       const entry = softwareItems[item.id];
       if (entry?.count > 0) lines.push({ label: L(item.title), value: entry.count });
+      lines.push(...descLine(item, entry));
     });
     return lines;
   }, [deviceCounts, osCounts, softwareDeviceCounts, softwareItems]);
 
   const hardwareSummaryLines = useMemo(() => {
-    return HARDWARE_ITEMS
-      .filter((item) => hardwareItems[item.id]?.count > 0)
-      .map((item) => ({ label: L(item.title), value: hardwareItems[item.id].count }));
+    return HARDWARE_ITEMS.flatMap((item) => [
+      ...(hardwareItems[item.id]?.count > 0 ? [{ label: L(item.title), value: hardwareItems[item.id].count }] : []),
+      ...descLine(item, hardwareItems[item.id]),
+    ]);
   }, [hardwareItems]);
 
   const procurementSummaryLines = useMemo(() => {
@@ -405,6 +412,7 @@ const ComprehensiveSelectionScreen = ({ navigation, route }) => {
       const entry = procurementItems[item.id];
       if (entry?.new > 0) lines.push({ label: `${L(item.title)} / ${L('آکبند')}`, value: entry.new });
       if (entry?.used > 0) lines.push({ label: `${L(item.title)} / ${L('کارکرده')}`, value: entry.used });
+      lines.push(...descLine(item, entry));
     });
     return lines;
   }, [procurementItems]);

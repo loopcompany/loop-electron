@@ -14,6 +14,7 @@
  * user's first message is followed by an automatic «sent, we'll review it»
  * reply (both drawn here, not stored on the server). The support card shows
  * the support phone number itself (click copies it) instead of a Call button.
+ * The composer has an emoji picker (@desktop/EmojiPicker) that inserts at the caret.
  *
  * When the mobile file changes, `npm run check:overrides` fails: port the
  * change here, then run `npm run overrides:accept`.
@@ -39,6 +40,7 @@ import { elevation, gradients, motion, onDark, palette, radii, surface } from '@
 import { animate, loop } from '@desktop/globalStyles';
 import { contentGutter, contentMaxWidth } from '@desktop/Breakpoints';
 import { tip as hoverTip } from '@desktop/tooltip';
+import EmojiPicker from '@desktop/EmojiPicker';
 
 const MAX_LENGTH = 5000;
 
@@ -49,8 +51,8 @@ const COPY = {
   fa: {
     thread: 'گفتگو با پشتیبانی',
     threadHint: 'پیام‌های شما و پاسخ‌های تیم لوپ',
-    team: 'تیم پشتیبانی لوپ',
-    teamHint: 'معمولاً در ساعات کاری کمتر از یک ساعت پاسخ می‌دهیم.',
+    team: 'ارتباط با پشتیبانی',
+    teamHint: 'برای دریافت راهنمایی، با تیم پشتیبانی لوپ تماس بگیرید.',
     unread: (n) => `${n} پیام خوانده‌نشده`,
     total: (n) => `${n} پیام`,
     shortcut: 'Ctrl + Enter برای ارسال',
@@ -65,8 +67,8 @@ const COPY = {
   en: {
     thread: 'Conversation with support',
     threadHint: 'Your messages and the Loop team’s replies',
-    team: 'Loop support team',
-    teamHint: 'We usually reply within an hour during business hours.',
+    team: 'Contact support',
+    teamHint: 'For guidance, call the Loop support team.',
     unread: (n) => `${n} unread`,
     total: (n) => `${n} messages`,
     shortcut: 'Ctrl + Enter to send',
@@ -118,6 +120,23 @@ export default function MessageScreen() {
   const [focused, setFocused] = useState(false);
   const [phoneCopied, setPhoneCopied] = useState(false);
   const threadRef = useRef(null);
+  const inputRef = useRef(null);
+  // last caret / selection in the composer, so an emoji lands where the user was typing
+  const selectionRef = useRef(null);
+
+  const insertEmoji = (emoji) => {
+    const length = messageText.length;
+    const sel = selectionRef.current || { start: length, end: length };
+    const start = Math.min(sel.start, length);
+    const end = Math.min(sel.end, length);
+    const caret = start + emoji.length;
+    setMessageText(messageText.slice(0, start) + emoji + messageText.slice(end));
+    selectionRef.current = { start: caret, end: caret };
+    requestAnimationFrame(() => {
+      inputRef.current?.focus?.();
+      inputRef.current?.setSelectionRange?.(caret, caret);
+    });
+  };
 
   const copyPhone = () => {
     try {
@@ -275,6 +294,7 @@ export default function MessageScreen() {
           <View style={styles.composer}>
             <View style={[styles.inputWrap, focused && styles.inputWrapFocused, over && styles.inputWrapError]}>
               <TextInput
+                ref={inputRef}
                 style={[styles.input, dir.light, dir.align]}
                 multiline
                 numberOfLines={3}
@@ -282,6 +302,9 @@ export default function MessageScreen() {
                 placeholderTextColor={surface.faint}
                 value={messageText}
                 onChangeText={setMessageText}
+                onSelectionChange={(e) => {
+                  selectionRef.current = e.nativeEvent.selection;
+                }}
                 onKeyPress={onKeyPress}
                 onFocus={() => setFocused(true)}
                 onBlur={() => setFocused(false)}
@@ -289,11 +312,14 @@ export default function MessageScreen() {
                 editable={!sending}
               />
               <View style={[styles.composerBar, dir.row]}>
-                <Text style={[styles.counter, dir.light, over && styles.counterOver]}>
-                  {formatNumber(messageText.length, dir.lang)} / {formatNumber(MAX_LENGTH, dir.lang)}
-                  {'   ·   '}
-                  {copy.shortcut}
-                </Text>
+                <View style={[styles.composerTools, dir.row]}>
+                  <EmojiPicker onPick={insertEmoji} disabled={sending} />
+                  <Text style={[styles.counter, dir.light, over && styles.counterOver]}>
+                    {formatNumber(messageText.length, dir.lang)} / {formatNumber(MAX_LENGTH, dir.lang)}
+                    {'   ·   '}
+                    {copy.shortcut}
+                  </Text>
+                </View>
                 <DButton
                   title={t('Send message to Loop')}
                   icon={dir.rtl ? 'send' : 'send'}
@@ -452,6 +478,7 @@ const styles = StyleSheet.create({
     outlineStyle: 'none',
   },
   composerBar: { alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: 8, paddingHorizontal: 12 },
+  composerTools: { alignItems: 'center', gap: 8 },
   counter: { fontSize: 11.5, color: surface.faint },
   counterOver: { color: palette.danger },
   flipIcon: {},

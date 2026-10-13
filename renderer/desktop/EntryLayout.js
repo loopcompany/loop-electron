@@ -8,6 +8,8 @@ import { setLanguage } from '@slices/languageSlice';
 
 import { elevation, gradients, motion, onDark, palette, radii } from './desktopTheme';
 import { animate } from './globalStyles';
+import { tip } from './tooltip';
+import { SITE_LABEL, SITE_URL, openLink } from './links';
 import { useDir } from './ui';
 import AppWallpaper from './Wallpaper';
 import { brandCopy, greetingIcon, useTimeGreeting } from './brandCopy';
@@ -81,7 +83,10 @@ export default function EntryLayout({ title, subtitle, children, footer }) {
 
       <View style={[styles.bottomBar, dir.row]}>
         <Text style={[styles.bottomText, dir.light]}>
-          www.clpiran.com{version ? `  ·  v${version}` : ''}
+          <Text accessibilityRole="link" onPress={() => openLink(SITE_URL)} style={styles.siteLink}>
+            {SITE_LABEL}
+          </Text>
+          {version ? `  ·  v${version}` : ''}
         </Text>
         <Pressable
           onPress={toggleLanguage}
@@ -163,15 +168,21 @@ export function EntryMore({ title, children }) {
   );
 }
 
-/** One small secondary action (icon + label chip) for EntryMore. */
-export function EntryLink({ icon, title, onPress, badge, disabled }) {
+/**
+ * One small secondary action (icon + label chip) for EntryMore. With `image`
+ * the chip shows that artwork instead of icon + label; `title` then only
+ * names it (screen readers, tooltip).
+ */
+export function EntryLink({ icon, image, title, onPress, badge, disabled }) {
   const dir = useDir();
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled}
       accessibilityRole="button"
+      accessibilityLabel={title}
       accessibilityState={{ disabled: !!disabled }}
+      {...(image ? tip(title) : null)}
       style={({ hovered, pressed }) => [
         styles.link,
         dir.row,
@@ -180,8 +191,14 @@ export function EntryLink({ icon, title, onPress, badge, disabled }) {
         disabled && styles.actionDisabled,
       ]}
     >
-      <Ionicons name={icon} size={16} color={palette.gold} />
-      <Text style={[styles.linkText, dir.bold]} numberOfLines={1}>{title}</Text>
+      {image ? (
+        <Image source={image} style={styles.linkImage} />
+      ) : (
+        <>
+          <Ionicons name={icon} size={16} color={palette.gold} />
+          <Text style={[styles.linkText, dir.bold]} numberOfLines={1}>{title}</Text>
+        </>
+      )}
       {!!badge && <Text style={[styles.badgeText, dir.light]}>{badge}</Text>}
     </Pressable>
   );
@@ -375,6 +392,7 @@ const styles = StyleSheet.create({
   },
   linkHover: { backgroundColor: 'rgba(255,255,255,0.12)', borderColor: 'rgba(255, 215, 0, 0.35)' },
   linkText: { color: onDark.text, fontSize: 12.5 },
+  linkImage: { width: 26, height: 26 },
   chevron: { transitionProperty: 'transform', transitionDuration: motion.base },
   chevronNudgeRtl: { transform: 'translateX(-4px)' },
   chevronNudgeLtr: { transform: 'translateX(4px)' },
@@ -390,6 +408,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   bottomText: { color: onDark.muted, fontSize: 12 },
+  siteLink: { cursor: 'pointer', textDecorationLine: 'underline', textDecorationColor: 'rgba(255, 255, 255, 0.25)' },
   lang: {
     alignItems: 'center',
     gap: 6,

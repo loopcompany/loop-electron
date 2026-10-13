@@ -19,6 +19,9 @@ import { CUSTOMER_HOME_ROUTE, resetToHome } from '@navigation/homeRoute';
 
 import EntryLayout, { EntryAction, EntryLink, EntryMore } from '@desktop/EntryLayout';
 
+/** The AI entry's own artwork (desktop v2 notes: icon only, no label). */
+const AI_ICON = require('@desktop/assets/ai-icon.png');
+
 const COPY = {
   fa: {
     title: 'از کجا شروع کنیم؟',
@@ -74,7 +77,7 @@ function OrderMenuScreen({ navigation }) {
       <EntryMore title={copy.more}>
         <EntryLink icon="business-outline" title={t("Organization / Company")} onPress={() => navigation.navigate("Grouping")} />
         <EntryLink icon="call-outline" title={t("Urgent order")} onPress={callSupport} />
-        <EntryLink icon="sparkles-outline" title={t("Artificial intelligence")} badge={t("(Coming soon)").replace(/[()]/g, '')} disabled onPress={() => {}} />
+        <EntryLink image={AI_ICON} title={t("Artificial intelligence")} badge={t("(Coming soon)").replace(/[()]/g, '')} disabled onPress={() => {}} />
       </EntryMore>
     </EntryLayout>
   );

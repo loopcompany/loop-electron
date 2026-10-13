@@ -8,6 +8,7 @@ import { NAV_GROUPS, iconForRoute, shellLabels } from './routeMeta';
 import { formatNumber } from './ui';
 import { brandCopy } from './brandCopy';
 import { tip } from './tooltip';
+import { APPS_URL, SITE_LABEL, SITE_URL, openLink } from './links';
 import { getFontFamily } from '@theme/Typography';
 
 /**
@@ -169,7 +170,7 @@ export default function DesktopSidebar({
           </View>
           {!collapsed && (
             <View style={styles.brandText}>
-              <Text style={[styles.brandName, bold, textAlign]}>{rtl ? 'لوپ' : 'Loop'}</Text>
+              <Text style={[styles.brandName, bold, textAlign]}>Loop</Text>
               <Text style={[styles.brandTag, light, textAlign]} numberOfLines={2}>
                 {brandCopy(lang).tagline}
               </Text>
@@ -238,6 +239,25 @@ export default function DesktopSidebar({
 
       {/* Account */}
       <View style={[styles.footer, collapsed && styles.footerCollapsed]}>
+        <Pressable
+          onPress={() => openLink(APPS_URL)}
+          accessibilityRole="link"
+          accessibilityLabel={L.apps}
+          {...tip(collapsed ? L.apps : null)}
+          style={({ hovered }) => [styles.apps, row, collapsed && styles.appsCollapsed, hovered && styles.appsHover]}
+        >
+          <View style={styles.appsIcon}>
+            <Ionicons name="phone-portrait-outline" size={16} color={palette.gold} />
+          </View>
+          {!collapsed && (
+            <View style={styles.appsText}>
+              <Text style={[styles.appsTitle, bold, textAlign]} numberOfLines={1}>{L.apps}</Text>
+              <Text style={[styles.appsHint, light, textAlign]} numberOfLines={1}>{L.appsHint}</Text>
+            </View>
+          )}
+          {!collapsed && <Ionicons name="download-outline" size={16} color={chrome.itemText} />}
+        </Pressable>
+
         {isLoggedIn ? (
           <Pressable
             onPress={onProfile}
@@ -327,6 +347,15 @@ export default function DesktopSidebar({
           >
             <Ionicons name="language-outline" size={16} color={chrome.itemText} />
             {!collapsed && <Text style={[styles.footerButtonText, light]}>{L.language}</Text>}
+          </Pressable>
+          <Pressable
+            onPress={() => openLink(SITE_URL)}
+            accessibilityRole="link"
+            accessibilityLabel={`${L.website} — ${SITE_LABEL}`}
+            {...tip(SITE_LABEL)}
+            style={({ hovered }) => [styles.footerButton, row, hovered && styles.itemHover]}
+          >
+            <Ionicons name="globe-outline" size={16} color={chrome.itemText} />
           </Pressable>
         </View>
       </View>
@@ -470,6 +499,32 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.12)',
   },
   footerCollapsed: { alignItems: 'center', paddingHorizontal: 6 },
+  apps: {
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.22)',
+    backgroundColor: 'rgba(255, 215, 0, 0.06)',
+    cursor: 'pointer',
+    transitionProperty: 'background-color, border-color',
+    transitionDuration: motion.base,
+  },
+  appsCollapsed: { padding: 6, borderRadius: 10 },
+  appsHover: { backgroundColor: 'rgba(255, 215, 0, 0.12)', borderColor: 'rgba(255, 215, 0, 0.45)' },
+  appsIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 215, 0, 0.12)',
+  },
+  appsText: { flex: 1, minWidth: 0 },
+  appsTitle: { color: onDark.text, fontSize: 12.5 },
+  appsHint: { color: chrome.itemText, fontSize: 11 },
   profile: {
     alignItems: 'center',
     gap: 10,

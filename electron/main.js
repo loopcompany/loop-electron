@@ -119,7 +119,7 @@ function createMainWindow() {
     minHeight: minSize.height,
     ...(TITLE_BAR === 'overlay' && { titleBarStyle: 'hidden', titleBarOverlay: TITLE_BAR_OVERLAY }),
     show: false,
-    title: 'لوپ',
+    title: 'Loop',
     backgroundColor: '#020305', // matches the loading screen in public/index.html
     autoHideMenuBar: true,
     icon: path.join(__dirname, '..', 'build', 'icon.png'),

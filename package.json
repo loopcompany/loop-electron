@@ -1,7 +1,7 @@
 {
   "name": "loop-customer-electron",
   "productName": "Loop",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Loop (لوپ) — Windows desktop shell around the loop-customer-mobile web build.",
   "private": true,
   "main": "electron/main.js",

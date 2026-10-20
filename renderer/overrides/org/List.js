@@ -32,6 +32,7 @@ import { Card, Pill, SectionHeader, useDir } from '@desktop/ui';
 import { elevation, gradients, motion, onDark, palette, radii, surface } from '@desktop/desktopTheme';
 import { animate } from '@desktop/globalStyles';
 import HelpButton from '@desktop/HelpButton';
+import { useScrollCue } from '@desktop/ScrollCue';
 import { brandCopy, useTimeGreeting } from '@desktop/brandCopy';
 import {
   AccountStats,
@@ -149,6 +150,8 @@ const List = ({ navigation }) => {
 
   // «ثبت سفارش خدمات» به بخش «روش ثبت سفارش» (همیشه باز) اسکرول می‌کند
   const scrollRef = useRef(null);
+  // «بخش‌های بیشتر در پایین»: اقدام‌ها، حساب و دسترسی سریع زیر لبه‌ی صفحه‌اند
+  const { scrollProps, cue } = useScrollCue(scrollRef);
   const servicesY = useRef(0);
   const scrollToServices = () =>
     scrollRef.current?.scrollTo({ y: Math.max(0, servicesY.current - 16), animated: true });
@@ -174,7 +177,7 @@ const List = ({ navigation }) => {
   return (
     <View style={dashboardStyles.screen}>
       <ScreenHeaders title={organizationName || L('سازمانی / دولتی')} />
-      <ScrollView ref={scrollRef} style={dashboardStyles.scroll} contentContainerStyle={dashboardStyles.scrollContent}>
+      <ScrollView ref={scrollRef} style={dashboardStyles.scroll} contentContainerStyle={dashboardStyles.scrollContent} {...scrollProps}>
         <View style={dashboardStyles.page}>
           <WelcomeHero
             greeting={[greeting, name].filter(Boolean).join(dir.rtl ? '، ' : ', ')}
@@ -243,6 +246,7 @@ const List = ({ navigation }) => {
           </QuickAccess>
         </View>
       </ScrollView>
+      {cue}
     </View>
   );
 };

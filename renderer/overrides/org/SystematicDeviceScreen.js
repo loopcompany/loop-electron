@@ -217,6 +217,11 @@ const SystematicDeviceScreen = ({ navigation, route }) => {
             value: described ? `${described.weekday} ${described.dayLabel}` : value.date,
           });
           lines.push({ label: L('بازه ساعتی'), value: titleOf(LO(TIME_SLOT_OPTIONS), value.slot) });
+          // توضیحِ زمان مراجعه هم باید در خلاصه، توضیحاتِ ارسالی (`description`) و
+          // جزئیات سفارش دیده شود؛ قبلاً فقط تاریخ و بازه می‌آمد و این متن گم می‌شد.
+          if ((value.note || '').trim()) {
+            lines.push({ label: `${L('بازه ساعتی')} - ${L('توضیحات')}`, value: value.note.trim() });
+          }
           break;
         }
         case 'address': {

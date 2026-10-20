@@ -4,7 +4,8 @@
  * The splash logo motion, played WITH sound on desktop (the mobile file mutes
  * it on web because browsers block unmuted autoplay; the Electron window
  * allows it — `autoplayPolicy` in electron/main.js) — silent from the start
- * when the user switched the music off. The background music is
+ * when the user switched the music off, and muted live by the floating music
+ * button (`useBackgroundMusic`). The background music is
  * held while the logo motion plays so the two never overlap, and starts once
  * the splash is gone. Same data flow as the mobile file: the same requests,
  * auth check, timeouts and navigation.
@@ -34,7 +35,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useEvent } from 'expo';
 import { getSmsHash } from '@screens/auth/OtpRetriever';
 import { setHashApp } from '@slices/hashAppSlice';
-import { holdBackgroundMusic, isBackgroundMusicOn } from '@desktop/backgroundMusic';
+import { holdBackgroundMusic, isBackgroundMusicOn, useBackgroundMusic } from '@desktop/backgroundMusic';
 
 // اگر ویدیوی اسپلش اصلاً شروع به پخش نکند (کدک، شبکه، autoplay) کاربر برای
 // همیشه روی صفحه‌ی سیاه می‌ماند. این سقف فقط تا «شروع پخش» است.
@@ -73,6 +74,13 @@ export default function Landing({ navigation }) {
 
   // background music waits until the splash (and its sound) is over
   useEffect(() => holdBackgroundMusic(), []);
+  // the floating mute button (MenuContext) silences the logo motion too, live —
+  // volume as well as muted, since expo-video routes web audio through a Web Audio node
+  const musicOn = useBackgroundMusic();
+  useEffect(() => {
+    player.muted = !musicOn;
+    player.volume = musicOn ? 1 : 0;
+  }, [player, musicOn]);
   // Check authentication on component mount
   useEffect(() => {
 

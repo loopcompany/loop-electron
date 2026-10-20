@@ -45,6 +45,7 @@ import { L } from '@org/orgI18n';
 import { Card, DButton, Pill, SectionHeader, Skeleton, useDir } from '@desktop/ui';
 import { elevation, motion, palette, radii, surface } from '@desktop/desktopTheme';
 import { animate } from '@desktop/globalStyles';
+import { useScrollCue } from '@desktop/ScrollCue';
 import { brandCopy, useTimeGreeting } from '@desktop/brandCopy';
 import { useHomeRoute } from '@navigation/homeRoute';
 import {
@@ -141,6 +142,8 @@ const SystematicCategoryScreen = ({ navigation }) => {
 
   // «ثبت سفارش خدمات» به دسته‌بندی دستگاه‌ها (همیشه باز) اسکرول می‌کند
   const scrollRef = useRef(null);
+  // «بخش‌های بیشتر در پایین»: اقدام‌ها، حساب و دسترسی سریع زیر لبه‌ی صفحه‌اند
+  const { scrollProps, cue } = useScrollCue(scrollRef);
   const servicesY = useRef(0);
   const scrollToServices = () =>
     scrollRef.current?.scrollTo({ y: Math.max(0, servicesY.current - 16), animated: true });
@@ -325,7 +328,7 @@ const SystematicCategoryScreen = ({ navigation }) => {
   return (
     <View style={dashboardStyles.screen}>
       <ScreenHeaders title={L('انتخاب سیستماتیک')} onBackPress={handleHeaderBack} />
-      <ScrollView ref={scrollRef} style={dashboardStyles.scroll} contentContainerStyle={dashboardStyles.scrollContent}>
+      <ScrollView ref={scrollRef} style={dashboardStyles.scroll} contentContainerStyle={dashboardStyles.scrollContent} {...scrollProps}>
         <View style={dashboardStyles.page}>
           {isHome && <WelcomeHero
             greeting={[greeting, greetingName(user)].filter(Boolean).join(dir.rtl ? '، ' : ', ')}
@@ -387,6 +390,7 @@ const SystematicCategoryScreen = ({ navigation }) => {
           )}
         </View>
       </ScrollView>
+      {isHome && cue}
     </View>
   );
 };

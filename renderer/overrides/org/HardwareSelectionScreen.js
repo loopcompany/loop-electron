@@ -210,7 +210,15 @@ const HardwareSelectionScreen = ({ navigation }) => {
         }
         aside={
           <>
-            <SummaryCard copy={copy} dir={dir} category={selectedCategory} quantities={quantities} total={total} />
+            <SummaryCard
+              copy={copy}
+              dir={dir}
+              category={selectedCategory}
+              quantities={quantities}
+              total={total}
+              need={generalNeed}
+              notes={description}
+            />
             <TipsCard title={copy.steps} icon="git-network-outline" items={copy.stepItems} />
           </>
         }
@@ -316,9 +324,13 @@ function StepButton({ icon, onPress, disabled, label, primary }) {
   );
 }
 
-/** Live summary of the choices, in the side column. */
-function SummaryCard({ copy, dir, category, quantities, total }) {
+/** Live summary of the choices, in the side column. The need and notes show in full. */
+function SummaryCard({ copy, dir, category, quantities, total, need, notes }) {
   const lines = Object.entries(quantities).filter(([, n]) => n > 0);
+  const texts = [
+    { key: 'need', icon: 'create-outline', label: copy.need, value: need?.trim() },
+    { key: 'notes', icon: 'chatbox-ellipses-outline', label: copy.notes, value: notes?.trim() },
+  ].filter((text) => text.value);
   return (
     <View style={styles.summary}>
       <View style={styles.summaryStars} pointerEvents="none" />
@@ -342,6 +354,15 @@ function SummaryCard({ copy, dir, category, quantities, total }) {
       ) : (
         <Text style={[styles.summaryLabel, dir.light, dir.align]}>{copy.none}</Text>
       )}
+      {texts.map((text) => (
+        <View key={text.key} style={styles.summaryText}>
+          <View style={[styles.summaryTextHead, dir.row]}>
+            <Ionicons name={text.icon} size={14} color={palette.gold} />
+            <Text style={[styles.summaryLabel, dir.bold]}>{text.label}</Text>
+          </View>
+          <Text style={[styles.summaryTextValue, dir.light, dir.align]}>{text.value}</Text>
+        </View>
+      ))}
       <View style={[styles.summaryRow, styles.summaryTotal, dir.row]}>
         <Text style={[styles.summaryTotalLabel, dir.bold]}>{copy.total}</Text>
         <Text style={[styles.summaryTotalValue, dir.bold]}>{`${formatNumber(total, dir.lang)} ${copy.items}`}</Text>
@@ -437,6 +458,17 @@ const styles = StyleSheet.create({
   summaryRow: { alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   summaryLabel: { color: onDark.soft, fontSize: 13 },
   summaryValue: { color: onDark.text, fontSize: 14 },
+  summaryText: {
+    gap: 6,
+    padding: 12,
+    borderRadius: radii.md,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  summaryTextHead: { alignItems: 'center', gap: 6 },
+  // the whole text, wrapped — long words / pasted links break instead of overflowing
+  summaryTextValue: { color: onDark.text, fontSize: 13.5, lineHeight: 23, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' },
   summaryTotal: { paddingTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(255, 255, 255, 0.1)' },
   summaryTotalLabel: { color: onDark.soft, fontSize: 13.5 },
   summaryTotalValue: { color: palette.gold, fontSize: 18 },

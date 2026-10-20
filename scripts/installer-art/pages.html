@@ -1,0 +1,329 @@
+<!doctype html>
+<!--
+  Loop's setup pages, drawn at the setup window's size at 100 % (497 × 360 px:
+  the page and the 46 px button bar under it). ./render.js renders them at every
+  Windows scale with window.setPage(page, hover):
+
+    welcome, folder, finish  whole-window pictures; their buttons ([data-button])
+                             are also cut out in normal and hover looks and laid
+                             over the picture by build/installer.nsh
+    install                  only the header band and the bottom bar are used,
+                             around NSIS's own progress page
+
+  Text is part of the picture so it is set in the app's own font (Vazirmatn),
+  which Windows lacks. On the folder page the path and the size note are real
+  Windows controls placed on the flat boxes marked [data-slot] (their colours
+  are repeated in installer.nsh). %FONTS% / %ASSETS% are replaced by render.js.
+-->
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<style>
+  @font-face { font-family: 'Vazirmatn'; font-weight: 700; src: url('%FONTS%/Vazirmatn-Bold.ttf'); }
+  @font-face { font-family: 'Vazirmatn'; font-weight: 300; src: url('%FONTS%/Vazirmatn-Light.ttf'); }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  [hidden] { display: none !important; }
+  html, body { width: 497px; height: 360px; overflow: hidden; background: #040f1f; }
+  body { font-family: 'Vazirmatn', sans-serif; color: #f4f7fc; -webkit-font-smoothing: antialiased; position: relative; }
+
+  /* ---- space ------------------------------------------------------------ */
+  .space {
+    position: absolute; inset: 0;
+    background: url('%ASSETS%/wallpaper.webp') no-repeat;
+    background-size: auto 400px; background-position: 66% 22%;
+    transform: scaleX(-1);
+  }
+  .finish .space { background-position: 72% 26%; }
+  .folder .space { background-position: 58% 70%; background-size: auto 470px; }
+  .veil {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(120% 90% at 100% 0%, rgba(29, 95, 174, 0.28) 0%, rgba(29, 95, 174, 0) 55%),
+      linear-gradient(to left, rgba(4, 15, 31, 0.97) 0%, rgba(4, 15, 31, 0.9) 44%, rgba(4, 15, 31, 0.35) 70%, rgba(4, 15, 31, 0.05) 100%);
+  }
+  .folder .veil {
+    background:
+      radial-gradient(120% 90% at 100% 0%, rgba(29, 95, 174, 0.3) 0%, rgba(29, 95, 174, 0) 55%),
+      linear-gradient(to bottom, rgba(4, 15, 31, 0.94) 0%, rgba(4, 15, 31, 0.86) 55%, rgba(4, 15, 31, 0.55) 100%);
+  }
+  .stars {
+    position: absolute; inset: 0; opacity: 0.9;
+    background:
+      radial-gradient(1px 1px at 8% 12%, rgba(255,255,255,0.8) 50%, transparent 51%),
+      radial-gradient(1px 1px at 22% 30%, rgba(255,255,255,0.5) 50%, transparent 51%),
+      radial-gradient(1.3px 1.3px at 34% 9%, rgba(255,215,0,0.8) 50%, transparent 51%),
+      radial-gradient(1px 1px at 47% 22%, rgba(255,255,255,0.6) 50%, transparent 51%),
+      radial-gradient(1px 1px at 58% 6%, rgba(255,255,255,0.45) 50%, transparent 51%),
+      radial-gradient(1.2px 1.2px at 71% 17%, rgba(255,255,255,0.7) 50%, transparent 51%),
+      radial-gradient(1px 1px at 88% 8%, rgba(255,255,255,0.5) 50%, transparent 51%);
+  }
+  .rim {
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(to left, rgba(255,215,0,0) 0%, rgba(255,215,0,0.85) 30%, rgba(233,179,8,0.35) 70%, rgba(255,215,0,0) 100%);
+  }
+
+  /* ---- content ---------------------------------------------------------- */
+  .content { position: absolute; top: 24px; right: 26px; width: 272px; }
+  .folder .content { width: 445px; }
+
+  .brand { display: flex; align-items: center; gap: 11px; }
+  .icon {
+    width: 46px; height: 46px; border-radius: 13px; flex: none;
+    background: url('%ASSETS%/icon.png') center / cover;
+    box-shadow: 0 0 0 1px rgba(255, 215, 0, 0.45), 0 6px 22px rgba(255, 215, 0, 0.22), 0 8px 18px rgba(0, 0, 0, 0.45);
+  }
+  .word { line-height: 1; }
+  .word b {
+    display: block; font-size: 22px; font-weight: 700; letter-spacing: 0.5px; direction: ltr; text-align: right;
+    background: linear-gradient(180deg, #fff3b0 0%, #ffd700 45%, #e9b308 100%);
+    -webkit-background-clip: text; color: transparent;
+  }
+  .word span { display: block; margin-top: 5px; font-size: 10px; font-weight: 300; color: rgba(226, 234, 247, 0.72); }
+
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px; margin-top: 16px;
+    padding: 2px 10px 3px; border-radius: 999px;
+    font-size: 9.5px; font-weight: 700; color: #ffe27a;
+    background: rgba(255, 215, 0, 0.09); border: 1px solid rgba(255, 215, 0, 0.35);
+  }
+  .pill i { width: 5px; height: 5px; border-radius: 50%; background: #ffd700; box-shadow: 0 0 6px #ffd700; }
+  .pill.ok { color: #8ff0b8; background: rgba(46, 204, 113, 0.1); border-color: rgba(46, 204, 113, 0.4); }
+  .pill.ok i { background: #3ddc84; box-shadow: 0 0 6px #3ddc84; }
+
+  h1 { margin-top: 9px; font-size: 22.5px; line-height: 1.35; font-weight: 700; color: #ffffff; }
+  h1 em { font-style: normal; color: #ffd700; }
+  .tagline { margin-top: 3px; font-size: 11.5px; line-height: 1.75; font-weight: 300; color: rgba(226, 234, 247, 0.82); }
+
+  ul { list-style: none; margin-top: 13px; display: grid; gap: 8px; }
+  li { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 300; color: #e7edf7; }
+  li svg { flex: none; width: 17px; height: 17px; }
+
+  .done-badge {
+    position: absolute; top: 84px; left: 64px; width: 88px; height: 88px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(circle at 35% 30%, #fff3b0 0%, #ffd700 40%, #e9b308 100%);
+    box-shadow: 0 0 0 8px rgba(255, 215, 0, 0.12), 0 0 0 18px rgba(255, 215, 0, 0.06), 0 18px 46px rgba(255, 215, 0, 0.35);
+  }
+  .done-badge svg { width: 44px; height: 44px; }
+
+  /* ---- folder page: the card with the path ------------------------------ */
+  .card {
+    margin-top: 16px; padding: 14px 16px 12px; border-radius: 14px;
+    background: #0b1a2f; border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.35);
+  }
+  .card-label { display: flex; align-items: center; gap: 7px; font-size: 10.5px; font-weight: 700; color: #ffe27a; }
+  .card-label svg { width: 15px; height: 15px; }
+  .field-row { display: flex; align-items: center; gap: 10px; margin-top: 9px; }
+  .field {
+    flex: 1; height: 32px; border-radius: 9px; display: flex; align-items: center; gap: 8px;
+    padding: 0 10px; background: #061224; border: 1px solid rgba(255, 255, 255, 0.16);
+  }
+  .field svg { width: 16px; height: 16px; flex: none; }
+  .field [data-slot] { flex: 1; height: 20px; background: #061224; }
+  .size { margin-top: 9px; height: 16px; background: #0b1a2f; }
+  .browse {
+    height: 32px; min-width: 76px; padding: 0 12px; border-radius: 9px;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    font-size: 11px; font-weight: 300; color: rgba(231, 237, 247, 0.9);
+    background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.18);
+  }
+  .browse svg { width: 13px; height: 13px; }
+  .hover-browse .browse { color: #fff; background: rgba(255, 255, 255, 0.13); border-color: rgba(255, 255, 255, 0.36); }
+  .note { display: flex; align-items: center; gap: 7px; margin-top: 11px; font-size: 10px; font-weight: 300; color: rgba(226, 234, 247, 0.62); }
+  .note svg { width: 13px; height: 13px; flex: none; }
+
+  /* ---- install page: header band ---------------------------------------- */
+  .band {
+    position: absolute; top: 0; left: 0; right: 0; height: 56px;
+    display: flex; align-items: center; justify-content: space-between; padding: 0 22px 0 16px;
+    background:
+      radial-gradient(60% 140% at 85% 0%, rgba(79, 143, 224, 0.42) 0%, rgba(79, 143, 224, 0) 60%),
+      radial-gradient(45% 120% at 10% 10%, rgba(255, 215, 0, 0.1) 0%, rgba(255, 215, 0, 0) 60%),
+      linear-gradient(180deg, #0c2747 0%, #0a1f3b 100%);
+    border-bottom: 1px solid rgba(255, 215, 0, 0.25);
+  }
+  .band h2 { font-size: 14px; font-weight: 700; color: #fff; }
+  .band p { margin-top: 2px; font-size: 10px; font-weight: 300; color: rgba(226, 234, 247, 0.75); }
+  .band .icon { width: 34px; height: 34px; border-radius: 10px; }
+  .install .middle { position: absolute; top: 56px; left: 0; right: 0; bottom: 46px; background: #f0f0f0; }
+  .working { display: flex; align-items: center; gap: 9px; font-size: 11px; font-weight: 300; color: rgba(226, 234, 247, 0.85); padding-left: 6px; }
+  .working i { width: 6px; height: 6px; border-radius: 50%; background: #ffd700; box-shadow: 0 0 8px rgba(255, 215, 0, 0.8); }
+  .working i:nth-child(2) { opacity: 0.6; }
+  .working i:nth-child(3) { opacity: 0.3; }
+
+  /* ---- bottom bar ------------------------------------------------------- */
+  .bar {
+    position: absolute; left: 0; right: 0; bottom: 0; height: 46px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 18px 0 12px;
+    background: linear-gradient(180deg, rgba(10, 26, 50, 0.78) 0%, rgba(6, 18, 36, 0.95) 100%);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .install .bar { background: linear-gradient(180deg, #0a1a32 0%, #061224 100%); }
+  .bar::before {
+    content: ''; position: absolute; top: -1px; right: 0; left: 0; height: 1px;
+    background: linear-gradient(to left, rgba(255,215,0,0) 0%, rgba(255,215,0,0.5) 25%, rgba(255,215,0,0.15) 60%, rgba(255,215,0,0) 100%);
+  }
+
+  .steps { display: flex; align-items: center; }
+  .step { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 44px; }
+  .dot {
+    width: 14px; height: 14px; border-radius: 50%; flex: none;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 8px; font-weight: 700; color: rgba(226, 234, 247, 0.55);
+    border: 1px solid rgba(226, 234, 247, 0.28); background: rgba(255, 255, 255, 0.03);
+  }
+  .step span { font-size: 8.5px; line-height: 1.3; font-weight: 300; color: rgba(226, 234, 247, 0.5); white-space: nowrap; }
+  .step.now .dot { color: #241a00; background: #ffd700; border-color: #ffd700; box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.18), 0 0 10px rgba(255, 215, 0, 0.55); }
+  .step.now span { color: #ffe27a; font-weight: 700; }
+  .step.done .dot { background: rgba(255, 215, 0, 0.16); border-color: rgba(255, 215, 0, 0.6); color: #ffd700; }
+  .step.done span { color: rgba(226, 234, 247, 0.75); }
+  .steps { align-items: flex-start; }
+  .link { width: 14px; height: 1px; margin: 7px -8px 0; background: rgba(226, 234, 247, 0.2); }
+  .link.done { background: rgba(255, 215, 0, 0.6); }
+
+  .actions { display: flex; align-items: center; gap: 12px; }
+  .btn {
+    height: 30px; border-radius: 999px; display: flex; align-items: center; justify-content: center; gap: 7px;
+    font-size: 11.5px; font-weight: 700; white-space: nowrap;
+  }
+  .btn svg { width: 13px; height: 13px; }
+  .primary {
+    min-width: 104px; padding: 0 15px; color: #1c1400;
+    background: linear-gradient(135deg, #ffe45c 0%, #ffd700 45%, #e9b308 100%);
+    box-shadow: 0 0 0 1px rgba(255, 228, 92, 0.6) inset, 0 5px 14px rgba(233, 179, 8, 0.3);
+  }
+  /* hover looks stay within 6 px of the button (render.js cuts the buttons out with that margin) */
+  .hover-primary .primary {
+    background: linear-gradient(135deg, #fff3a6 0%, #ffe14a 45%, #ffc81a 100%);
+    box-shadow: 0 0 0 1px rgba(255, 243, 166, 0.95) inset, 0 0 0 3px rgba(255, 215, 0, 0.28), 0 5px 14px rgba(233, 179, 8, 0.3);
+  }
+  .secondary {
+    min-width: 68px; padding: 0 13px; color: rgba(231, 237, 247, 0.88); font-weight: 300;
+    background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.18);
+  }
+  .hover-secondary .secondary { color: #ffffff; background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 255, 255, 0.36); }
+  .tertiary { min-width: 52px; padding: 0 9px; color: rgba(226, 234, 247, 0.6); font-weight: 300; }
+  .hover-tertiary .tertiary { color: #ffffff; background: rgba(255, 255, 255, 0.07); }
+</style>
+</head>
+<body>
+  <div class="space" data-on="welcome folder finish"></div>
+  <div class="veil" data-on="welcome folder finish"></div>
+  <div class="stars" data-on="welcome folder finish"></div>
+  <div class="rim" data-on="welcome folder finish"></div>
+
+  <div class="content" data-on="welcome folder finish">
+    <div class="brand">
+      <div class="icon"></div>
+      <div class="word"><b>Loop</b><span>جوهر آینده</span></div>
+    </div>
+
+    <div data-on="welcome">
+      <div class="pill"><i></i>نسخه‌ی ویندوز</div>
+      <h1>به <em>لوپ</em> خوش آمدید</h1>
+      <p class="tagline">خدمات و راهکارهای فناوری، در یک فضای یکپارچه</p>
+      <ul>
+        <li><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="rgba(255,215,0,0.14)" stroke="#e9b308" stroke-width="1"/><path d="M6 10.4l2.6 2.5L14 7.6" fill="none" stroke="#ffd700" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>ثبت سفارش خدمات و تامین کالا در چند کلیک</li>
+        <li><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="rgba(255,215,0,0.14)" stroke="#e9b308" stroke-width="1"/><path d="M6 10.4l2.6 2.5L14 7.6" fill="none" stroke="#ffd700" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>پیگیری لحظه‌ای سفارش‌ها و کیف پول لوپ</li>
+        <li><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="rgba(255,215,0,0.14)" stroke="#e9b308" stroke-width="1"/><path d="M6 10.4l2.6 2.5L14 7.6" fill="none" stroke="#ffd700" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>ارتباط مستقیم با تیم پشتیبانی لوپ</li>
+      </ul>
+    </div>
+
+    <div data-on="folder">
+      <h1>محل نصب لوپ</h1>
+      <p class="tagline">لوپ در پوشه‌ی زیر نصب می‌شود. برای نصب در جای دیگر، «تغییر» را بزنید.</p>
+      <div class="card">
+        <div class="card-label">
+          <svg viewBox="0 0 16 16"><path d="M1.8 4.2c0-.7.5-1.2 1.2-1.2h3l1.4 1.5h5.6c.7 0 1.2.5 1.2 1.2v6.1c0 .7-.5 1.2-1.2 1.2H3c-.7 0-1.2-.5-1.2-1.2z" fill="rgba(255,215,0,0.18)" stroke="#ffd700" stroke-width="1.1"/></svg>
+          پوشه‌ی نصب
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <svg viewBox="0 0 16 16"><path d="M1.8 4.2c0-.7.5-1.2 1.2-1.2h3l1.4 1.5h5.6c.7 0 1.2.5 1.2 1.2v6.1c0 .7-.5 1.2-1.2 1.2H3c-.7 0-1.2-.5-1.2-1.2z" fill="none" stroke="rgba(226,234,247,0.55)" stroke-width="1.1"/></svg>
+            <div data-slot="path"></div>
+          </div>
+          <div class="browse" data-button="browse">
+            <svg viewBox="0 0 16 16"><path d="M3 12.5l1-3.4 6.6-6.6 2.4 2.4-6.6 6.6zM9.4 3.7l2.4 2.4" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+            تغییر…
+          </div>
+        </div>
+        <div class="size" data-slot="size"></div>
+      </div>
+      <div class="note">
+        <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5" fill="none" stroke="rgba(226,234,247,0.5)" stroke-width="1.1"/><path d="M8 7.2v3.6M8 5.1v.2" stroke="rgba(226,234,247,0.7)" stroke-width="1.3" stroke-linecap="round"/></svg>
+        نصب فقط برای حساب کاربری شما انجام می‌شود و به دسترسی مدیر نیازی ندارد.
+      </div>
+    </div>
+
+    <div data-on="finish">
+      <div class="pill ok"><i></i>نصب کامل شد</div>
+      <h1><em>لوپ</em> آماده است</h1>
+      <p class="tagline">لوپ روی رایانه‌ی شما نصب شد؛ از منوی استارت یا میز کار هم باز می‌شود.</p>
+      <ul>
+        <li><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="rgba(255,215,0,0.14)" stroke="#e9b308" stroke-width="1"/><path d="M6 10.4l2.6 2.5L14 7.6" fill="none" stroke="#ffd700" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>میانبر روی میز کار ساخته شد</li>
+        <li><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="rgba(255,215,0,0.14)" stroke="#e9b308" stroke-width="1"/><path d="M6 10.4l2.6 2.5L14 7.6" fill="none" stroke="#ffd700" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>با حساب لوپ خود وارد شوید و سفارش بدهید</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="done-badge" data-on="finish">
+    <svg viewBox="0 0 24 24"><path d="M5 12.5l4.6 4.5L19 7.5" fill="none" stroke="#2a1d00" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </div>
+
+  <!-- install: NSIS's progress page sits between this band and the bar -->
+  <div class="middle" data-on="install"></div>
+  <div class="band" data-on="install">
+    <div>
+      <h2>در حال نصب لوپ</h2>
+      <p>چند لحظه صبر کنید؛ فایل‌های لوپ روی رایانه‌ی شما قرار می‌گیرند.</p>
+    </div>
+    <div class="icon"></div>
+  </div>
+
+  <div class="bar">
+    <div class="steps" id="steps"></div>
+
+    <div class="actions" data-on="welcome folder finish">
+      <div class="btn tertiary" data-button="tertiary" data-on="folder">انصراف</div>
+      <div class="btn secondary" data-button="secondary">
+        <span data-on="welcome">انصراف</span>
+        <span data-on="folder">قبل</span>
+        <span data-on="finish">بستن</span>
+      </div>
+      <div class="btn primary" data-button="primary">
+        <span data-on="welcome">شروع نصب</span>
+        <span data-on="folder">نصب</span>
+        <span data-on="finish">اجرای لوپ</span>
+        <svg data-on="welcome" viewBox="0 0 16 16"><path d="M10 3.5L5.5 8l4.5 4.5" fill="none" stroke="#1c1400" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg data-on="folder" viewBox="0 0 16 16"><path d="M8 2.5v7.2M4.8 6.6L8 9.8l3.2-3.2M3 12.8h10" fill="none" stroke="#1c1400" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg data-on="finish" viewBox="0 0 16 16"><path d="M11.5 8L5.5 4.2v7.6z" fill="#1c1400"/></svg>
+      </div>
+    </div>
+    <div class="working" data-on="install"><i></i><i></i><i></i>در حال نصب…</div>
+  </div>
+
+<script>
+  const STEPS = ['خوش‌آمد', 'محل نصب', 'نصب', 'پایان'];
+  const INDEX = { welcome: 0, folder: 1, install: 2, finish: 3 };
+  const FA = '۰۱۲۳۴۵۶۷۸۹';
+
+  /** Called by render.js: which page, and which button (if any) is under the mouse. */
+  window.setPage = (page, hover) => {
+    document.body.className = `${page}${hover ? ` hover-${hover}` : ''}`;
+    // the attribute, not el.hidden: that property does not exist on SVG elements
+    for (const el of document.querySelectorAll('[data-on]')) el.toggleAttribute('hidden', !el.dataset.on.split(' ').includes(page));
+    const now = INDEX[page];
+    document.getElementById('steps').innerHTML = STEPS.map((label, i) => {
+      const state = i < now ? 'done' : i === now ? 'now' : '';
+      const mark = i < now ? '✓' : FA[i + 1];
+      const link = i ? `<div class="link ${i <= now ? 'done' : ''}"></div>` : '';
+      return `${link}<div class="step ${state}"><div class="dot">${mark}</div><span>${label}</span></div>`;
+    }).join('');
+  };
+</script>
+</body>
+</html>

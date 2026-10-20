@@ -13,7 +13,7 @@
  * When the mobile file changes, `npm run check:overrides` fails: port the
  * change here, then run `npm run overrides:accept`.
  */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, BackHandler, useWindowDimensions } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { useFocusEffect } from '@react-navigation/native';
@@ -27,6 +27,7 @@ import { fetchOrders } from '@slices/ordersSlice';
 import OrderItem from '@components/OrderItem';
 import OrderDraftsSection from '@components/OrderDraftsSection';
 import { useHomeRoute } from '@navigation/homeRoute';
+import { withoutCancelledOrders } from '@services/orderStatus';
 
 import Dialog from '@desktop/Dialog';
 import { DButton, EmptyState, Skeleton, formatNumber, useDir } from '@desktop/ui';
@@ -71,7 +72,9 @@ function OrdersScreen({ navigation }) {
   const dir = useDir();
   const copy = COPY[dir.rtl ? 'fa' : 'en'];
   const dispatch = useDispatch();
-  const orders = useSelector(state => state.orders?.data);
+  // لغوشده‌ها فقط در «سفارش‌های لغوشده» می‌آیند («تغییرات اپ کاربر» بند ۲).
+  const allOrders = useSelector(state => state.orders?.data);
+  const orders = useMemo(() => withoutCancelledOrders(allOrders), [allOrders]);
   const orderLoader = useSelector(state => state.orders?.loading);
   const user = useSelector(state => state.user?.data);
   const [refreshing, setRefreshing] = useState(false);

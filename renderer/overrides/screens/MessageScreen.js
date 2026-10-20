@@ -14,7 +14,11 @@
  * user's first message is followed by an automatic «sent, we'll review it»
  * reply (both drawn here, not stored on the server). The support card shows
  * the support phone number itself (click copies it) instead of a Call button.
- * The composer has an emoji picker (@desktop/EmojiPicker) that inserts at the caret.
+ * The composer has an emoji picker (@desktop/EmojiPicker) that inserts at the caret,
+ * and a paperclip that attaches images / PDFs (one file dialog; the phone's
+ * gallery / camera / file menu has nothing to choose between on a desktop). As
+ * on the phone, attaching works only once the server says it accepts files
+ * (`attachmentsSupported`); until then the paperclip says «coming soon».
  *
  * When the mobile file changes, `npm run check:overrides` fails: port the
  * change here, then run `npm run overrides:accept`.
@@ -27,13 +31,22 @@ import {
   ScrollView,
   TextInput,
   Image,
+  Linking,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import ScreenHeaders from '@components/ScreenHeaders';
 import { getTicketsList, sendTicketMessage } from '@services/Api';
-import { formatDateTime, showAlert } from '@helpers/Common';
+import { formatDateTime, showAlert, showToastOrAlert } from '@helpers/Common';
+import * as DocumentPicker from 'expo-document-picker';
+import AttachmentChips from '@components/chat/AttachmentChips';
+import PhotoViewer from '@components/avatar/PhotoViewer';
+import {
+  ALLOWED_DOCUMENT_TYPES,
+  isImageAttachment,
+  validateAttachment,
+} from '@components/chat/composerUtils';
 
 import { Card, DButton, IconButton, Pill, Skeleton, formatNumber, useDir } from '@desktop/ui';
 import { elevation, gradients, motion, onDark, palette, radii, surface } from '@desktop/desktopTheme';
@@ -119,6 +132,9 @@ export default function MessageScreen() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [focused, setFocused] = useState(false);
   const [phoneCopied, setPhoneCopied] = useState(false);
+  const [attachments, setAttachments] = useState([]);
+  const [attachmentsSupported, setAttachmentsSupported] = useState(false);
+  const [viewerUri, setViewerUri] = useState(null);
   const threadRef = useRef(null);
   const inputRef = useRef(null);
   // last caret / selection in the composer, so an emoji lands where the user was typing
@@ -152,6 +168,7 @@ export default function MessageScreen() {
     try {
       const response = await getTicketsList();
 
+      setAttachmentsSupported(Boolean(response.attachmentsSupported));
       if (response.success && response.data) {
         setMessages([...response.data].sort(byDate));
         const unreadAdminMessages = response.data.filter(
@@ -180,7 +197,7 @@ export default function MessageScreen() {
   };
 
   const handleSendMessage = async () => {
-    if (!messageText.trim()) {
+    if (!messageText.trim() && attachments.length === 0) {
       showAlert(t('Warning'), t('Please enter the message text'));
       return;
     }
@@ -192,11 +209,12 @@ export default function MessageScreen() {
 
     try {
       setSending(true);
-      const response = await sendTicketMessage(messageText);
+      const response = await sendTicketMessage(messageText, attachments);
 
       if (response.success) {
         showAlert(t('Successful'), t('Your message was sent successfully'));
         setMessageText('');
+        setAttachments([]);
         await fetchMessages();
       }
     } catch (error) {
@@ -204,6 +222,49 @@ export default function MessageScreen() {
     } finally {
       setSending(false);
     }
+  };
+
+  const addAttachment = (asset) => {
+    const error = validateAttachment(asset, attachments.length);
+    if (error) {
+      showToastOrAlert(t(error));
+      return;
+    }
+    setAttachments((prev) => [
+      ...prev,
+      {
+        key: `${Date.now()}-${prev.length}`,
+        uri: asset.uri,
+        name: asset.name || asset.fileName || asset.uri.split('/').pop(),
+        size: asset.size ?? asset.fileSize,
+        mimeType: asset.mimeType || (asset.type === 'image' ? 'image/jpeg' : undefined),
+        file: asset.file,
+      },
+    ]);
+  };
+
+  const pickAttachment = async () => {
+    // تا سرور پیوست را نپذیرد، فایل‌ها دور ریخته می‌شدند - پس دکمه فعال نمی‌شود.
+    if (!attachmentsSupported) {
+      showToastOrAlert(t('Sending files will be available soon.'));
+      return;
+    }
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ALLOWED_DOCUMENT_TYPES,
+        copyToCacheDirectory: true,
+        multiple: false,
+      });
+      if (!result.canceled && result.assets?.length) addAttachment(result.assets[0]);
+    } catch (error) {
+      console.warn('[MessageScreen] attachment pick failed', error?.message);
+      showToastOrAlert(t('Error selecting image'));
+    }
+  };
+
+  const openAttachment = (item) => {
+    if (isImageAttachment(item)) setViewerUri(item.uri);
+    else if (item.uri) Linking.openURL(item.uri);
   };
 
   const onKeyPress = (e) => {
@@ -268,9 +329,23 @@ export default function MessageScreen() {
                         <Text style={[styles.role, dir.bold, mine && styles.roleMine]}>{msg.role_label}</Text>
                         {!msg.is_read && !mine && !msg.auto && <Pill label={t('New')} kind="gold" size="sm" />}
                       </View>
-                      <Text style={[styles.messageText, dir.light, dir.align, mine && styles.messageTextMine]} selectable>
-                        {msg.message}
-                      </Text>
+                      {!!msg.message && (
+                        <Text style={[styles.messageText, dir.light, dir.align, mine && styles.messageTextMine]} selectable>
+                          {msg.message}
+                        </Text>
+                      )}
+                      {Array.isArray(msg.attachments) && msg.attachments.length > 0 && (
+                        <AttachmentChips
+                          items={msg.attachments.map((file, index) => ({
+                            key: String(file.id ?? index),
+                            uri: file.url,
+                            name: file.name,
+                            size: file.size,
+                            mimeType: file.mime_type,
+                          }))}
+                          onOpen={openAttachment}
+                        />
+                      )}
                       <View style={[styles.meta, dir.row]}>
                         {!!msg.created_at && (
                           <Text style={[styles.time, dir.light, mine && styles.timeMine]}>{formatDateTime(msg.created_at)}</Text>
@@ -311,9 +386,26 @@ export default function MessageScreen() {
                 textAlignVertical="top"
                 editable={!sending}
               />
+              {attachments.length > 0 && (
+                <View style={styles.pending}>
+                  <AttachmentChips
+                    items={attachments}
+                    onRemove={(key) => setAttachments((prev) => prev.filter((item) => item.key !== key))}
+                  />
+                </View>
+              )}
               <View style={[styles.composerBar, dir.row]}>
                 <View style={[styles.composerTools, dir.row]}>
                   <EmojiPicker onPick={insertEmoji} disabled={sending} />
+                  <View {...hoverTip(t('Attach file'))}>
+                    <IconButton
+                      icon="attach-outline"
+                      label={t('Attach file')}
+                      onPress={pickAttachment}
+                      color={surface.muted}
+                      style={!attachmentsSupported && styles.toolDisabled}
+                    />
+                  </View>
                   <Text style={[styles.counter, dir.light, over && styles.counterOver]}>
                     {formatNumber(messageText.length, dir.lang)} / {formatNumber(MAX_LENGTH, dir.lang)}
                     {'   ·   '}
@@ -325,7 +417,7 @@ export default function MessageScreen() {
                   icon={dir.rtl ? 'send' : 'send'}
                   onPress={handleSendMessage}
                   loading={sending}
-                  disabled={!messageText.trim()}
+                  disabled={!messageText.trim() && attachments.length === 0}
                   style={dir.rtl ? styles.flipIcon : undefined}
                 />
               </View>
@@ -373,6 +465,7 @@ export default function MessageScreen() {
           </Card>
         </View>
       </View>
+      {viewerUri ? <PhotoViewer visible uri={viewerUri} onClose={() => setViewerUri(null)} /> : null}
     </View>
   );
 }
@@ -384,6 +477,8 @@ const formatPhone = (phone, lang) => (lang === 'fa' ? phone.replace(/\d/g, (d) =
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: 'transparent' },
+  toolDisabled: { opacity: 0.45 },
+  pending: { paddingTop: 8 },
   layout: {
     flex: 1,
     minHeight: 0,

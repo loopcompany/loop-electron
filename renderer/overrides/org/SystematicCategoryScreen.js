@@ -304,7 +304,9 @@ const SystematicCategoryScreen = ({ navigation }) => {
         subtitle: getCategory(categoryId)?.subtitle,
         image: categoryId === 'trash' ? undefined : entry.image,
         imageSource: localIconFor(categoryId) || entry.imageSource,
-        onPress: () => openCategory(entry),
+        // «ضایعات» فقط برچسبِ «به‌زودی» دارد و کلیک روی آن کاری نمی‌کند — پنجره‌ی
+        // alert مرورگر («… says») نباید باز شود
+        onPress: categoryId === 'trash' ? undefined : () => openCategory(entry),
         isTrash: categoryId === 'trash',
       };
     });
@@ -397,8 +399,10 @@ function CategoryTile({ tile, index, dir, copy }) {
   return (
     <Pressable
       onPress={tile.onPress}
+      disabled={tile.isTrash}
       accessibilityRole="button"
-      accessibilityLabel={L(tile.title)}
+      accessibilityState={{ disabled: tile.isTrash }}
+      accessibilityLabel={`${L(tile.title)}${tile.isTrash ? ` — ${copy.soon}` : ''}`}
       style={({ hovered, pressed }) => [
         styles.tile,
         animate('loop-fade-up', '320ms', `${160 + index * 40}ms`),

@@ -33,11 +33,13 @@ export function orderStatusMeta(item, t) {
   }
 }
 
-/** Filter tabs of the orders page: [status value sent to the API, label key]. */
+/**
+ * Filter tabs of the orders page: [status value sent to the API, label key].
+ * No «cancelled» tab: cancelled orders are listed only on their own page.
+ */
 export const ORDER_STATUS_TABS = [
   { value: null, labelKey: 'All', icon: 'apps-outline' },
   { value: 0, labelKey: 'Awaiting Review', icon: 'hourglass-outline' },
   { value: 1, labelKey: 'In Progress', icon: 'construct-outline' },
   { value: 2, labelKey: 'Completed', icon: 'checkmark-done-outline' },
-  { value: 3, labelKey: 'Canceled', icon: 'close-circle-outline' },
 ];

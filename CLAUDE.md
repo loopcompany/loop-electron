@@ -53,6 +53,8 @@ Detailed rules load automatically from `.claude/rules/` when you touch matching 
 | Override drift hashes | `overrides.lock.json` (edit only via `npm run overrides:accept`) |
 | Metro override resolver / aliases | `renderer/metro.config.js`, `renderer/babel.config.js` |
 | Build / dev scripts | `scripts/*.js`, `electron-builder.yml` |
+| Installer (Persian, custom welcome page) | `build/installer.nsh`; art: `scripts/installer-art/pages.html` → `npm run installer:art` |
+| In-app `alert()` toast, `confirm()` refocus | `renderer/desktop/dialogShims.js` (+ `loop:refocus` in `main.js`) |
 
 ## Hard rules
 
@@ -71,6 +73,7 @@ Detailed rules load automatically from `.claude/rules/` when you touch matching 
 `npm run dev` (Metro :8081 + Electron, hot reload) · `npm start` (runs `web-build/`) ·
 `npm test` · `npm run check:overrides` · `npm run overrides:accept` · `npm run build:web` ·
 `npm run dist:win` (NSIS, needs Wine on Linux) · `npm run dist:win:portable` (zip) ·
+`npm run installer:art` (re-render `build/installer/*` after editing the design) ·
 `LOOP_SCREENSHOT=out.png npm start` (screenshot smoke test) · `LOOP_TITLEBAR=overlay npm run dev`.
 
 ## Code style

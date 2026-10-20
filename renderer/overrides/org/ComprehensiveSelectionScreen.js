@@ -49,6 +49,7 @@ import {
 } from './deviceCatalog';
 import { showAlert, showToastOrAlert, validateMelicode, validatePhone } from '@helpers/Common';
 import { L, LO } from './orgI18n';
+import { counterLines, procurementLines } from './summaryLines';
 import { RECEIPT_STATE, receiptFromComprehensive } from '@services/receipt';
 import useReceiptSources from '@hooks/useReceiptSources';
 
@@ -369,11 +370,6 @@ const ComprehensiveSelectionScreen = ({ navigation, route }) => {
     return null;
   };
 
-  // دسکتاپ: توضیحی که کاربر زیر هر قلم نوشته (مثلاً «ماوس» زیر «لوازم جانبی»)
-  // هم در خلاصه و توضیحات سفارش می‌آید.
-  const descLine = (item, entry) =>
-    (entry?.desc || '').trim() ? [{ label: `${L(item.title)} - ${L('توضیحات')}`, value: entry.desc.trim() }] : [];
-
   const softwareSummaryLines = useMemo(() => {
     const lines = [];
     // تعداد لپ‌تاپ/کیسِ «نصب سیستم عامل» هم باید در خلاصه بیاید - قبلاً فقط
@@ -391,31 +387,21 @@ const ComprehensiveSelectionScreen = ({ navigation, route }) => {
         lines.push({ label: L(device.title), value: softwareDeviceCounts[device.id] });
       }
     });
-    SOFTWARE_ITEMS.forEach((item) => {
-      const entry = softwareItems[item.id];
-      if (entry?.count > 0) lines.push({ label: L(item.title), value: entry.count });
-      lines.push(...descLine(item, entry));
-    });
+    // تعداد هر نرم‌افزار و توضیح کاربر برای آن.
+    lines.push(...counterLines(softwareItems, LO(SOFTWARE_ITEMS), L));
     return lines;
   }, [deviceCounts, osCounts, softwareDeviceCounts, softwareItems]);
 
-  const hardwareSummaryLines = useMemo(() => {
-    return HARDWARE_ITEMS.flatMap((item) => [
-      ...(hardwareItems[item.id]?.count > 0 ? [{ label: L(item.title), value: hardwareItems[item.id].count }] : []),
-      ...descLine(item, hardwareItems[item.id]),
-    ]);
-  }, [hardwareItems]);
+  // توضیح هر قلم هم در خلاصه می‌آید (بند ۴ سند دسکتاپ ۲) - قبلاً فقط تعداد بود.
+  const hardwareSummaryLines = useMemo(
+    () => counterLines(hardwareItems, LO(HARDWARE_ITEMS), L),
+    [hardwareItems]
+  );
 
-  const procurementSummaryLines = useMemo(() => {
-    const lines = [];
-    PROCUREMENT_ITEMS.forEach((item) => {
-      const entry = procurementItems[item.id];
-      if (entry?.new > 0) lines.push({ label: `${L(item.title)} / ${L('آکبند')}`, value: entry.new });
-      if (entry?.used > 0) lines.push({ label: `${L(item.title)} / ${L('کارکرده')}`, value: entry.used });
-      lines.push(...descLine(item, entry));
-    });
-    return lines;
-  }, [procurementItems]);
+  const procurementSummaryLines = useMemo(
+    () => procurementLines(procurementItems, LO(PROCUREMENT_ITEMS), L),
+    [procurementItems]
+  );
 
   const handleOrderAction = (action) => {
     // «انتخاب جامع» روی سرور ثبت نمی‌شود؛ رسید از همین state ساخته می‌شود.

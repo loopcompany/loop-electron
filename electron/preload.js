@@ -6,7 +6,7 @@
  *
  * Keep this surface minimal — every addition is reachable from page script.
  */
-const { contextBridge } = require('electron');
+const { contextBridge, ipcRenderer } = require('electron');
 
 const argValue = (name) => {
   const arg = process.argv.find((a) => a.startsWith(`--${name}=`));
@@ -20,4 +20,6 @@ contextBridge.exposeInMainWorld('loopDesktop', {
   /** 'overlay': the app draws its own title bar (Windows); 'native': the OS frame. */
   titleBar: argValue('loop-title-bar') || 'native',
   electronVersion: process.versions.electron,
+  /** After a native confirm()/prompt(): give the window keyboard focus back (Windows). */
+  refocus: () => ipcRenderer.send('loop:refocus'),
 });

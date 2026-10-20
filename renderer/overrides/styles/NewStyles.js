@@ -9,7 +9,7 @@
  *   - container: the calm page surface instead of the phone's light blue
  *   - shadow: a soft, neutral desktop shadow instead of the navy glow
  *   - border10 / border5: the desktop corner radii
- *   - textInput: white field with a hairline border
+ *   - textInput: white field with a hairline border and dark text (in both themes)
  *   - whiteButton / strip: desktop surfaces
  * Everything else is the mobile file verbatim.
  *
@@ -371,6 +371,12 @@ const buildStyles = (lang) => {
 
       textInput: {
         backgroundColor: themeColor4.bgColor(1),
+        // the field is always white, so its text is always dark: with no colour
+        // of its own it took the browser's field text, which is white in the
+        // dark theme (`color-scheme: dark`) — typed text was invisible
+        color: light.ink,
+        fontFamily: langIsRTL(lang) ? "VazirLightFD" : "VazirLight",
+        fontSize: 14,
         borderWidth: 1,
         borderColor: light.borderStrong,
         borderRadius: 12,

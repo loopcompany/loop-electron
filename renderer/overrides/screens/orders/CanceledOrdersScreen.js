@@ -3,7 +3,7 @@
  *
  * Cancelled orders (status 3–6) in the same card grid as the orders page.
  * Same data as the mobile file: `fetchOrders()` on mount and on focus,
- * filtered locally to the cancelled statuses.
+ * filtered locally to the cancelled orders (`onlyCancelledOrders`).
  *
  * When the mobile file changes, `npm run check:overrides` fails: port the
  * change here, then run `npm run overrides:accept`.
@@ -16,6 +16,7 @@ import { useTranslation } from 'react-i18next';
 import { fetchOrders } from '@slices/ordersSlice';
 import { useFocusEffect } from '@react-navigation/native';
 import OrderItem from '@components/OrderItem';
+import { onlyCancelledOrders } from '@services/orderStatus';
 
 import { DButton, EmptyState, IconTile, formatNumber, useDir } from '@desktop/ui';
 import { elevation, radii, surface } from '@desktop/desktopTheme';
@@ -66,7 +67,7 @@ function CanceledOrdersScreen({ navigation }) {
     setRefreshing(false);
   };
 
-  const canceled = (orders || []).filter(order => (order.status == 3 || order.status == 4 || order.status == 5 || order.status == 6));
+  const canceled = onlyCancelledOrders(orders);
   const cellWidth = `calc(${100 / columns}% - ${(16 * (columns - 1)) / columns}px)`;
 
   return (

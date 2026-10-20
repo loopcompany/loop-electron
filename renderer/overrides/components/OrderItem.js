@@ -30,6 +30,7 @@ import { DButton, IconTile, Pill, formatNumber, useDir } from '@desktop/ui';
 import { elevation, motion, palette, radii, surface, tone } from '@desktop/desktopTheme';
 import { animate } from '@desktop/globalStyles';
 import { orderStatusMeta } from '@desktop/orderStatus';
+import { CANCELLED_BY_LABEL_KEYS, cancelledByOf, isCancelledOrder } from '@services/orderStatus';
 
 const STEPS = {
     fa: ['ثبت', 'تکنسین', 'در راه', 'انجام', 'تکمیل'],
@@ -162,8 +163,14 @@ export default function OrderItem({ item, navigation, user }) {
         return null;
     }, [item]);
 
-    const meta = orderStatusMeta(item, t);
-    const isCanceled = Number(item?.status) >= 3;
+    // لغوشده یعنی کد ۳ تا ۶ یا `cancelled_by` از سرور (services/orderStatus):
+    // لیبل «ناموفق» و زیر شماره‌ی سفارش «لغو از سوی ...» — «تغییرات اپ کاربر» بند ۱.
+    const isCanceled = isCancelledOrder(item);
+    const cancelledBy = cancelledByOf(item);
+    const statusMeta = orderStatusMeta(item, t);
+    const meta = isCanceled
+        ? { ...statusMeta, kind: 'danger', label: t('Order failed'), icon: statusMeta.group === 'canceled' ? statusMeta.icon : 'close-circle-outline' }
+        : statusMeta;
     const visit = item?.is_urgent > 0
         ? t('Urgent Request')
         : formatDate(item?.date) + t(' at ') + item?.time?.split(':')?.slice(0, 2)?.join(':');
@@ -202,6 +209,11 @@ export default function OrderItem({ item, navigation, user }) {
                             <Text style={[styles.subtitle, dir.light, dir.align]} numberOfLines={1}>
                                 {t('Order ID: ')}{orderNumber}
                             </Text>
+                            {!!cancelledBy && (
+                                <Text style={[styles.cancelledBy, dir.bold, dir.align]} numberOfLines={1}>
+                                    {t(CANCELLED_BY_LABEL_KEYS[cancelledBy])}
+                                </Text>
+                            )}
                         </View>
                         <Pill label={meta.label} kind={meta.kind} dot />
                     </View>
@@ -341,6 +353,7 @@ const styles = StyleSheet.create({
     headerText: { flex: 1, minWidth: 0, gap: 2 },
     title: { fontSize: 15.5, color: surface.title },
     subtitle: { fontSize: 12, color: surface.faint },
+    cancelledBy: { fontSize: 12, color: palette.danger },
     info: {
         gap: 2,
         borderRadius: radii.md,

@@ -31,7 +31,7 @@ import i18n from 'i18next';
 
 import { elevation, gradients, motion, palette, radii, surface } from '@desktop/desktopTheme';
 import { DButton, formatNumber, useFitColumns } from '@desktop/ui';
-import { groupSummaryLines } from '@desktop/WizardLayout';
+import { groupSummaryLines, isLongSummaryValue } from '@desktop/WizardLayout';
 
 const rtl = () => langIsRTL(i18n.language);
 const dirRow = () => ({ flexDirection: rtl() ? 'row-reverse' : 'row' });
@@ -359,7 +359,14 @@ export const DeviceCountTile = ({ title, image, count, onIncrement, onDecrement,
   );
 };
 
-export const DescriptionInput = ({ value, onChangeText, placeholder = L('توضیحات (اختیاری)'), style }) => {
+export const DescriptionInput = ({
+  value,
+  onChangeText,
+  placeholder = L('توضیحات (اختیاری)'),
+  style,
+  multiline = true,
+  keyboardType,
+}) => {
   const [focused, setFocused] = useState(false);
   return (
     <TextInput
@@ -367,7 +374,8 @@ export const DescriptionInput = ({ value, onChangeText, placeholder = L('توض�
       onChangeText={onChangeText}
       placeholder={placeholder}
       placeholderTextColor={surface.faint}
-      multiline
+      multiline={multiline}
+      keyboardType={keyboardType}
       onFocus={() => setFocused(true)}
       onBlur={() => setFocused(false)}
       style={[k.input, light(), align(), focused && k.inputFocused, style]}
@@ -516,14 +524,18 @@ export const SummaryBox = ({ title, lines }) => {
         <Text style={[k.summaryTitle, bold(), align()]}>{title}</Text>
       </View>
       <View style={[k.summaryGrid, dirRow()]}>
-        {groupSummaryLines(lines, i18n.language !== 'en').map((line, idx) => (
-          <View key={idx} style={[k.summaryLine, dirRow()]}>
-            <Text style={[k.summaryLabel, light(), align()]} numberOfLines={2}>{line.label}</Text>
-            <Text style={[k.summaryValue, bold()]} numberOfLines={3}>
-              {typeof line.value === 'number' ? num(line.value) : line.value}
-            </Text>
-          </View>
-        ))}
+        {groupSummaryLines(lines, i18n.language !== 'en').map((line, idx) => {
+          // the whole text, never cut off; a long one goes under its label, full width
+          const long = isLongSummaryValue(line.value);
+          return (
+            <View key={idx} style={[k.summaryLine, dirRow(), long && k.summaryLineStacked]}>
+              <Text style={[k.summaryLabel, light(), align()]}>{line.label}</Text>
+              <Text style={[k.summaryValue, bold(), long && k.summaryValueStacked, long && align()]}>
+                {typeof line.value === 'number' ? num(line.value) : line.value}
+              </Text>
+            </View>
+          );
+        })}
       </View>
     </View>
   );
@@ -852,7 +864,9 @@ const k = StyleSheet.create({
     borderBottomColor: 'rgba(255,255,255,0.08)',
   },
   summaryLabel: { flex: 1, fontSize: 12.5, color: 'rgba(226, 234, 247, 0.78)' },
-  summaryValue: { flexShrink: 1, maxWidth: '60%', fontSize: 13, color: palette.gold },
+  summaryValue: { flexShrink: 1, maxWidth: '60%', fontSize: 13, color: palette.gold, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' },
+  summaryLineStacked: { width: '100%', flexDirection: 'column', alignItems: 'stretch', gap: 4 },
+  summaryValueStacked: { maxWidth: '100%', lineHeight: 22 },
 
   brand: {
     alignItems: 'center',

@@ -24,16 +24,20 @@ win:
   icon: build/icon.ico
   artifactName: Loop-${version}-win-${arch}.${ext}
 
-# A short, branded setup: Welcome (Loop sidebar) → install folder → progress → Finish
-# (with "Run Loop"). build/installer.nsh skips the per-user / per-machine page.
-# Artwork: build/icon.ico (16–256 px, rounded navy icon), installerSidebar.bmp 164×314,
-# installerHeader.bmp 150×57 — the app icon, a Latin "Loop" wordmark and the desktop wallpaper's planet.
+# A short, branded setup in Persian (right to left): Welcome → install folder → progress →
+# Finish ("Run Loop"), in Loop's own design: build/installer.nsh draws its own welcome,
+# folder and finish pages and dresses NSIS's progress page (pictures in build/installer/
+# from `npm run installer:art`), loads NSIS's Farsi language and skips the per-user page.
+# Artwork: build/icon.ico (16–256 px, rounded navy icon); installerSidebar.bmp 164×314 and
+# installerHeader.bmp 150×57 are left for the uninstaller.
 nsis:
   artifactName: Loop-Setup-${version}.${ext}
   oneClick: false
   perMachine: false
   include: build/installer.nsh
-  allowToChangeInstallationDirectory: true
+  installerLanguages: [fa_IR]
+  language: '1065' # Farsi; installer.nsh maps electron-builder's "Persian" to NSIS's "Farsi"
+  allowToChangeInstallationDirectory: false # installer.nsh has its own folder page
   installerIcon: build/icon.ico
   uninstallerIcon: build/icon.ico
   installerSidebar: build/installerSidebar.bmp

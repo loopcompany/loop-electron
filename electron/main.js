@@ -7,7 +7,7 @@
  */
 const fs = require('fs');
 const path = require('path');
-const { app, BrowserWindow, Menu, screen, shell, session } = require('electron');
+const { app, BrowserWindow, Menu, ipcMain, screen, shell, session } = require('electron');
 
 const { APP_ORIGIN, DEV_URL, isDev, APP_USER_MODEL_ID, getWebRoot } = require('./config');
 const { registerSchemePrivileges, registerAppProtocol } = require('./protocol');
@@ -100,6 +100,16 @@ function onReady() {
     callback(ALLOWED_PERMISSIONS.has(permission));
   });
   session.defaultSession.setPermissionCheckHandler((_wc, permission) => ALLOWED_PERMISSIONS.has(permission));
+
+  // On Windows a page can be left unable to take keyboard focus after a native
+  // confirm()/prompt() closes (inputs look focused, typing does nothing). The
+  // renderer (renderer/desktop/dialogShims.js) asks for a blur/focus round trip.
+  ipcMain.on('loop:refocus', (event) => {
+    if (!mainWindow || event.sender !== mainWindow.webContents) return;
+    mainWindow.blur();
+    mainWindow.focus();
+    event.sender.focus();
+  });
 
   createMainWindow();
 }

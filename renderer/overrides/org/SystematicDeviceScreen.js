@@ -23,7 +23,7 @@
 // دقیقاً یک ظاهر داشته باشند.
 
 import React, { useCallback, useMemo, useState } from 'react';
-import { View, Text, TextInput, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import ScreenHeaders from '@components/ScreenHeaders';
@@ -48,7 +48,7 @@ import {
   TIME_SLOT_OPTIONS,
 } from './deviceCatalog';
 import { getCategory, getFlow, getVisibleFlow } from './systematicFlows';
-import NewStyles from '@styles/NewStyles';
+import { counterLines, procurementLines } from './summaryLines';
 import { themeColor10, colors } from '@theme/Color';
 import { spacing } from '@theme/Spacing';
 import { radius } from '@theme/Radius';
@@ -201,22 +201,11 @@ const SystematicDeviceScreen = ({ navigation, route }) => {
           }
           break;
         case 'procurement':
-          Object.entries(value).forEach(([itemId, entry]) => {
-            if (entry.new > 0) lines.push({ label: `${titleOf(LO(PROCUREMENT_ITEMS), itemId)} / ${L('آکبند')}`, value: entry.new });
-            if (entry.used > 0) lines.push({ label: `${titleOf(LO(PROCUREMENT_ITEMS), itemId)} / ${L('کارکرده')}`, value: entry.used });
-            // دسکتاپ: توضیح هر قلم (مثلاً «ماوس» زیر «لوازم جانبی») هم در خلاصه می‌آید
-            if ((entry.desc || '').trim()) {
-              lines.push({ label: `${titleOf(LO(PROCUREMENT_ITEMS), itemId)} - ${L('توضیحات')}`, value: entry.desc.trim() });
-            }
-          });
+          // تعداد آکبند/کارکرده و توضیح کاربر (مثلاً «ماوس» برای لوازم جانبی).
+          lines.push(...procurementLines(value, LO(PROCUREMENT_ITEMS), L));
           break;
         case 'hardwareCounters':
-          Object.entries(value).forEach(([itemId, entry]) => {
-            if (entry.count > 0) lines.push({ label: titleOf(LO(HARDWARE_ITEMS), itemId), value: entry.count });
-            if ((entry.desc || '').trim()) {
-              lines.push({ label: `${titleOf(LO(HARDWARE_ITEMS), itemId)} - ${L('توضیحات')}`, value: entry.desc.trim() });
-            }
-          });
+          lines.push(...counterLines(value, LO(HARDWARE_ITEMS), L));
           break;
         case 'technician':
           lines.push({ label: L(step.title), value: titleOf(LO(TECHNICIAN_GENDER_OPTIONS), value.gender) });
@@ -376,15 +365,18 @@ const SystematicDeviceScreen = ({ navigation, route }) => {
       case 'fields':
         return (
           <>
+            {/* the kit's input, like the step's other text boxes: its text and
+                background follow the theme (a white NewStyles field showed white,
+                invisible text in the dark theme — model / serial number) */}
             {step.fields.map((field) => (
-              <TextInput
+              <DescriptionInput
                 key={field.id}
+                multiline={false}
                 value={value?.[field.id] || ''}
                 onChangeText={(text) => setAnswer(step.id, { [field.id]: text })}
                 placeholder={L(field.placeholder)}
-                placeholderTextColor={themeColor10.bgColor(0.4)}
                 keyboardType={field.keyboardType}
-                style={[NewStyles.textInput, NewStyles.border10, { marginBottom: spacing.sm }]}
+                style={{ marginBottom: spacing.sm }}
               />
             ))}
           </>

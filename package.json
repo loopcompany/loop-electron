@@ -20,7 +20,8 @@
     "test": "node --test test/*.test.js",
     "dist:win:portable": "npm run build:web && node scripts/dist-win.js zip",
     "check:overrides": "node scripts/check-overrides.js",
-    "overrides:accept": "node scripts/check-overrides.js --accept"
+    "overrides:accept": "node scripts/check-overrides.js --accept",
+    "installer:art": "node scripts/installer-art.js"
   },
   "devDependencies": {
     "concurrently": "^10.0.5",

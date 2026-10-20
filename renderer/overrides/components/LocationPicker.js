@@ -242,7 +242,7 @@ const LocationPicker = ({
             placeholder={t('Search...')}
             placeholderTextColor={surface.faint}
             autoFocus
-            style={[desk.searchInput, NewStyles.text10, dir.align]}
+            style={[NewStyles.text10, desk.searchInput, dir.align]}
           />
         </View>
         {loading ? (

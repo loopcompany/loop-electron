@@ -60,6 +60,13 @@ export function groupSummaryLines(lines, rtl) {
 }
 
 /**
+ * A value too long for the narrow value column (a note, a model and serial
+ * number): it goes under its label, full width and never cut off.
+ */
+export const isLongSummaryValue = (value) =>
+  typeof value === 'string' && (value.length > 26 || value.includes('\n'));
+
+/**
  * The desktop frame for the step-by-step order flows (systematic,
  * comprehensive): the steps as a vertical stepper, the current step in a
  * large card with Previous / Next, and a live summary of the choices so far.
@@ -113,14 +120,26 @@ export default function WizardLayout({ title, subtitle, image, steps, currentId,
     summary.lines.length === 0 ? (
       <Text style={[styles.summaryEmpty, light && styles.onLight, dir.light]}>{copy.summaryEmpty}</Text>
     ) : (
-      groupSummaryLines(summary.lines, dir.rtl).map((line, i) => (
-        <View key={i} style={[styles.summaryLine, light && styles.summaryLineLight, dir.row]}>
-          <Text style={[styles.summaryLabel, light && styles.summaryLabelLight, dir.light, dir.align]}>{line.label}</Text>
-          <Text style={[styles.summaryValue, light && styles.summaryValueLight, dir.bold, { textAlign: dir.rtl ? 'left' : 'right' }]} numberOfLines={4}>
-            {typeof line.value === 'number' ? n(line.value) : String(line.value ?? '')}
-          </Text>
-        </View>
-      ))
+      groupSummaryLines(summary.lines, dir.rtl).map((line, i) => {
+        const value = typeof line.value === 'number' ? n(line.value) : String(line.value ?? '');
+        const long = isLongSummaryValue(value);
+        return (
+          <View key={i} style={[styles.summaryLine, light && styles.summaryLineLight, dir.row, long && styles.summaryLineStacked]}>
+            <Text style={[styles.summaryLabel, light && styles.summaryLabelLight, dir.light, dir.align]}>{line.label}</Text>
+            <Text
+              style={[
+                styles.summaryValue,
+                long && styles.summaryValueStacked,
+                light && styles.summaryValueLight,
+                dir.bold,
+                long ? dir.align : { textAlign: dir.rtl ? 'left' : 'right' },
+              ]}
+            >
+              {value}
+            </Text>
+          </View>
+        );
+      })
     );
 
   return (
@@ -517,7 +536,9 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(255,255,255,0.07)',
   },
   summaryLabel: { flex: 1, color: onDark.soft, fontSize: 12.5, lineHeight: 20 },
-  summaryValue: { maxWidth: '55%', color: palette.gold, fontSize: 12.5, lineHeight: 20 },
+  summaryValue: { maxWidth: '55%', color: palette.gold, fontSize: 12.5, lineHeight: 20, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' },
+  summaryLineStacked: { flexDirection: 'column', alignItems: 'stretch', gap: 4 },
+  summaryValueStacked: { maxWidth: '100%' },
   summaryDialog: { maxHeight: 420 },
   onLight: { color: surface.faint },
   summaryLineLight: { borderBottomColor: surface.border },

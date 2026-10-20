@@ -515,9 +515,9 @@ export const MenuProvider = ({ children }) => {
             // { id: 23, title: t("Submit order"), screen: "FolderScreen" },
             // { id: 12, title: t("Lucky Wheel"), screen: "Club", apple_check: userData?.apple_check, image:`${imageUri}/userfolder/gift.png` },
             // { id: 11, title: t("Think and Play"), screen: "GameMenu" },
-            // { id: 7, title: t("User Account"), screen: "Profile", image:`${imageUri}/userfolder/Profile.png` },
-            
-            
+
+            // «حساب کاربری» - همان کاشیِ اولِ «انتخاب سیستماتیک»، حالا در سایدبار هم.
+            { id: 7, title: t("User Account"), screen: "Profile", image: `${imageUri}/userfolder/Profile.png` },
             { id: 3, title: t("Orders"), screen: "OrdersScreen", image: `${imageUri}/userfolder/Orders.png` },
             { id: 22, title: t("Loop Wallet"), screen: "Wallet", apple_check: userData?.apple_check, image: `${imageUri}/userfolder/Increase.png` },
             { id: 5, title: t("Canceled Orders"), screen: "CanceledOrdersScreen", apple_check: userData?.apple_check, image: `${imageUri}/userfolder/CanceledOrdersScreen.png` },

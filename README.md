@@ -173,3 +173,7 @@ overrideهای فعلی — منطق (درخواست‌ها، state، اعتبا
 ## انتشار ۱٫۱٫۵ — ۱۶ نوامبر ۲۰۲۶
 
 گزینهٔ تکنسین خانم در مسیرهای انتخاب سفارش غیرفعال و با برچسب «به‌زودی» نمایش داده می‌شود. دادهٔ گزینه‌ها و مؤلفهٔ قدیمی Gender از overlay بررسی‌شده می‌آیند و override موجود SelectableOptions قفل گزینه را اعمال می‌کند. هر ۴۸ hash قفل قبلی حفظ شدند. هر چهار نصب‌کننده ساخته و پس از تطبیق SHA256 روی سایت منتشر شدند. پاک‌سازی حساب‌ها و سفارش‌های قبلی روی سرور، طبق درخواست کارفرما، مستقل از نصب ویندوز انجام شده است.
+
+### 1.1.6 — 2026-11-16
+
+Preserve the desktop snapshot translation dictionaries while adding the coming-soon label; all four Windows installers include the disabled female-technician selection.

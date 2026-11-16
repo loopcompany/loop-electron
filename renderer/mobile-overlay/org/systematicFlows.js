@@ -419,13 +419,6 @@ const closingSteps = (afterProcurement = []) => [
     required: true,
   },
   {
-    id: 'address',
-    title: 'آدرس‌های منتخب',
-    hint: 'آدرس محل مراجعه را انتخاب کنید.',
-    type: 'address',
-    required: true,
-  },
-  {
     id: 'order_actions',
     title: 'نمایش / استعلام / ثبت سفارش',
     hint: 'پیش از ثبت نهایی می‌توانید پیش‌رسید را صادر یا مشاهده کنید و در نهایت سفارش را ثبت یا لغو نمایید.',
@@ -930,14 +923,6 @@ export const SYSTEMATIC_FLOWS = {
       columns: 1,
       note: true,
       required: true,
-    },
-    {
-      id: 'device_status',
-      title: 'وضعیت هارد دیسک',
-      hint: 'وضعیت فعلی هارد دیسک را انتخاب کنید.',
-      icon: sectionIcon.equipmentStatus,
-      type: 'options',
-      options: DEVICE_STATUS_OPTIONS,
     },
     ...closingSteps(),
   ],

@@ -33,3 +33,5 @@ const ScreenHeaders = ({
 };
 
 export default ScreenHeaders;
+// Older organization screens import this component by name.
+export { ScreenHeaders };

@@ -42,6 +42,7 @@
     "screens/ViolationReportsListScreen.js",
     "screens/account/AddressScreen.js",
     "screens/category/Preview.js",
+    "screens/category/Steps.js",
     "screens/chat/ChatRoom.js",
     "screens/club/Club.js",
     "screens/club/GemTransactions.js",
@@ -60,6 +61,7 @@
     "services/axiosConfig.js",
     "services/realtime/client.js",
     "services/realtime/events.js",
-    "slices/ordersSlice.js"
+    "slices/ordersSlice.js",
+    "slices/stepSlice.js"
   ]
 }

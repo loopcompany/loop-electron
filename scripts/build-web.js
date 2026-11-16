@@ -22,6 +22,9 @@ const OUT_DIR = path.join(ROOT, 'web-build');
 const check = spawnSync(process.execPath, [path.join(__dirname, 'check-overrides.js')], { stdio: 'inherit' });
 if (check.status !== 0) process.exit(check.status ?? 1);
 
+const imports = spawnSync(process.execPath, [path.join(__dirname, 'check-renderer-imports.js')], { stdio: 'inherit' });
+if (imports.status !== 0) process.exit(imports.status ?? 1);
+
 prepareRenderer();
 fs.rmSync(OUT_DIR, { recursive: true, force: true });
 

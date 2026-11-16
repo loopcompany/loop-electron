@@ -177,3 +177,7 @@ overrideهای فعلی — منطق (درخواست‌ها، state، اعتبا
 ### 1.1.6 — 2026-11-16
 
 Preserve the desktop snapshot translation dictionaries while adding the coming-soon label; all four Windows installers include the disabled female-technician selection.
+
+### 1.1.8 — 2026-11-16
+
+Fix duplicate address/device-status wizard IDs, receipt procurement notes, and stale individual-category steps. Keep existing draft answer keys. Build checks now verify local renderer imports; snapshot extraction publishes atomically for concurrent test/build processes. Android and mobile web are unchanged.

@@ -1,3 +1,4 @@
+import ReferralWalletPanel from '@components/ReferralWalletPanel';
 /**
  * DESKTOP OVERRIDE of loop-customer-mobile/screens/account/Increase.js
  *
@@ -231,6 +232,7 @@ export default function Increase({ navigation, route }) {
             })}
           </View>
         </FormSection>
+        <ReferralWalletPanel />
       </FormPage>
     </View>
   );

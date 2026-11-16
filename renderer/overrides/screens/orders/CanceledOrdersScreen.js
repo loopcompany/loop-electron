@@ -1,3 +1,4 @@
+import useRealtimeRefresh from '@hooks/useRealtimeRefresh';
 /**
  * DESKTOP OVERRIDE of loop-customer-mobile/screens/orders/CanceledOrdersScreen.js
  *
@@ -40,6 +41,7 @@ const COPY = {
 };
 
 function CanceledOrdersScreen({ navigation }) {
+  useRealtimeRefresh(["orders"], () => dispatch(fetchOrders()));
   const { t } = useTranslation();
   const dir = useDir();
   const copy = COPY[dir.rtl ? 'fa' : 'en'];

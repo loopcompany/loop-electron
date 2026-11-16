@@ -1,3 +1,6 @@
+import { OrderReadOnlyContext } from '@contexts/OrderReadOnlyContext';
+import CustomerVisitDecisionCard from '@components/CustomerVisitDecisionCard';
+import useRealtimeRefresh from '@hooks/useRealtimeRefresh';
 /**
  * DESKTOP OVERRIDE of loop-customer-mobile/screens/orders/Details.js
  *
@@ -40,6 +43,9 @@ import OrderLoopSendSection from './OrderLoopSendSection';
 import OrderReturnTimeSection from './OrderReturnTimeSection';
 import { fetchUser } from '@slices/userSlice';
 import { fetchOrders } from '@slices/orderSlice';
+import OrderQuoteCard from '@components/OrderQuoteCard';
+import OrderProcurementDetails from '@components/OrderProcurementDetails';
+import CustomerOrderAttachments from '@components/CustomerOrderAttachments';
 import { payOrderViaGateway, describeWalletError } from '@services/WalletApi';
 import { fetchWalletBalance, payOrderWithWallet, seedBalance, selectWalletBalance } from '@slices/walletSlice';
 import { createStyles } from '@styles/NewStyles';
@@ -68,7 +74,6 @@ const COPY = {
         open: 'فعال',
         locked: 'هنوز فعال نشده',
         services: 'خدمات و انتخاب‌ها',
-        gallery: 'تصاویر',
         costs: 'هزینه‌ی سفارش',
         basePrice: 'هزینه‌ی خدمات',
         discount: 'تخفیف',
@@ -93,7 +98,6 @@ const COPY = {
         open: 'Open',
         locked: 'Not open yet',
         services: 'Services and choices',
-        gallery: 'Photos',
         costs: 'Order cost',
         basePrice: 'Service cost',
         discount: 'Discount',
@@ -163,14 +167,6 @@ function Notice({ dir, kind = 'info', icon, title, children }) {
     );
 }
 
-function Thumb({ uri: src, large }) {
-    return (
-        <Pressable onPress={() => Linking.openURL(src)} style={({ hovered }) => [ds.thumb, large && ds.thumbLarge, hovered && ds.thumbHover]}>
-            <Image source={{ uri: src }} style={ds.thumbImage} resizeMode="cover" />
-        </Pressable>
-    );
-}
-
 function SummaryRow({ dir, label, value, good }) {
     return (
         <View style={[ds.summaryRow, dir.row]}>
@@ -181,6 +177,7 @@ function SummaryRow({ dir, label, value, good }) {
 }
 
 function Details({ route, navigation }) {
+  useRealtimeRefresh(["orders", "wallet", "chat", "chat-counts"], () => { if (orderId && token) return fetchData(true); });
 
     const { t, i18n } = useTranslation();
     const NewStyles = useMemo(
@@ -264,12 +261,12 @@ function Details({ route, navigation }) {
         }
     };
 
-    const fetchData = async () => {
+    const fetchData = async (background = false) => {
         try {
             const response = await axios.post(`${uri}/orders/detail`, { orderId }, { headers: { 'Accept': 'application/json', 'Authorization': `Bearer ${token}`, 'Accept-Language': lang } })
             if (response.status == 200) {
                 setData(response?.data)
-                setIsTechnicianVerified(response?.data?.is_technician_verified);
+                if (!background) setIsTechnicianVerified(response?.data?.is_technician_verified);
             }
         } catch (error) {
             const message = error?.response ? (error?.response?.status ? error?.response?.data?.message : t("An unexpected error occurred!")) : t("Network error!");
@@ -567,6 +564,10 @@ function Details({ route, navigation }) {
             <ScrollView ref={scrollRef} style={dashboardStyles.scroll} contentContainerStyle={dashboardStyles.scrollContent}>
                 <View style={dashboardStyles.page}>
 
+                    <OrderQuoteCard orderId={orderId} order={data} quote={data?.workflow?.current_quote} readOnly={Number(data?.status) >= 2} onChanged={() => setRefreshing(true)} />
+
+                    <CustomerVisitDecisionCard orderId={orderId} workflow={data?.workflow} onChanged={() => setRefreshing(true)} />
+
                     {/* ---------- Header ---------- */}
                     <View style={[ds.hero, dir.row, animate('loop-fade-up', '340ms')]}>
                         <View style={ds.heroStars} pointerEvents="none" />
@@ -635,6 +636,8 @@ function Details({ route, navigation }) {
                     <View style={[dashboardStyles.columns, dir.row]}>
                         {/* ---------- Stages ---------- */}
                         <View style={ds.main}>
+<OrderReadOnlyContext.Provider value={Number(data?.status)===2}>
+{Number(data?.status)===2 && <Notice dir={dir} kind="info">پرونده مختومه است؛ اطلاعات فقط قابل مشاهده‌اند. نظر و امتیاز اختیاری است.</Notice>}
                             <View onLayout={stageLayout('details')}>
                                 <StageCard dir={dir} copy={copy} icon="document-text-outline" title={t("Order details")} active open={showDetails} onPress={() => setShowDetails(!showDetails)}>
                                     <View style={[ds.facts, dir.row]}>
@@ -690,19 +693,17 @@ function Details({ route, navigation }) {
                                         </View>
                                     )}
 
-                                    {(!!data?.image_path || data?.order_galleries?.length > 0) && (
+                                    {data?.procurement_items?.length > 0 && (
                                         <View style={ds.block}>
-                                            <BlockTitle dir={dir} icon="images-outline" title={copy.gallery} />
-                                            <View style={[ds.gallery, dir.row]}>
-                                                {!!data?.image_path && (
-                                                    <Thumb uri={`${imageUri}/${data?.image_path}`} large />
-                                                )}
-                                                {(data?.order_galleries || []).map((item, i) => (
-                                                    <Thumb key={`${item?.image_path}-${i}`} uri={`${imageUri}/${item?.image_path}`} />
-                                                ))}
-                                            </View>
+                                            <OrderProcurementDetails items={data.procurement_items}
+                                                titleStyle={[ds.addressText, dir.bold, dir.align]}
+                                                textStyle={[ds.addressMeta, dir.light, dir.align]} />
                                         </View>
                                     )}
+
+                                    <CustomerOrderAttachments order={data}
+                                        titleStyle={[ds.addressText, dir.bold, dir.align]}
+                                        textStyle={[ds.addressMeta, dir.light, dir.align]} />
 
                                     {/* Where */}
                                     <View style={ds.block}>
@@ -1030,7 +1031,8 @@ function Details({ route, navigation }) {
                                 </StageCard>
                             </View>
 
-                            {/* مرحله ثبت نظر - فعال بعد از تکمیل سفارش (status=2 و finished_at) */}
+                            </OrderReadOnlyContext.Provider>
+{/* مرحله ثبت نظر - فعال بعد از تکمیل سفارش (status=2 و finished_at) */}
                             <View onLayout={stageLayout('rating')}>
                                 <StageCard
                                     dir={dir} copy={copy} icon="star-outline"
@@ -1045,7 +1047,7 @@ function Details({ route, navigation }) {
                                         }
                                     }}
                                 >
-                                    <OrderReviewRatingSection orderId={orderId} technicianId={data?.technician?.id} orderStatus={data?.status} finishedAt={data?.finished_at} />
+                                    <OrderReviewRatingSection orderId={orderId} technicianId={data?.technician?.id} orderStatus={data?.status} finishedAt={data?.finished_at} reviewDismissedAt={data?.review_dismissed_at} />
                                 </StageCard>
                             </View>
                         </View>
@@ -1282,20 +1284,6 @@ const ds = StyleSheet.create({
     quoteLtr: { borderLeftWidth: 3, borderLeftColor: palette.gold },
     quoteText: { fontSize: 13.5, color: surface.text, lineHeight: 24 },
 
-    gallery: { flexWrap: 'wrap', gap: 10 },
-    thumb: {
-        width: 110,
-        height: 110,
-        borderRadius: radii.md,
-        overflow: 'hidden',
-        backgroundColor: surface.sunken,
-        cursor: 'zoom-in',
-        transitionProperty: 'transform, box-shadow',
-        transitionDuration: motion.fast,
-    },
-    thumbLarge: { width: 230 },
-    thumbHover: { transform: 'translateY(-2px)', boxShadow: elevation.raised },
-    thumbImage: { width: '100%', height: '100%' },
 
     address: {
         alignItems: 'flex-start',

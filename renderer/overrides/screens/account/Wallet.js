@@ -1,3 +1,4 @@
+import useRealtimeRefresh from '@hooks/useRealtimeRefresh';
 /**
  * DESKTOP OVERRIDE of loop-customer-mobile/screens/account/Wallet.js
  *
@@ -41,13 +42,13 @@ const QUICK_AMOUNTS = [500000, 1000000, 2000000, 5000000];
 const COPY = {
   fa: {
     cardTitle: 'کیف پول لوپ',
-    balance: 'موجودی قابل استفاده',
-    quickHint: 'یک مبلغ را انتخاب کنید تا به صفحه‌ی پرداخت بروید',
-    custom: 'مبلغ دلخواه',
-    customHint: 'هر مبلغی بین ۱۰ هزار تا ۵۰ میلیون تومان',
-    recentHint: 'آخرین شارژها و پرداخت‌های شما',
-    secure: 'پرداخت امن از طریق درگاه بانکی',
-    member: 'دارنده‌ی حساب',
+    balance: 'موجودی کیف پول',
+    quickHint: 'مبلغ مورد نظر برای افزایش موجودی را انتخاب کنید',
+    custom: 'مبلغ مورد نظر',
+    customHint: 'یکی از مبالغ پیشنهادی را انتخاب کنید یا مبلغ دلخواه خود را وارد کنید',
+    recentHint: 'تاریخچه تراکنش‌های کیف پول',
+    secure: 'پرداخت آنلاین از طریق درگاه درون‌برنامه‌ای',
+    member: 'صاحب حساب کاربری',
   },
   en: {
     cardTitle: 'Loop Wallet',
@@ -62,6 +63,7 @@ const COPY = {
 };
 
 export default function Wallet({ navigation }) {
+  useRealtimeRefresh(["wallet"], () => refresh());
   const { t } = useTranslation();
   const dir = useDir();
   const copy = COPY[dir.rtl ? 'fa' : 'en'];
@@ -187,7 +189,7 @@ export default function Wallet({ navigation }) {
 
             {/* Quick top-up */}
             <Card style={[styles.quickCard, animate('loop-fade-up', '360ms', '80ms')]}>
-              <SectionHeader title={t('Quick recharge')} subtitle={copy.quickHint} icon="flash-outline" />
+              <SectionHeader title={dir.rtl ? 'افزایش موجودی کیف پول' : 'Top up wallet'} subtitle={copy.quickHint} icon="flash-outline" />
               <View style={[styles.quickGrid, dir.row]}>
                 {QUICK_AMOUNTS.map((amount, i) => (
                   <Pressable

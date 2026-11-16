@@ -1,3 +1,4 @@
+import { useOrderReadOnly } from '@contexts/OrderReadOnlyContext';
 /**
  * DESKTOP OVERRIDE of loop-customer-mobile/components/Button.js
  *
@@ -16,7 +17,8 @@ import NewStyles from "@styles/NewStyles";
 import { elevation, gradients, motion } from "@desktop/desktopTheme";
 
 export default function Button({ onPress, title, style, loading, disabled, textStyle }) {
-  const inactive = Boolean(loading || disabled);
+  const orderReadOnly=useOrderReadOnly();
+  const inactive = Boolean(orderReadOnly || loading || disabled);
 
   return (
     <Pressable

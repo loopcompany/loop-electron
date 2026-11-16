@@ -610,12 +610,12 @@ export const IconOptionGrid = ({ options, value, onChange, columns = 3, imageSiz
 };
 
 // چهار عمل پایانی سفارش: یک ردیف دکمه، با «ثبت سفارش» به‌عنوان عمل اصلی.
-export const OrderActionButtons = ({ onIssueReceipt, onShowReceipt, onSubmit, onCancel }) => (
+export const OrderActionButtons = ({ onIssueReceipt, onShowReceipt, onSubmit, onCancel, disabled = false }) => (
   <View style={k.actions}>
     <View style={[k.actionsRow, dirRow()]}>
-      <DButton title={L('ثبت سفارش')} icon="checkmark-done" variant="gold" size="lg" onPress={onSubmit} />
-      <DButton title={L('صدور پیش‌رسید')} icon="document-text-outline" size="lg" onPress={onIssueReceipt} />
-      <DButton title={L('نمایش پیش‌رسید')} icon="eye-outline" variant="outline" size="lg" onPress={onShowReceipt} />
+      <DButton title={L('ثبت سفارش')} icon="checkmark-done" variant="gold" size="lg" onPress={onSubmit} disabled={disabled} />
+      <DButton title={L('صدور پیش‌رسید')} icon="document-text-outline" size="lg" onPress={onIssueReceipt} disabled={disabled} />
+      <DButton title={L('نمایش پیش‌رسید')} icon="eye-outline" variant="outline" size="lg" onPress={onShowReceipt} disabled={disabled} />
       <View style={k.flex} />
       <DButton title={L('لغو سفارش')} icon="close-circle-outline" variant="danger" size="lg" onPress={onCancel} />
     </View>

@@ -11,16 +11,8 @@ const { app, BrowserWindow, Menu, ipcMain, screen, shell, session } = require('e
 
 const { APP_ORIGIN, DEV_URL, isDev, APP_USER_MODEL_ID, getWebRoot } = require('./config');
 const { registerSchemePrivileges, registerAppProtocol } = require('./protocol');
-const { classifyMainNavigation, classifyNewWindow } = require('./routing');
+const { isAppUrl, canUseAppPermission, classifyMainNavigation, classifyNewWindow } = require('./routing');
 const windowState = require('./windowState');
-
-/** Permissions the web app actually uses; everything else is refused (fail closed). */
-const ALLOWED_PERMISSIONS = new Set([
-  'notifications',
-  'geolocation', // map / address picker
-  'clipboard-sanitized-write', // expo-clipboard
-  'fullscreen', // expo-video
-]);
 
 /**
  * Below this the screens stop looking like a desktop app; keep in sync with
@@ -96,10 +88,14 @@ function onReady() {
     registerAppProtocol(webRoot);
   }
 
-  session.defaultSession.setPermissionRequestHandler((_wc, permission, callback) => {
-    callback(ALLOWED_PERMISSIONS.has(permission));
+  session.defaultSession.setPermissionRequestHandler((contents, permission, callback, details) => {
+    const requestingUrl = details?.requestingUrl || (details?.isMainFrame === true ? contents?.getURL() : null);
+    callback(isAppUrl(contents?.getURL(), APP_ORIGINS) &&
+      canUseAppPermission(permission, requestingUrl, APP_ORIGINS));
   });
-  session.defaultSession.setPermissionCheckHandler((_wc, permission) => ALLOWED_PERMISSIONS.has(permission));
+  session.defaultSession.setPermissionCheckHandler((contents, permission, requestingOrigin) =>
+    (!contents || isAppUrl(contents.getURL(), APP_ORIGINS)) &&
+    canUseAppPermission(permission, requestingOrigin, APP_ORIGINS));
 
   // On Windows a page can be left unable to take keyboard focus after a native
   // confirm()/prompt() closes (inputs look focused, typing does nothing). The

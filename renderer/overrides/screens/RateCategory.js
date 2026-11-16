@@ -14,6 +14,7 @@
  * change here, then run `npm run overrides:accept`.
  */
 import React, { useState, useEffect, useMemo } from 'react';
+import useRealtimeRefresh from '@hooks/useRealtimeRefresh';
 import { View, Text, StyleSheet, ScrollView, Pressable, TextInput } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
@@ -67,6 +68,7 @@ const COPY = {
 };
 
 export default function RateCategory() {
+  useRealtimeRefresh(['catalog'], () => fetchLetterRates());
   const { t } = useTranslation();
   const dir = useDir();
   const copy = COPY[dir.rtl ? 'fa' : 'en'];

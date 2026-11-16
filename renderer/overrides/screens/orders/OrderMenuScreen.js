@@ -25,7 +25,7 @@ const AI_ICON = require('@desktop/assets/ai-icon.png');
 const COPY = {
   fa: {
     title: 'از کجا شروع کنیم؟',
-    subtitle: 'یکی از سه کار اصلی را انتخاب کنید.',
+    subtitle: 'نوع درخواست خود را انتخاب کنید',
     service: 'ثبت سفارش خدمات',
     serviceText: 'دستگاه را انتخاب کنید و مرحله‌به‌مرحله سفارش دهید',
     supply: 'تامین کالا / محصول',

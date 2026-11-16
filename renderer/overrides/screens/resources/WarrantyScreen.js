@@ -10,6 +10,7 @@
  * change here, then run `npm run overrides:accept`.
  */
 import React, { useState, useEffect } from 'react';
+import useRealtimeRefresh from '@hooks/useRealtimeRefresh';
 import { View, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import ScreenHeaders from '@components/ScreenHeaders';
@@ -20,6 +21,7 @@ import BlankScreen from '@components/BlankScreen';
 import DocumentPage from '@desktop/DocumentPage';
 
 export default function WarrantyScreen() {
+  useRealtimeRefresh(['catalog'], () => loadFaqs());
   const { t, i18n } = useTranslation();
   const [warranties, setWarranties] = useState([]);
   const [isLoading, setIsLoading] = useState(true);

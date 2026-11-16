@@ -5,6 +5,6 @@
  */
 const path = require('path');
 
-module.exports = path.resolve(
-  process.env.LOOP_MOBILE_DIR || path.join(__dirname, '..', '..', 'loop-customer-mobile')
-);
+module.exports = process.env.LOOP_MOBILE_DIR
+  ? path.resolve(process.env.LOOP_MOBILE_DIR)
+  : require('../scripts/prepare-desktop-source')(path.join(__dirname, '..', '..', 'loop-customer-mobile'));

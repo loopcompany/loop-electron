@@ -1,0 +1,2 @@
+# Reviewed mobile snapshots preserve upstream whitespace for byte-identical release inputs.
+renderer/mobile-overlay/** whitespace=-blank-at-eol,-blank-at-eof

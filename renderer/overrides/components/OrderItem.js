@@ -33,7 +33,7 @@ import { orderStatusMeta } from '@desktop/orderStatus';
 import { CANCELLED_BY_LABEL_KEYS, cancelledByOf, isCancelledOrder } from '@services/orderStatus';
 
 const STEPS = {
-    fa: ['ثبت', 'تکنسین', 'در راه', 'انجام', 'تکمیل'],
+    fa: ['ثبت', 'تکنسین', 'اعزام تکنسین', 'انجام', 'تکمیل'],
     en: ['Placed', 'Technician', 'On the way', 'Working', 'Done'],
 };
 

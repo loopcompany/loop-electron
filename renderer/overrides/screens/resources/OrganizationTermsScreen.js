@@ -1,3 +1,4 @@
+import useRealtimeRefresh from '@hooks/useRealtimeRefresh';
 /**
  * DESKTOP OVERRIDE of loop-customer-mobile/screens/resources/OrganizationTermsScreen.js
  *
@@ -11,8 +12,7 @@
  */
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Linking } from 'react-native';
-import { useSelector } from 'react-redux';
-import { imageUri } from '@services/URL';
+import { termsPdfUrl } from '@services/URL';
 import { useTranslation } from 'react-i18next';
 import ScreenHeaders from '@components/ScreenHeaders';
 import { infoAPI } from '@services/Api';
@@ -23,12 +23,12 @@ import DocumentPage from '@desktop/DocumentPage';
 import { DButton } from '@desktop/ui';
 
 export default function OrganizationTermsScreen() {
+  useRealtimeRefresh(["catalog"], () => loadTerms());
   const { t, i18n } = useTranslation();
   const [terms, setTerms] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [expandedItems, setExpandedItems] = useState({});
-  const pdf = useSelector(state => state.pdf?.data)
 
   useEffect(() => {
     loadFaqs();
@@ -79,7 +79,7 @@ export default function OrganizationTermsScreen() {
             size="lg"
             style={styles.pdf}
             onPress={() => {
-              Linking.openURL(`${imageUri}/${pdf?.organ_term}`)
+              Linking.openURL(termsPdfUrl)
             }}
           />
         }

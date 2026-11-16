@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('path');
 
-const { classifyMainNavigation, classifyNewWindow, resolveWebPath } = require('../electron/routing');
+const { canUseAppPermission, classifyMainNavigation, classifyNewWindow, resolveWebPath } = require('../electron/routing');
 
 const APP = 'app://loop';
 const ctx = { appOrigins: [APP], currentUrl: `${APP}/orders` };
@@ -23,7 +23,16 @@ test('bank redirect back into the app is re-issued with loadURL', () => {
 test('backend PDFs and receipts go to the system browser', () => {
   assert.equal(classifyMainNavigation('https://clpiran.com/storage/contracts/a.pdf', ctx), 'external');
   assert.equal(classifyMainNavigation('https://clpiran.com/reciept/42', ctx), 'external');
+  assert.equal(classifyMainNavigation('https://clpiran.com/assets/guid/loop-service-terms.pdf', ctx), 'external');
   assert.equal(classifyMainNavigation('tel:02191693909', ctx), 'external');
+});
+
+test('desktop permissions are available only to the app origin', () => {
+  assert.equal(canUseAppPermission('geolocation', `${APP}/addresses`, [APP]), true);
+  assert.equal(canUseAppPermission('geolocation', 'https://sep.shaparak.ir/OnlinePG', [APP]), false);
+  assert.equal(canUseAppPermission('notifications', 'app://loop.example/', [APP]), false);
+  assert.equal(canUseAppPermission('fullscreen', undefined, [APP]), false);
+  assert.equal(canUseAppPermission('media', APP, [APP]), false);
 });
 
 test('unknown schemes are denied', () => {

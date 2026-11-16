@@ -1,3 +1,4 @@
+import { useOrderReadOnly } from '@contexts/OrderReadOnlyContext';
 import { Ionicons } from '@expo/vector-icons';
 import { forwardRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -149,6 +150,8 @@ export const TextField = forwardRef(function TextField(
   ref
 ) {
   const dir = useDir();
+  const readOnly = useOrderReadOnly();
+  editable = editable && !readOnly;
   const [focused, setFocused] = useState(false);
   return (
     <View>
@@ -242,6 +245,7 @@ export function SelectField({ icon = 'calendar-outline', value, placeholder, onP
  * @param {number} [props.columns]
  */
 export function ChoiceGroup({ options, value, onChange, multiple, columns = 2, compact }) {
+  const readOnly = useOrderReadOnly();
   const dir = useDir();
   const gap = 10;
   const width = columns === 1 ? '100%' : `calc(${100 / columns}% - ${(gap * (columns - 1)) / columns}px)`;
@@ -258,6 +262,7 @@ export function ChoiceGroup({ options, value, onChange, multiple, columns = 2, c
         return (
           <Pressable
             key={String(opt.value)}
+            disabled={readOnly}
             onPress={() => toggle(opt.value)}
             accessibilityRole={multiple ? 'checkbox' : 'radio'}
             accessibilityState={{ checked: on }}

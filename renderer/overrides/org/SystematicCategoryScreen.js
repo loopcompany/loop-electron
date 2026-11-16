@@ -19,6 +19,7 @@
  * change here, then run `npm run overrides:accept`.
  */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import useRealtimeRefresh from '@hooks/useRealtimeRefresh';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -126,6 +127,8 @@ const COPY = {
 };
 
 const SystematicCategoryScreen = ({ navigation }) => {
+  useRealtimeRefresh(['catalog'], () => loadCategories());
+  useRealtimeRefresh(['orders'], () => token && dispatch(fetchOrders()));
   const { t, i18n } = useTranslation();
   const dir = useDir();
   const copy = COPY[dir.rtl ? 'fa' : 'en'];

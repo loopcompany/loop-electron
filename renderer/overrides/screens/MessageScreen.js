@@ -1,3 +1,4 @@
+import useRealtimeRefresh from '@hooks/useRealtimeRefresh';
 /**
  * DESKTOP OVERRIDE of loop-customer-mobile/screens/MessageScreen.js
  *
@@ -121,6 +122,7 @@ const withSupportNotes = (messages, copy) => {
 };
 
 export default function MessageScreen() {
+  useRealtimeRefresh(["support"], () => fetchMessages());
   const { t } = useTranslation();
   const dir = useDir();
   const copy = COPY[dir.rtl ? 'fa' : 'en'];

@@ -1,3 +1,4 @@
+import useRealtimeRefresh from '@hooks/useRealtimeRefresh';
 /**
  * DESKTOP OVERRIDE of loop-customer-mobile/screens/orders/OrdersScreen.js
  *
@@ -13,7 +14,7 @@
  * When the mobile file changes, `npm run check:overrides` fails: port the
  * change here, then run `npm run overrides:accept`.
  */
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, BackHandler, useWindowDimensions } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { useFocusEffect } from '@react-navigation/native';
@@ -67,6 +68,7 @@ const COPY = {
 };
 
 function OrdersScreen({ navigation }) {
+  useRealtimeRefresh(["orders"], () => dispatch(fetchOrders(filterParams)));
   const homeRoute = useHomeRoute();
   const { t } = useTranslation();
   const dir = useDir();
@@ -89,29 +91,21 @@ function OrdersScreen({ navigation }) {
   const [tempFromDate, setTempFromDate] = useState(null);
   const [tempToDate, setTempToDate] = useState(null);
 
-  useEffect(() => {
-    const params = {};
-    if (fromDate) params.from_date = fromDate;
-    if (toDate) params.to_date = toDate;
-    if (status !== null) params.status = status;
-
-    dispatch(fetchOrders(params));
-  }, [dispatch, fromDate, toDate, status]);
+  const filterParams = useMemo(() => ({
+    ...(fromDate ? { from_date: fromDate } : {}),
+    ...(toDate ? { to_date: toDate } : {}),
+    ...(status !== null ? { status } : {}),
+  }), [fromDate, toDate, status]);
 
   useFocusEffect(
     React.useCallback(() => {
-      dispatch(fetchOrders());
-    }, [dispatch])
+      dispatch(fetchOrders(filterParams));
+    }, [dispatch, filterParams])
   );
 
   const onRefresh = async () => {
     setRefreshing(true);
-    const params = {};
-    if (fromDate) params.from_date = fromDate;
-    if (toDate) params.to_date = toDate;
-    if (status !== null) params.status = status;
-
-    await dispatch(fetchOrders(params));
+    await dispatch(fetchOrders(filterParams));
     setRefreshing(false);
   };
 
@@ -396,7 +390,7 @@ const styles = StyleSheet.create({
   dateButtonActive: { borderColor: 'rgba(29, 95, 174, 0.4)', backgroundColor: 'rgba(29, 95, 174, 0.05)' },
   dateCaption: { fontSize: 10.5, color: surface.faint, lineHeight: 14 },
   dateValue: { fontSize: 12.5, color: surface.title, lineHeight: 18 },
-  count: { fontSize: 12.5, color: surface.faint, paddingHorizontal: 4 },
+  count: { fontSize: 14, fontWeight: '700', color: '#eaf2ff', backgroundColor: '#10213d', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 },
 
   grid: { flexWrap: 'wrap', gap: 16, alignItems: 'stretch' },
   cell: { display: 'flex' },

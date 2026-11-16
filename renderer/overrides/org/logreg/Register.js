@@ -19,12 +19,13 @@
  */
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform } from 'react-native';
+import { Linking, Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import axios from 'axios';
 import DatePickerModal from '@components/DatePickerModal';
 import LocationPicker from '@components/LocationPicker';
-import { uri } from '@services/URL';
+import { uri, termsPdfUrl } from '@services/URL';
+import Button from '@components/Button';
 import { jalaliToGregorian } from '@helpers/Common';
 import { useSelector } from 'react-redux';
 import { restartOtpRetriever, stopOtpRetriever } from '@screens/auth/OtpRetriever';
@@ -744,6 +745,7 @@ const Register = ({ navigation }) => {
           <CheckRow checked={acceptTerms} onChange={bind(setAcceptTerms, 'acceptTerms')} invalid={!!errors.acceptTerms}>
             {t("By continuing, I accept Loop's Terms of Use and Privacy Policy.")}
           </CheckRow>
+          <Button title={t("Terms of use PDF")} onPress={() => Linking.openURL(termsPdfUrl)} />
         </AuthField>
       </AuthSection>
 

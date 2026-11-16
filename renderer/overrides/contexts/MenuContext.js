@@ -1,3 +1,4 @@
+import PendingOrganizationAgreementNotice from '@components/PendingOrganizationAgreementNotice';
 /**
  * DESKTOP OVERRIDE of loop-customer-mobile/contexts/MenuContext.js
  *
@@ -64,6 +65,7 @@ import useResponsive from '@desktop/useResponsive';
 import DesktopSidebar from '@desktop/DesktopSidebar';
 import { authFormWidth, authWideFormWidth, contentGutter, contentMaxWidth, contentTopGap, documentWidth, narrowContentWidth } from '@desktop/Breakpoints';
 import { screenLayoutFor } from '@desktop/screenLayouts';
+import PendingOrderQuoteNotice from '@components/PendingOrderQuoteNotice';
 import DesktopTitleBar, { hasCustomTitleBar } from '@desktop/DesktopTitleBar';
 import DesktopAuthPanel, { AuthCardBar } from '@desktop/DesktopAuthPanel';
 import { CosmicBackdrop } from '@desktop/EntryLayout';
@@ -522,11 +524,11 @@ export const MenuProvider = ({ children }) => {
             { id: 22, title: t("Loop Wallet"), screen: "Wallet", apple_check: userData?.apple_check, image: `${imageUri}/userfolder/Increase.png` },
             { id: 5, title: t("Canceled Orders"), screen: "CanceledOrdersScreen", apple_check: userData?.apple_check, image: `${imageUri}/userfolder/CanceledOrdersScreen.png` },
             { id: 6, title: t("Messages"), screen: "MessageScreen", image: `${imageUri}/userfolder/MessageScreen.png` },
-            { id: 8, title: t("Contract"), screen: "OrganizationContract", organizationOnly: true, image: `${imageUri}/userfolder/OrganizationContract.png` },
+            { id: 8, title: "سوابق توافق‌نامه‌ها", screen: "OrganizationContract", organizationOnly: true, image: `${imageUri}/userfolder/OrganizationContract.png` },
             { id: 9, title: t("Selected Addresses"), screen: "AddressScreen", image: `${imageUri}/userfolder/AddressScreen.png` },
             { id: 10, title: t("Training Course Registration"), screen: "TrainingRegistrationScreen", image: `${imageUri}/userfolder/TrainingRegistrationScreen.png` },
             { id: 23, title: t("Promotional codes"), screen: "UserDiscounts", apple_check: userData?.apple_check, image: `${imageUri}/userfolder/Club.png` },
-            { id: 13, title: i18n.language === 'en' ? 'Order / Product Issue Report' : 'گزارش ایرادات سفارش / محصول', screen: "ProductIssueScreen", apple_check: userData?.apple_check, image: `${imageUri}/userfolder/ProductIssueScreen.png` },
+            { id: 13, title: i18n.language === 'en' ? 'Order / Product Issue Report' : 'درخواست رسیدگی به سفارش‌های انجام‌شده', screen: "ProductIssueScreen", apple_check: userData?.apple_check, image: `${imageUri}/userfolder/ProductIssueScreen.png` },
             { id: 14, title: t("Rate List"), screen: "RateCategory", apple_check: userData?.apple_check, image: `${imageUri}/userfolder/RateCategory.png` },
             { id: 15, title: t("Report/Track Violation"), screen: "ViolationReportScreen", apple_check: userData?.apple_check, image: `${imageUri}/userfolder/ViolationReportScreen.png` },
             // id 16 «نظرسنجی / عملکرد» (FeedbackSurveyScreen) is left out on the desktop: the
@@ -802,7 +804,9 @@ export const MenuProvider = ({ children }) => {
 
     return (
         <MenuContext.Provider value={contextValue}>
+            <PendingOrganizationAgreementNotice navigation={navigation} />
             <SafeAreaView edges={{ top: 'off', bottom: 'additive' }} style={{ flex: 1 }}>
+                <PendingOrderQuoteNotice navigation={navigation} />
                 {hasCustomTitleBar() && (
                     <DesktopTitleBar
                         appName="Loop"
@@ -1189,8 +1193,8 @@ const createLocalStyles = (NewStyles, language) => StyleSheet.create({
         transitionProperty: 'background-color',
         transitionDuration: motion.fast,
     },
-    floatingMusicLeft: { left: 18 },
-    floatingMusicRight: { right: 18 },
+    floatingMusicLeft: { left: 118 },
+    floatingMusicRight: { right: 118 },
     // کارت صفحه: روی نوار ستاره‌ای می‌نشیند و پهنایش به نوع صفحه بستگی دارد
     frameCard: {
         alignSelf: 'center',

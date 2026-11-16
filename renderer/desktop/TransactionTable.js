@@ -126,7 +126,7 @@ export default function TransactionTable({ items, loading, skeletonRows = 4, emp
                   {[
                     typeLabel(item?.type),
                     item?.order_id ? `#${item.order_id}` : null,
-                    detailed ? describePayment(item)?.label : null,
+                    detailed ? describePayment(item)?.label?.replace(/از طریق درگاه(?! درون)/, 'از طریق درگاه درون‌برنامه‌ای') : null,
                     detailed && item?.referenceId ? `${t('Tracking Number:')} ${item.referenceId}` : null,
                   ].filter(Boolean).join('  ·  ')}
                 </Text>

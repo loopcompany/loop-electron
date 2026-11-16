@@ -265,13 +265,6 @@ export default function Landing({ navigation }) {
   }, [isPlaying, player]);
 
 
-  useEffect(() => {
-    if (Platform.OS === 'web' && !isPlaying && player) {
-      player.play();
-
-
-    }
-  }, [player, isPlaying])
 
   return (
     <View style={styles.root}>

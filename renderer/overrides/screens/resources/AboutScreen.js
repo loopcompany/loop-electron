@@ -1,3 +1,4 @@
+import useRealtimeRefresh from '@hooks/useRealtimeRefresh';
 /**
  * DESKTOP OVERRIDE of loop-customer-mobile/screens/resources/AboutScreen.js
  *
@@ -10,16 +11,19 @@
  * change here, then run `npm run overrides:accept`.
  */
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Linking } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import ScreenHeaders from '@components/ScreenHeaders';
 import { infoAPI } from '@services/Api';
 import { showToastOrAlert } from '@helpers/Common';
 import BlankScreen from '@components/BlankScreen';
+import Button from '@components/Button';
+import { termsPdfUrl } from '@services/URL';
 
 import DocumentPage from '@desktop/DocumentPage';
 
 export default function AboutScreen() {
+  useRealtimeRefresh(["catalog"], () => loadFaqs());
   const { t, i18n } = useTranslation();
   const [terms, setTerms] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -67,6 +71,7 @@ export default function AboutScreen() {
         refreshing={isRefreshing}
         onRefresh={() => setIsRefreshing(true)}
         empty={<BlankScreen />}
+        footer={<Button title={t("Terms of use PDF")} onPress={() => Linking.openURL(termsPdfUrl)} />}
       />
     </View>
   );

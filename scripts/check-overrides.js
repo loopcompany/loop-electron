@@ -21,8 +21,8 @@ const { ROOT, RENDERER_DIR, MOBILE_DIR, assertMobileDir } = require('./paths');
 const LOCK_FILE = path.join(ROOT, 'overrides.lock.json');
 const OVERRIDES_DIR = path.join(RENDERER_DIR, 'overrides');
 
-function sha256(file) {
-  return crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+function sha256(content) {
+  return crypto.createHash('sha256').update(content).digest('hex');
 }
 
 function listOverrides(dir = OVERRIDES_DIR) {
@@ -50,9 +50,12 @@ for (const rel of listOverrides()) {
     problems.push(`${rel}: no longer exists in the mobile project — remove or re-target the override.`);
     continue;
   }
-  const hash = sha256(original);
+  const source = fs.readFileSync(original, 'utf8');
+  const normalized = source.replace(/\r\n/g, '\n');
+  const hash = sha256(normalized);
   nextLock[rel] = hash;
-  if (!accept && lock[rel] !== hash) {
+  // Read both legacy checkout formats while writing normalized hashes on accept.
+  if (!accept && lock[rel] !== hash && lock[rel] !== sha256(normalized.replace(/\n/g, '\r\n'))) {
     problems.push(
       `${rel}: the mobile file changed since the override was written.\n` +
         `    see: git -C "${MOBILE_DIR}" log -p -- ${rel}\n` +

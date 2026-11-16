@@ -27,8 +27,8 @@ import { useTranslation } from 'react-i18next';
 import ScreenHeaders from '@components/ScreenHeaders';
 import SchedulePicker from '@components/SchedulePicker';
 import SavedAddressPicker from '@components/SavedAddressPicker';
-import { showToastOrAlert } from '@helpers/Common';
-import { TIME_SLOT_OPTIONS } from './deviceCatalog';
+import { TECHNICIAN_GENDER_OPTIONS, TIME_SLOT_OPTIONS } from './deviceCatalog';
+import { SelectableOptions } from '@components/OrgSelectionKit';
 import { L, LO } from './orgI18n';
 
 import { DButton, formatNumber, useDir } from '@desktop/ui';
@@ -132,11 +132,12 @@ const HardwareSelectionScreen = ({ navigation }) => {
   const [description, setDescription] = useState('');
   const [quantities, setQuantities] = useState({
     'کارکرده': 0,
-    'اکبند': 2
+    'اکبند': 0
   });
   const [deliveryDate, setDeliveryDate] = useState('');
   const [timeSlot, setTimeSlot] = useState(null);
   const [addressId, setAddressId] = useState(null);
+  const [technicianGender, setTechnicianGender] = useState(null);
 
   const categories = [
     'لپ تاپ',
@@ -157,20 +158,22 @@ const HardwareSelectionScreen = ({ navigation }) => {
 
   const total = Object.values(quantities).reduce((sum, n) => sum + n, 0);
 
+  const canProceed = total > 0 && Boolean(deliveryDate && timeSlot && addressId && technicianGender);
+
   const submitOrder = () => {
-    const missing =
-      (total <= 0 && copy.needQuantity) ||
-      ((!deliveryDate || !timeSlot) && copy.needSchedule) ||
-      (addressId == null && copy.needAddress);
-    if (missing) {
-      showToastOrAlert(missing);
-      return;
-    }
+    if (!canProceed) return;
     navigation.navigate('OrderSummaryScreen', {
       source: 'hardware',
       categoryId: 3,
       schedule: { date: deliveryDate, slot: timeSlot },
       addressId,
+      technicianGender,
+      procurementSelection: {
+        title: selectedCategory,
+        new_count: quantities['اکبند'],
+        used_count: quantities['کارکرده'],
+        description: description.trim() || undefined,
+      },
       orderTitle: `سفارش خدمات سخت‌افزاری - ${selectedCategory}`,
       summaryLines: [
         { label: 'دسته‌بندی', value: selectedCategory },
@@ -205,7 +208,7 @@ const HardwareSelectionScreen = ({ navigation }) => {
         actions={
           <>
             <DButton title={copy.cancel} icon="close" variant="outline" size="lg" onPress={cancelOrder} />
-            <DButton title={copy.submit} iconAfter={dir.rtl ? 'arrow-back' : 'arrow-forward'} variant="gold" size="lg" onPress={submitOrder} />
+            <DButton title={copy.submit} iconAfter={dir.rtl ? 'arrow-back' : 'arrow-forward'} variant="gold" size="lg" onPress={submitOrder} disabled={!canProceed} />
           </>
         }
         aside={
@@ -274,7 +277,11 @@ const HardwareSelectionScreen = ({ navigation }) => {
           />
         </FormSection>
 
-        <FormSection index={4} icon="location-outline" title={copy.address} subtitle={copy.addressHint}>
+        <FormSection index={4} icon="person-outline" title={L('انتخاب تکنسین')}>
+          <SelectableOptions options={LO(TECHNICIAN_GENDER_OPTIONS)} value={technicianGender} onChange={setTechnicianGender} />
+        </FormSection>
+
+        <FormSection index={5} icon="location-outline" title={copy.address} subtitle={copy.addressHint}>
           <SavedAddressPicker value={addressId} onChange={(id) => setAddressId(id ?? null)} navigation={navigation} />
         </FormSection>
       </FormPage>

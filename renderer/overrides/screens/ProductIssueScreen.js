@@ -33,21 +33,21 @@ import { palette, radii, tone } from '@desktop/desktopTheme';
 
 const COPY = {
   fa: {
-    title: 'گزارش ایرادات سفارش / محصول',
+    title: 'درخواست رسیدگی به سفارش‌های انجام‌شده',
     subtitle: 'لطفاً ایراد یا مغایرت مشاهده‌شده در سفارش یا محصول را شرح دهید تا موضوع بررسی و پیگیری شود.',
-    submitted: 'گزارش ایرادات سفارش / محصول با موفقیت ثبت شد',
-    submitError: 'خطا در ثبت گزارش ایرادات سفارش / محصول',
+    submitted: 'درخواست رسیدگی به سفارش‌های انجام‌شده با موفقیت ثبت شد',
+    submitError: 'خطا در ثبت درخواست رسیدگی به سفارش‌های انجام‌شده',
     find: 'انتخاب سفارش',
     findHint: 'شماره‌ی سفارش را جستجو کنید یا از فهرست سفارش‌هایتان انتخاب کنید',
     selected: (id) => `سفارش #${id} انتخاب شد — اطلاعاتش در بخش بعد پر شده است.`,
     info: 'اطلاعات سفارش',
-    infoHint: 'از سفارش انتخاب‌شده پر می‌شود',
+    infoHint: 'اطلاعات سفارش به صورت خودکار درج می‌شود',
     problem: 'شرح ایراد',
-    problemHint: 'لطفاً شرح ایراد را حداقل در ۱۰ نویسه و با جزئیات کامل وارد کنید تا درخواست شما سریع‌تر بررسی شود.',
+    problemHint: 'لطفاً شرح موضوع را با جزئیات کافی و حداقل ۱۰ نویسه وارد کنید.',
     toman: 'تومان',
     actionsHint: 'پس از ثبت، نتیجه‌ی بررسی از طریق پیام‌ها به شما اطلاع داده می‌شود.',
     steps: 'مراحل رسیدگی',
-    stepItems: ['سفارش مربوط را پیدا کنید', 'ایراد را با جزئیات شرح دهید', 'کارشناس لوپ بررسی و با شما تماس می‌گیرد'],
+    stepItems: ['سفارش مربوط را پیدا کنید', 'شرح درخواست رسیدگی', 'کارشناس مربوطه جهت پیگیری درخواست با شما در ارتباط خواهد بود'],
     help: 'نیاز به راهنمایی دارید؟',
     helpText: 'تیم پشتیبانی در ساعات کاری پاسخ‌گوی شماست.',
     helpButton: 'پیام به پشتیبانی',
@@ -297,10 +297,10 @@ export default function ProductIssueScreen({ navigation }) {
 
         <FormSection index={1} icon="document-text-outline" title={copy.info} subtitle={copy.infoHint}>
           <FieldGrid>
-            <Field label={t('Product / Service Name')} full>
+            <Field label={t('Order subject')} full>
               <TextField
                 icon="cube-outline"
-                placeholder={t('Product / Service Name')}
+                placeholder={t('Order subject')}
                 editable={Boolean(selectedOrder) && !nameAutoFilled}
                 value={form.name}
                 onChangeText={(text) => handleChange('name', text)}
@@ -329,12 +329,12 @@ export default function ProductIssueScreen({ navigation }) {
         </FormSection>
 
         <FormSection index={2} icon="alert-circle-outline" title={copy.problem} subtitle={copy.problemHint}>
-          <Field label={t('Description')} required full>
+          <Field label={t('Issue subject details')} required full>
             <TextField
               icon="create-outline"
               multiline
               rows={6}
-              placeholder={t('Description')}
+              placeholder={t('Issue subject details')}
               value={form.desc}
               onChangeText={(text) => handleChange('desc', text)}
             />

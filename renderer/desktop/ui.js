@@ -1,3 +1,4 @@
+import { useOrderReadOnly } from '@contexts/OrderReadOnlyContext';
 /**
  * Small building blocks for everything the desktop bundle draws itself:
  * buttons, cards, status pills, section headings, empty and loading states.
@@ -109,7 +110,8 @@ export function DButton({
   const v = BUTTON_VARIANTS[variant] || BUTTON_VARIANTS.primary;
   const height = size === 'sm' ? 34 : size === 'lg' ? 50 : 42;
   const fontSize = size === 'sm' ? 12.5 : size === 'lg' ? 15 : 13.5;
-  const inactive = disabled || loading;
+  const readOnly = useOrderReadOnly();
+  const inactive = disabled || loading || readOnly;
   return (
     <Pressable
       onPress={onPress}

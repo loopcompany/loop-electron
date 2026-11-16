@@ -13,15 +13,14 @@
  * When the mobile file changes, `npm run check:overrides` fails: port the
  * change here, then run `npm run overrides:accept`.
  */
-import React, { useReducer, useEffect, useCallback } from "react";
+import React, { useReducer, useCallback } from "react";
 import { Linking } from "react-native";
 import { authAPI } from "@services/Api";
 import { showToastOrAlert } from "@helpers/Common";
 import { useTranslation } from "react-i18next";
 import { restartOtpRetriever, stopOtpRetriever } from "./OtpRetriever";
-import { useSelector, useDispatch } from "react-redux";
-import { fetchPdfDocs } from "@slices/pdfDocumentSlice";
-import { imageUri } from "@services/URL";
+import { useSelector } from "react-redux";
+import { termsPdfUrl } from "@services/URL";
 
 import {
     AccountSwitch,
@@ -119,35 +118,20 @@ const formReducer = (state, action) => {
 
 export default function MainSignIn({ navigation }) {
     const [state, dispatch] = useReducer(formReducer, initialState);
-    const storeDispatch = useDispatch();
     const hashApp = useSelector(state => state.hashApp?.hash)
-    // `pdf.user` is the customer-app terms & conditions PDF (see slices/pdfDocumentSlice.js)
-    const termsPdfPath = useSelector(state => state.pdf?.data?.user)
 
     const inviteLetter = 'L'; // Static invite letter
     const { t, i18n } = useTranslation();
     const copy = COPY[i18n.language === 'fa' ? 'fa' : 'en'];
 
-    // The PDF list is normally fetched on Landing; refetch when this screen is
-    // opened directly by URL (web) so the terms link still resolves.
-    useEffect(() => {
-        if (!termsPdfPath) {
-            storeDispatch(fetchPdfDocs());
-        }
-    }, [termsPdfPath, storeDispatch]);
-
     const openTermsPdf = useCallback(async () => {
-        if (!termsPdfPath) {
-            showToastOrAlert(t('Terms and conditions file is not available.'));
-            return;
-        }
         try {
-            await Linking.openURL(`${imageUri}/${termsPdfPath}`);
+            await Linking.openURL(termsPdfUrl);
         } catch (error) {
             console.warn('Unable to open terms PDF:', error);
             showToastOrAlert(t('Terms and conditions file is not available.'));
         }
-    }, [termsPdfPath, t]);
+    }, [t]);
 
     // Form validation
     const validateForm = () => {

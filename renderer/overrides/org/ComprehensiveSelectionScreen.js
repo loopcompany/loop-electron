@@ -1,3 +1,4 @@
+import OrganizationAgreementPanel from '@components/OrganizationAgreementPanel';
 /**
  * DESKTOP OVERRIDE of loop-customer-mobile/org/ComprehensiveSelectionScreen.js
  *
@@ -46,10 +47,11 @@ import {
   SOFTWARE_ITEMS,
   TECHNICIAN_GENDER_OPTIONS,
   TIME_SLOT_OPTIONS,
+  hasDescriptionWithoutQuantity,
 } from './deviceCatalog';
 import { showAlert, showToastOrAlert, validateMelicode, validatePhone } from '@helpers/Common';
 import { L, LO } from './orgI18n';
-import { counterLines, procurementLines } from './summaryLines';
+import { counterLines, procurementLines } from '@org/summaryLines';
 import { RECEIPT_STATE, receiptFromComprehensive } from '@services/receipt';
 import useReceiptSources from '@hooks/useReceiptSources';
 
@@ -172,7 +174,6 @@ const SECTIONS = [
     id: 'address',
     title: 'آدرس‌های منتخب',
     hint: 'آدرس محل ارائه خدمت را از آدرس‌های ذخیره‌شده انتخاب کنید یا از همین‌جا آدرس جدیدی اضافه کنید.',
-    icon: require('@assets/icons/sections/address.png'),
   },
 ];
 
@@ -277,7 +278,7 @@ const ComprehensiveSelectionScreen = ({ navigation, route }) => {
 
   const restoreDraft = (saved) => {
     if (!saved || typeof saved !== 'object') return;
-    if (Array.isArray(saved.deliveryMode)) setDeliveryMode(saved.deliveryMode);
+    if (Array.isArray(saved.deliveryMode)) setDeliveryMode(saved.deliveryMode.slice(-1));
     if (saved.deviceCounts) setDeviceCounts(saved.deviceCounts);
     if (saved.osCounts) setOsCounts(saved.osCounts);
     if (saved.softwareDeviceCounts) setSoftwareDeviceCounts(saved.softwareDeviceCounts);
@@ -307,7 +308,18 @@ const ComprehensiveSelectionScreen = ({ navigation, route }) => {
   });
 
   // روی دسکتاپ همیشه یک بخش باز است (مرحله‌ی جاری ویزارد)
-  const selectSection = (id) => setExpanded(id);
+  const selectSection = (id) => {
+    const itemsBySection = {
+      software_services: softwareItems,
+      hardware_services: hardwareItems,
+      procurement: procurementItems,
+    };
+    if (id !== expanded && hasDescriptionWithoutQuantity(itemsBySection[expanded])) {
+      showToastOrAlert(L('برای موارد دارای توضیحات، تعداد را وارد کنید.'));
+      return;
+    }
+    setExpanded(id);
+  };
 
   const changeDeviceCount = (id, delta) =>
     setDeviceCounts((prev) => ({ ...prev, [id]: Math.max(0, (prev[id] || 0) + delta) }));
@@ -335,7 +347,7 @@ const ComprehensiveSelectionScreen = ({ navigation, route }) => {
 
   // «بازه زمانی/رزرو» شرطیه: اگر «کوتاه‌مدت/یکبار» جزو حالت‌های انتخاب‌شده باشد
   // (نحوه ارائه خدمات چندانتخابی است)، فقط تاریخ+ساعت نمایش داده می‌شود.
-  const isOnceShort = deliveryMode.includes('once_short');
+  const isOnceShort = deliveryMode.length === 1 && deliveryMode.includes('once_short');
 
   const handleUploadLetter = async () => {
     try {
@@ -403,7 +415,18 @@ const ComprehensiveSelectionScreen = ({ navigation, route }) => {
     [procurementItems]
   );
 
+  const hasMissingQuantity = hasDescriptionWithoutQuantity(softwareItems) ||
+    hasDescriptionWithoutQuantity(hardwareItems) || hasDescriptionWithoutQuantity(procurementItems);
+
+  const hasService = softwareSummaryLines.length > 0 || hardwareSummaryLines.length > 0;
+  const supplyOnly = !hasService && procurementSummaryLines.length > 0;
+  const canProceed = !hasMissingQuantity && deliveryMode.length > 0 &&
+    (hasService || supplyOnly) && (supplyOnly || equipmentStatus.length > 0) &&
+    Boolean(serviceLevel && (isOnceShort ? onceDate : startDate) && timeSlot && addressId && technicianGender) &&
+    (isOnceShort || Boolean(letterFile && (supplyOnly || criticalInfra) && !getOperatorInfoError()));
+
   const handleOrderAction = (action) => {
+    if (action !== 'cancel_order' && !canProceed) return;
     // «انتخاب جامع» روی سرور ثبت نمی‌شود؛ رسید از همین state ساخته می‌شود.
     // این مسیر برند/مدل نمی‌پرسد، پس رسیدش «مشخصات محصول» ندارد.
     const preReceipt = () =>
@@ -441,19 +464,6 @@ const ComprehensiveSelectionScreen = ({ navigation, route }) => {
       return;
     }
     if (action === 'submit_order') {
-      if (addressId == null) {
-        showToastOrAlert(`${L('آدرس‌های منتخب')} — ${L('لطفاً این مرحله را تکمیل کنید')}`);
-        setExpanded('address');
-        requestScrollTo('address');
-        return;
-      }
-      const operatorError = getOperatorInfoError();
-      if (operatorError) {
-        showToastOrAlert(operatorError);
-        setExpanded('operator_info');
-        requestScrollTo('operator_info');
-        return;
-      }
       navigation.navigate('OrderSummaryScreen', {
         source: 'comprehensive',
         // «جامع سازمانی» در بک‌اند category_id ثابت ۳ دارد (طبق ORGANIZATION_ORDER_API.md)،
@@ -469,6 +479,10 @@ const ComprehensiveSelectionScreen = ({ navigation, route }) => {
         schedule: { date: isOnceShort ? onceDate : startDate, slot: timeSlot },
         contact: { fullName: operatorInfo.fullName, mobile: operatorInfo.mobile },
         addressId,
+        technicianGender,
+        deliveryMode,
+        procurementItems,
+        letterFile,
         draftId,
         // پس از ثبت نهایی، OrderSummaryScreen همین رسید را با شماره‌ی سفارش
         // تکمیل و نمایش می‌دهد.
@@ -501,7 +515,7 @@ const ComprehensiveSelectionScreen = ({ navigation, route }) => {
     letter_upload: Boolean(letterFile),
     order_actions: false,
   };
-  const required = { address: true, operator_info: true };
+  const required = { address: true, operator_info: !isOnceShort };
 
   // همان ترتیب JSX موبایل: «آدرس‌های منتخب» درست بعد از «بازه زمانی / رزرو»
   const ORDER = [
@@ -534,7 +548,7 @@ const ComprehensiveSelectionScreen = ({ navigation, route }) => {
   const renderBody = (id) => {
     switch (id) {
       case 'delivery_mode':
-        return <SelectableOptions options={LO(DELIVERY_MODE_OPTIONS)} value={deliveryMode} onChange={setDeliveryMode} multi columns={2} />;
+        return <SelectableOptions options={LO(DELIVERY_MODE_OPTIONS)} value={deliveryMode.at(-1) ?? null} onChange={(mode) => setDeliveryMode(mode ? [mode] : [])} columns={2} />;
 
       case 'software_services':
         return (
@@ -775,6 +789,8 @@ const ComprehensiveSelectionScreen = ({ navigation, route }) => {
 
       case 'letter_upload':
         return (
+          <>
+          <OrganizationAgreementPanel deliveryModes={deliveryMode} navigation={navigation} />
           <Pressable
             onPress={handleUploadLetter}
             disabled={uploading}
@@ -791,12 +807,14 @@ const ComprehensiveSelectionScreen = ({ navigation, route }) => {
             <Text style={[styles.dropTitle, dir.bold]}>{letterFile ? letterFile.name : L('بارگزاری نامه (اختیاری)')}</Text>
             <Text style={[styles.dropHint, dir.light]}>PDF / JPG / PNG</Text>
           </Pressable>
+          </>
         );
 
       case 'order_actions':
         return (
           <>
             <OrderActionButtons
+              disabled={!canProceed}
               onIssueReceipt={() => handleOrderAction('issue_receipt')}
               onShowReceipt={() => handleOrderAction('show_receipt')}
               onSubmit={() => handleOrderAction('submit_order')}

@@ -17,9 +17,11 @@ const path = require('path');
 const EXTERNAL_IN_MAIN_WINDOW = [
   /^https?:\/\/(www\.)?clpiran\.com\/storage\//i,
   /^https?:\/\/(www\.)?clpiran\.com\/reciept\//i,
+  /^https?:\/\/(www\.)?clpiran\.com\/assets\/guid\/loop-service-terms\.pdf(?:[?#]|$)/i,
 ];
 
 const EXTERNAL_PROTOCOLS = new Set(['http:', 'https:', 'mailto:', 'tel:']);
+const APP_PERMISSIONS = new Set(['notifications', 'geolocation', 'clipboard-sanitized-write', 'fullscreen']);
 
 function parse(url) {
   try {
@@ -40,6 +42,10 @@ function originOf(parsed) {
 function isAppUrl(url, appOrigins) {
   const parsed = parse(url);
   return !!parsed && appOrigins.includes(originOf(parsed));
+}
+
+function canUseAppPermission(permission, requestingUrl, appOrigins) {
+  return APP_PERMISSIONS.has(permission) && isAppUrl(requestingUrl, appOrigins);
 }
 
 /**
@@ -107,6 +113,7 @@ function resolveWebPath(webRoot, pathname) {
 
 module.exports = {
   isAppUrl,
+  canUseAppPermission,
   classifyMainNavigation,
   classifyNewWindow,
   resolveWebPath,

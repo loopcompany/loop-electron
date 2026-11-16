@@ -5,7 +5,6 @@ import { View, Text, TextInput, TouchableOpacity, Image, ImageBackground, Scroll
 import { useTranslation } from 'react-i18next';
 import HintBadge from '@components/HintBadge';
 import { createDirectionalStyles } from '@styles/directionalStyles';
-import FooterSpacer from '@components/FooterSpacer';
 
 export default function TechnicianBookingScreen({navigation}) {
   const { t, i18n } = useTranslation();
@@ -62,13 +61,16 @@ export default function TechnicianBookingScreen({navigation}) {
           {genders.map((g) => (
             <TouchableOpacity
               key={g}
+              disabled={g === 'Female'}
+              accessibilityState={{ disabled: g === 'Female' }}
               onPress={() => setGender(g)}
               style={[
                 styles.genderButton,
+                g === 'Female' && { opacity: 0.45 },
                 gender === g && styles.genderSelected,
               ]}
             >
-              <Text style={styles.genderText}>{t(g)}</Text>
+              <Text style={styles.genderText}>{t(g)}{g === 'Female' ? ` (${t('Coming soon')})` : ''}</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -102,7 +104,6 @@ export default function TechnicianBookingScreen({navigation}) {
         <TouchableOpacity style={styles.submitButton}>
           <Text style={styles.submitText}>{t("Submit / Continue")}</Text>
         </TouchableOpacity>
-        <FooterSpacer />
       </ScrollView>
 
       {/* فوتر */}

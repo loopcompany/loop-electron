@@ -8,7 +8,6 @@ import HintBadge from '@components/HintBadge';
 import NewStyles from '@styles/NewStyles';
 import { themeColor10 } from '@theme/Color';
 import { createDirectionalStyles } from '@styles/directionalStyles';
-import FooterSpacer from '@components/FooterSpacer';
 export default function DeviceModelInfoScreen({ navigation, route }) {
   const category = route?.params?.category || 'لپ تاپ';
   const [visibleSection, setVisibleSection] = useState(null);
@@ -175,13 +174,16 @@ export default function DeviceModelInfoScreen({ navigation, route }) {
               {genders.map((g) => (
                 <TouchableOpacity
                   key={g}
+                  disabled={g === 'خانم'}
+                  accessibilityState={{ disabled: g === 'خانم' }}
                   onPress={() => setTechGender(g)}
                   style={[
                     styles.genderButton,
+                g === 'خانم' && { opacity: 0.45 },
                     techGender === g && styles.genderSelected,
                   ]}
                 >
-                  <Text style={[NewStyles.text10,{textAlign:'center'}]}>{g}</Text>
+                  <Text style={[NewStyles.text10,{textAlign:'center'}]}>{g}{g === 'خانم' ? ' (به‌زودی)' : ''}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -220,7 +222,6 @@ export default function DeviceModelInfoScreen({ navigation, route }) {
             <Text style={NewStyles.text4}>نمایش / استعلام / ثبت سفارش</Text>
           </TouchableOpacity>
 
-          <FooterSpacer />
         </ScrollView>
 
    

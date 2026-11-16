@@ -15,6 +15,7 @@ export const DEVICE_TYPES = [
 export const SOFTWARE_DEVICE_TYPES = [
   { id: 'printer_multi', title: 'پرینتر لیزری چندکاره', image: require('@assets/icons/hardware-services/printer-multi.png') },
   { id: 'industrial_copier', title: 'دستگاه کپی صنعتی', image: require('@assets/icons/hardware-services/industrial-copier.png') },
+  { id: 'storage_drive', title: 'هارد ذخیره‌سازی', image: require('@assets/icons/hardware-services/storage-drive.png') },
   { id: 'network_internet', title: 'شبکه و اینترنت', image: require('@assets/icons/procurement/network-internet.png') },
 ];
 
@@ -55,9 +56,7 @@ export const PROCUREMENT_ITEMS = [
 
 // همان لیست ویندوزهای موجود در WindowsInstallScreen.js - برای هماهنگی بین دو مسیر.
 // تصاویر بج‌های واقعی هر نسخه (assets/icons/os) جایگزین دایره‌ی رنگی + گلیف برند شدند.
-// ۹ سیستم عامل (لیست ادیت‌های ۱۴۰۵/۰۷/۰۳): ویندوز 11 دو نسخه دارد - اورجینال و معمولی.
 export const OS_ITEMS = [
-  { id: 'win11_original', title: 'ویندوز 11 اورجینال', image: require('@assets/icons/os/win11-original.png') },
   { id: 'win11', title: 'ویندوز 11', image: require('@assets/icons/os/win11.png') },
   { id: 'win10', title: 'ویندوز 10', image: require('@assets/icons/os/win10.png') },
   { id: 'win81', title: 'ویندوز 8.1', image: require('@assets/icons/os/win81.png') },
@@ -94,9 +93,7 @@ export const TIME_SLOT_OPTIONS = [
 
 // «انتخاب تکنسین» - کاربر فقط جنسیت تکنسین را انتخاب می‌کند (انتخاب مستقیم
 // تکنسین هنوز فعال نیست).
-// تکنسین خانم هنوز فعال نیست: گزینه دیده می‌شود ولی قفل است تا کاربر بداند
-// این امکان در راه است (نه اینکه حذف شده باشد).
 export const TECHNICIAN_GENDER_OPTIONS = [
   { id: 'male', title: 'آقا' },
-  { id: 'female', title: 'خانم (به زودی)', disabled: true },
+  { id: 'female', title: 'خانم (به‌زودی)', disabled: true },
 ];

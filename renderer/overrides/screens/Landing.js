@@ -14,7 +14,7 @@
  * change here, then run `npm run overrides:accept`.
  */
 import React, { useEffect, useState } from 'react';
-import { View, Text, ActivityIndicator, StyleSheet, Platform } from 'react-native';
+import { View, Text, Pressable, ActivityIndicator, StyleSheet, Platform } from 'react-native';
 import { useDispatch } from 'react-redux';
 
 import { setToken, setUserType } from '@slices/authSlice';
@@ -35,7 +35,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useEvent } from 'expo';
 import { getSmsHash } from '@screens/auth/OtpRetriever';
 import { setHashApp } from '@slices/hashAppSlice';
-import { holdBackgroundMusic, isBackgroundMusicOn, useBackgroundMusic } from '@desktop/backgroundMusic';
+import { holdBackgroundMusic } from '@desktop/backgroundMusic';
 
 // اگر ویدیوی اسپلش اصلاً شروع به پخش نکند (کدک، شبکه، autoplay) کاربر برای
 // همیشه روی صفحه‌ی سیاه می‌ماند. این سقف فقط تا «شروع پخش» است.
@@ -58,29 +58,41 @@ const SPLASH_MAX_MS = 20000;
 
 export default function Landing({ navigation }) {
   const dispatch = useDispatch();
+  const mountedRef=React.useRef(true);
+  useEffect(()=>{mountedRef.current=true;return()=>{mountedRef.current=false;};},[]);
   const [checking, setChecking] = useState(true);
+  const [logoMuted, setLogoMuted] = useState(false);
   // نگهبان‌های تک‌بار-بودن: هم playToEnd و هم تایم‌اوت می‌توانند مسیر را ادامه دهند.
   const startedRef = React.useRef(false);
   const settledRef = React.useRef(false);
   const fallbackTimerRef = React.useRef(null);
   const playbackArmedRef = React.useRef(false);
-  const player = useVideoPlayer(require('@assets/video/InShot_20260626_171217014.mp4'), player => {
+  const player = useVideoPlayer(require('@desktop/assets/logo-motion-landscape.mp4'), player => {
     console.log("player ready");
-    // desktop: the logo motion plays with its sound (not muted like mobile web),
-    // unless the user switched the music off — then it starts silent too
-    player.muted = !isBackgroundMusicOn();
+    // Intro audio is independent from the optional dashboard background music.
+    player.muted = false;
+    player.volume = 1;
     player.play();
   });
 
+  // On web the setup callback runs before VideoView mounts its HTML element.
+  // Calling play there has no target; start again after mount and media readiness.
+  useEffect(() => {
+    const start = () => { if (!settledRef.current) player.play(); };
+    const subscription = player.addListener('statusChange', ({ status }) => {
+      if (status === 'readyToPlay') start();
+    });
+    start();
+    return () => subscription.remove();
+  }, [player]);
+
   // background music waits until the splash (and its sound) is over
   useEffect(() => holdBackgroundMusic(), []);
-  // the floating mute button (MenuContext) silences the logo motion too, live —
-  // volume as well as muted, since expo-video routes web audio through a Web Audio node
-  const musicOn = useBackgroundMusic();
+  // The intro has its own mute control; keep volume and muted synchronized.
   useEffect(() => {
-    player.muted = !musicOn;
-    player.volume = musicOn ? 1 : 0;
-  }, [player, musicOn]);
+    player.muted = logoMuted;
+    player.volume = logoMuted ? 0 : 1;
+  }, [player, logoMuted]);
   // Check authentication on component mount
   useEffect(() => {
 
@@ -109,34 +121,20 @@ export default function Landing({ navigation }) {
       // Use TokenManager to check authentication
       const authStatus = await TokenManager.isAuthenticated();
 
-      if (authStatus.authenticated) {
-        dispatch(setToken(authStatus.token));
-        dispatch(fetchAddresses(authStatus.token));
-        await dispatch(fetchUser(authStatus.token));
-        if (authStatus.user) {
-          if (authStatus.user?.account_type !== 'individual') {
-            dispatch(setUserType('organization'))
-          } else {
-            dispatch(setUserType('individual'))
-          }
-          navigateToMainApp();
-        } else {
-          const userResult = await dispatch(fetchUser(authStatus.token));
-          if (userResult?.payload?.account_type !== 'individual') {
-            dispatch(setUserType('organization'))
-          } else {
-            dispatch(setUserType('individual'))
-          }
-
-          if (fetchUser.fulfilled.match(userResult)) {
-            navigateToMainApp();
-          } else {
-            navigateToWelcome();
-          }
-        }
-      } else {
-        navigateToWelcome();
-      }
+      if (!mountedRef.current) return;
+      if (!authStatus.authenticated) {navigateToWelcome(); return;}
+      dispatch(setToken(authStatus.token));
+      dispatch(fetchAddresses(authStatus.token));
+      const result=await dispatch(fetchUser(authStatus.token));
+      if (!mountedRef.current) return;
+      // Temporary network failures preserve an existing session. An actual 401
+      // removes the token through the shared interceptor/TokenManager.
+      if ((await TokenManager.getToken()) !== authStatus.token) {navigateToWelcome(); return;}
+      const profile=fetchUser.fulfilled.match(result) ? result.payload : authStatus.user;
+      const storedType=await AsyncStorage.getItem('userType');
+      const accountType=profile?.account_type;
+      dispatch(setUserType(accountType ? (['individual','indiviual'].includes(accountType)?'individual':'organization') : (storedType || 'individual')));
+      navigateToMainApp();
 
     } catch (error) {
       navigateToWelcome();
@@ -148,38 +146,14 @@ export default function Landing({ navigation }) {
   // Both auth branches funnel through here so the "settle once" guard covers
   // them equally — `playToEnd` and either timeout can all reach this point.
   const settle = (routeName) => {
-    if (settledRef.current) return;
+    if (settledRef.current || !mountedRef.current) return;
     settledRef.current = true;
     setChecking(false);
     navigation.replace(routeName);
   };
 
-  // یک شروعِ واردشده از اسپلش «خوش آمدید» رد می‌شود و بعد روی منوی چهارگزینه‌ای
-  // (`OrderMenuScreen`) می‌نشیند — سفارش سیستماتیک / سفارش فوری / هوش مصنوعی /
-  // سازمانی و شرکتی.
-  //
-  // A signed-in cold start goes through the `Welcome` splash, which then lands
-  // on `OrderMenuScreen` — the four-way entry menu.
-  //
-  // `Welcome` had been orphaned: it is the only screen that navigates to
-  // `OrderMenuScreen`, and nothing navigated to *it*, so the whole entry menu
-  // (and the organisation login behind it) was unreachable from a cold start.
-  // `Welcome` re-checks the session itself before choosing where to go, so the
-  // signed-out case stays covered even if the token is dropped in between.
-  const navigateToMainApp = () => settle('Welcome');
-
-  // کاربر خارج‌شده هم به همان اسپلش و منوی ورودی می‌رود — آنجا هر دو مسیر ورود
-  // (مشتری و سازمانی) در دسترس است.
-  //
-  // A signed-out visitor goes to the same place: the entry menu is public and
-  // is where both sign-in paths start.
-  //
-  // The hazard this branch was split to avoid was sending an unauthenticated
-  // user to `List` — a signed-in UI whose every request then went out with no
-  // Authorization header, and whose 401s `axiosConfig` swallows precisely
-  // because they carried no token. `OrderMenuScreen` is not that: it makes no
-  // authenticated request at all, so routing a guest there reintroduces
-  // nothing.
+  // Signed-in sessions open the dashboard; guests retain both sign-in paths.
+  const navigateToMainApp = () => settle('List');
   const navigateToWelcome = () => settle('Welcome');
 
 
@@ -271,24 +245,14 @@ export default function Landing({ navigation }) {
       <CustomStatusBar />
       <LinearGradient colors={SPLASH_GRADIENT} style={StyleSheet.absoluteFill} />
 
-      {/* کادر ویدیو دقیقاً هم‌اندازه‌ی صفحه است و `cover` خودش تصویر را وسط
-          نگه می‌دارد — پس روی هر نسبت‌تصویری تمام‌صفحه و بدون نوار سیاه است.
-          اندازه از `useWindowDimensions` حساب نمی‌شود: آن عدد روی اندروید
-          (edge-to-edge، نوار وضعیت/ناوبری، حالت چندپنجره‌ای) با اندازه‌ی واقعی
-          این کادر یکی نیست و همان اختلاف بود که ویدیو را روی بعضی گوشی‌ها از
-          بالا و پایین می‌برید.
-
-          The box is the screen, and `cover` does the centring itself, so the
-          video fills any aspect ratio with nothing letterboxed. Deriving a size
-          from `useWindowDimensions` is what cropped it on some devices: on
-          Android that number does not always match this view's real height
-          (edge-to-edge insets, split screen), so the computed box overflowed. */}
+      {/* Preserve the complete landscape clip; the gradient fills window margins. */}
       <VideoView
         style={styles.video}
         nativeControls={false}
         player={player}
-        contentFit="cover"
+        contentFit="contain"
       />
+      <Pressable accessibilityRole="button" accessibilityLabel={logoMuted ? "پخش صدای لوگوموشن" : "قطع صدای لوگوموشن"} onPress={() => setLogoMuted((value) => !value)} style={{ position: "absolute", bottom: 24, right: 24, padding: 12, backgroundColor: "#17334f", borderRadius: 12 }}><Text style={{color:"#fff"}}>{logoMuted ? "🔇" : "🔊"}</Text></Pressable>
     </View>
   );
 }

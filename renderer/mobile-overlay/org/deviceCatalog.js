@@ -57,6 +57,7 @@ export const PROCUREMENT_ITEMS = [
 // همان لیست ویندوزهای موجود در WindowsInstallScreen.js - برای هماهنگی بین دو مسیر.
 // تصاویر بج‌های واقعی هر نسخه (assets/icons/os) جایگزین دایره‌ی رنگی + گلیف برند شدند.
 export const OS_ITEMS = [
+  { id: 'win11_original', title: 'ویندوز 11 اورجینال', image: require('@assets/icons/os/win11.png') },
   { id: 'win11', title: 'ویندوز 11', image: require('@assets/icons/os/win11.png') },
   { id: 'win10', title: 'ویندوز 10', image: require('@assets/icons/os/win10.png') },
   { id: 'win81', title: 'ویندوز 8.1', image: require('@assets/icons/os/win81.png') },

@@ -1,3 +1,4 @@
+import localizedCopy from '@utils/localizedCopy';
 /**
  * DESKTOP OVERRIDE of loop-customer-mobile/org/logreg/Grouping.js
  *
@@ -34,7 +35,7 @@ const COPY = {
 
 const Grouping = ({ navigation }) => {
   const { t, i18n } = useTranslation();
-  const copy = COPY[i18n.language === 'fa' ? 'fa' : 'en'];
+  const copy = localizedCopy(COPY.fa,COPY.en,i18n.language);
   const pdf = useSelector(state => state.pdf?.data)
   return (
     <>

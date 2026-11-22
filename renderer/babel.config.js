@@ -22,7 +22,7 @@ module.exports = function (api) {
 
   return {
     presets: ['babel-preset-expo'],
-    plugins: [
+    plugins: [require.resolve('../scripts/localize-ui-literals.cjs'),
       [
         'module-resolver',
         {

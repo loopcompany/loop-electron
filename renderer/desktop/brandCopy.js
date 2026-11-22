@@ -1,3 +1,4 @@
+import i18n from 'i18next';
 /**
  * The brand lines the desktop app repeats in several places (welcome screen,
  * sidebar, entry screens, home banner), so they are written once:
@@ -24,7 +25,7 @@ const COPY = {
   },
 };
 
-export const brandCopy = (lang) => COPY[lang === 'fa' ? 'fa' : 'en'];
+export const brandCopy = (lang) => Object.fromEntries(Object.entries(COPY.fa).map(([key,value])=>[key,i18n.t(value,{defaultValue:lang === 'en' ? COPY.en[key] : value})]));
 
 // صبح ۵:۰۰ تا ۱۱:۵۹، ظهر ۱۲:۰۰ تا ۱۴:۵۹، عصر ۱۵:۰۰ تا ۱۸:۵۹، شب ۱۹:۰۰ تا ۴:۵۹
 // Read on Iran's clock, not the computer's time zone: Windows keeps UTC in

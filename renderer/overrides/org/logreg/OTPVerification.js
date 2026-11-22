@@ -1,3 +1,4 @@
+import localizedCopy from '@utils/localizedCopy';
 /**
  * DESKTOP OVERRIDE of loop-customer-mobile/org/logreg/OTPVerification.js
  *
@@ -83,7 +84,7 @@ const OTPVerification = ({ route, navigation }) => {
 
   const { phone, organizationCode, userId, organizationId } = route.params;
   const { i18n } = useTranslation();
-  const copy = COPY[i18n.language === 'fa' ? 'fa' : 'en'];
+  const copy = localizedCopy(COPY.fa,COPY.en,i18n.language);
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);

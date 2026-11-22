@@ -15,6 +15,7 @@ export const procurementLines = (entries = {}, items = [], L = (s) => s) => item
   const lines = [];
   if (entry.new > 0) lines.push({ label: `${L(item.title)} / ${L('آکبند')}`, value: entry.new });
   if (entry.used > 0) lines.push({ label: `${L(item.title)} / ${L('کارکرده')}`, value: entry.used });
+  if (entry.budgetRial) lines.push({label:`${L(item.title)} — ${L('محدوده هزینه (ریال)')}`,value:entry.budgetRial});
   if (selectionDescription(entry)) lines.push({ label: `${L(item.title)} — ${L('توضیحات')}`, value: selectionDescription(entry) });
   return lines;
 });

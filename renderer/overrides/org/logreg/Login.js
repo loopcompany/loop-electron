@@ -1,3 +1,4 @@
+import localizedCopy from '@utils/localizedCopy';
 /**
  * DESKTOP OVERRIDE of loop-customer-mobile/org/logreg/Login.js
  *
@@ -70,7 +71,7 @@ const COPY = {
 
 const Login = ({ navigation }) => {
   const { t, i18n } = useTranslation();
-  const copy = COPY[i18n.language === 'fa' ? 'fa' : 'en'];
+  const copy = localizedCopy(COPY.fa,COPY.en,i18n.language);
   const dispatch = useDispatch();
   const [organizationCode, setOrganizationCode] = useState('');
   const [password, setPassword] = useState('');

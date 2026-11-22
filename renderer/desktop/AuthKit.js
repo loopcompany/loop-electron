@@ -1,3 +1,4 @@
+import localizedCopy from '@utils/localizedCopy';
 /**
  * Desktop sign-in / sign-up forms.
  *
@@ -115,7 +116,7 @@ const ACCOUNT_COPY = {
  */
 export function AccountSwitch({ value, onChange, disabled }) {
   const dir = useDir();
-  const copy = ACCOUNT_COPY[dir.rtl ? 'fa' : 'en'];
+  const copy = localizedCopy(ACCOUNT_COPY.fa,ACCOUNT_COPY.en,dir.lang);
   const options = [
     { value: 'individual', icon: 'person-outline', label: copy.individual },
     { value: 'organization', icon: 'business-outline', label: copy.organization },
@@ -349,7 +350,7 @@ const CAPTCHA_COPY = {
  */
 export function CaptchaField({ code, value, onChangeText, onRefresh, error, onSubmitEditing, uppercase, half }) {
   const dir = useDir();
-  const copy = CAPTCHA_COPY[dir.rtl ? 'fa' : 'en'];
+  const copy = localizedCopy(CAPTCHA_COPY.fa,CAPTCHA_COPY.en,dir.lang);
   return (
     <AuthField label={copy.label} required error={error} half={half}>
       <View style={[styles.captchaRow, dir.row]}>
@@ -604,7 +605,7 @@ const RESEND_COPY = {
 /** Under a code input: the countdown, then a "resend" link once it runs out. */
 export function ResendRow({ seconds, onResend, loading }) {
   const dir = useDir();
-  const copy = RESEND_COPY[dir.rtl ? 'fa' : 'en'];
+  const copy = localizedCopy(RESEND_COPY.fa,RESEND_COPY.en,dir.lang);
   const mm = String(Math.floor(seconds / 60)).padStart(2, '0');
   const ss = String(seconds % 60).padStart(2, '0');
   return (

@@ -1,3 +1,4 @@
+import { LanguageSelector, useLocalization } from '@components/LocalizationProvider';
 import PendingOrganizationAgreementNotice from '@components/PendingOrganizationAgreementNotice';
 /**
  * DESKTOP OVERRIDE of loop-customer-mobile/contexts/MenuContext.js
@@ -257,56 +258,7 @@ function DockAction({ icon, image, imageStyle, label, onPress, lang, accessibili
 // سوییچ زبان — یک کلید کشویی دو‌بخشی به‌جای یک آیکون کره‌ی زمین بی‌روح.
 // هر دو زبان همیشه با خط بومی خودشان دیده می‌شوند («EN» / «فا») و بخش فعال با
 // یک قرص سفید براق زیرش هایلایت می‌شود که هنگام تعویض زبان نرم سُر می‌خورد.
-const LanguageSwitch = React.memo(({ language, onToggle }) => {
-    const isFa = language === 'fa';
-    const slide = useRef(new Animated.Value(isFa ? 1 : 0)).current;
-
-    useEffect(() => {
-        Animated.spring(slide, {
-            toValue: isFa ? 1 : 0,
-            useNativeDriver: true,
-            friction: 7,
-            tension: 90,
-        }).start();
-    }, [isFa, slide]);
-
-    const translateX = slide.interpolate({
-        inputRange: [0, 1],
-        outputRange: [0, LANG_SEG_WIDTH],
-    });
-
-    return (
-        <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={onToggle}
-            style={dockStyles.action}
-            accessibilityRole="switch"
-            accessibilityState={{ checked: isFa }}
-            accessibilityLabel="Language / زبان"
-        >
-            <View style={langStyles.track}>
-                <Animated.View
-                    style={[langStyles.thumb, { transform: [{ translateX }] }]}
-                    pointerEvents="none"
-                />
-                <View style={langStyles.seg}>
-                    <Text style={[langStyles.segText, !isFa && langStyles.segTextActive]}>EN</Text>
-                </View>
-                <View style={langStyles.seg}>
-                    <Text
-                        style={[
-                            langStyles.segText,
-                            { fontFamily: getFontFamily('bold', 'fa') },
-                            isFa && langStyles.segTextActive,
-                        ]}
-                    >
-                        فا
-                    </Text>
-                </View>
-            </View>
-        </TouchableOpacity>
-    );
-});
+const LanguageSwitch = React.memo(() => <LanguageSelector />);
 
 const dockStyles = StyleSheet.create({
     // ویندوز ۷: آیکون‌های نوار وظیفه بدون حاشیه و بدون پلاک پس‌زمینه‌اند
@@ -377,6 +329,7 @@ const langStyles = StyleSheet.create({
 
 // Menu Provider Component
 export const MenuProvider = ({ children }) => {
+    const { openLanguagePicker } = useLocalization();
     const { t, i18n } = useTranslation();
     const userData = useSelector((state) => state.user?.data);
     const NewStyles = useMemo(
@@ -750,7 +703,7 @@ export const MenuProvider = ({ children }) => {
             console.error('Error loading language', error);
         }
     };
-    const toggleLanguage = () => changeLanguage(i18n.language === 'en' ? 'fa' : 'en');
+    const toggleLanguage = openLanguagePicker;
 
     const commands = [
         ...(isLoggedIn

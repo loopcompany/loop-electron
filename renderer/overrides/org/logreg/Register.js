@@ -1,3 +1,4 @@
+import localizedCopy from '@utils/localizedCopy';
 /**
  * DESKTOP OVERRIDE of loop-customer-mobile/org/logreg/Register.js
  *
@@ -135,7 +136,7 @@ const SERVER_FIELDS = {
 
 const Register = ({ navigation }) => {
   const { t, i18n } = useTranslation();
-  const copy = COPY[i18n.language === 'fa' ? 'fa' : 'en'];
+  const copy = localizedCopy(COPY.fa,COPY.en,i18n.language);
 
   const hashApp = useSelector(state=>state.hashApp?.hash)
   // Form states

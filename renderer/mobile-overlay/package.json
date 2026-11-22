@@ -1,6 +1,6 @@
 {
   "name": "loop-customer-mobile",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "description": "Loop (لوپ) — Expo/React Native customer app for the Loop home-service platform.",
   "private": true,
   "main": "index.js",
@@ -23,7 +23,8 @@
     "build:web": "expo export -p web",
     "serve:web": "serve dist -p 3000",
     "deploy:netlify": "cd dist && netlify deploy --prod",
-    "deploy:vercel": "cd dist && vercel --prod"
+    "deploy:vercel": "cd dist && vercel --prod",
+    "test:localization": "node --test test/localization.test.cjs"
   },
   "dependencies": {
     "@expo/metro-runtime": "~57.0.15",

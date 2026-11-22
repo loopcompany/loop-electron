@@ -1,3 +1,4 @@
+import localizedCopy from '@utils/localizedCopy';
 import useRealtimeRefresh from '@hooks/useRealtimeRefresh';
 /**
  * DESKTOP OVERRIDE of loop-customer-mobile/screens/MessageScreen.js
@@ -125,7 +126,7 @@ export default function MessageScreen() {
   useRealtimeRefresh(["support"], () => fetchMessages());
   const { t } = useTranslation();
   const dir = useDir();
-  const copy = COPY[dir.rtl ? 'fa' : 'en'];
+  const copy = localizedCopy(COPY.fa,COPY.en,dir.lang);
   const [messageText, setMessageText] = useState('');
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);

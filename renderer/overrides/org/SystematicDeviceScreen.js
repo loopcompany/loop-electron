@@ -1,3 +1,4 @@
+import { procurementNeedsBudget } from '@utils/procurementBudget';
 /**
  * DESKTOP OVERRIDE of loop-customer-mobile/org/SystematicDeviceScreen.js
  *
@@ -275,10 +276,15 @@ const SystematicDeviceScreen = ({ navigation, route }) => {
     steps.find((step) => step.required && !isStepFilled(step, answers[step.id])) ||
     (serviceSteps.some((step) => isStepFilled(step, answers[step.id])) ? null : serviceSteps[0]);
 
+  const missingBudgetStep = steps.find((step) => step.type === 'procurement' && Object.entries(answers[step.id] || {}).some(([id, entry]) => procurementNeedsBudget(id, entry)));
   const missingQuantityStep = steps.find((step) =>
     ['procurement', 'hardwareCounters'].includes(step.type) && hasDescriptionWithoutQuantity(answers[step.id]));
 
   const handleOrderAction = (action) => {
+    if (action !== 'cancel_order' && missingBudgetStep) {
+      showToastOrAlert(L('برای کالای انتخاب‌شده محدوده هزینه و برای کالای کارکرده توضیحات را تکمیل کنید.'));
+      setExpanded(missingBudgetStep.id); return;
+    }
     if (action !== 'cancel_order' && missingQuantityStep) {
       showToastOrAlert(L('برای موارد دارای توضیحات، تعداد را وارد کنید.'));
       return;
@@ -493,6 +499,7 @@ const SystematicDeviceScreen = ({ navigation, route }) => {
           const patch = (changes) => setAnswer(step.id, { [item.id]: { ...entry, ...changes } });
           return (
             <ProcurementCard
+              itemId={item.id} budgetRial={entry.budgetRial} onBudgetChange={(budgetRial) => patch({ budgetRial })}
               key={item.id}
               image={item.image}
               title={L(item.title)}
@@ -579,7 +586,7 @@ const SystematicDeviceScreen = ({ navigation, route }) => {
         return (
           <>
             <OrderActionButtons
-              disabled={Boolean(missingQuantityStep || firstMissingStep())}
+              disabled={Boolean(missingBudgetStep || missingQuantityStep || firstMissingStep())}
               onIssueReceipt={() => handleOrderAction('issue_receipt')}
               onShowReceipt={() => handleOrderAction('show_receipt')}
               onSubmit={() => handleOrderAction('submit_order')}

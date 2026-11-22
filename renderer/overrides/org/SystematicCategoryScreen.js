@@ -1,3 +1,4 @@
+import localizedCopy from '@utils/localizedCopy';
 /**
  * DESKTOP OVERRIDE of loop-customer-mobile/org/SystematicCategoryScreen.js
  *
@@ -131,7 +132,7 @@ const SystematicCategoryScreen = ({ navigation }) => {
   useRealtimeRefresh(['orders'], () => token && dispatch(fetchOrders()));
   const { t, i18n } = useTranslation();
   const dir = useDir();
-  const copy = COPY[dir.rtl ? 'fa' : 'en'];
+  const copy = localizedCopy(COPY.fa,COPY.en,dir.lang);
 
   const dispatch = useDispatch();
   const token = useSelector((state) => state?.auth?.token);
@@ -177,7 +178,6 @@ const SystematicCategoryScreen = ({ navigation }) => {
     try {
       const res = await categoriesAPI.getCategories();
       const categories = Array.isArray(res.data) ? res.data : res.data || res.data?.data || [];
-      prefetchIcons(categories);
       setFolders(categories);
       writeCachedCategories(lang, categories);
     } catch (err) {
@@ -219,29 +219,17 @@ const SystematicCategoryScreen = ({ navigation }) => {
     loadCategories();
   };
 
-  const items = useMemo(() => {
-    if (folders.length) {
-      return folders.map((item) => ({
-        key: String(item?.id),
-        title: item?.title,
-        image: item?.image_path,
-        apiItem: item,
-      }));
-    }
-    return SYSTEMATIC_CATEGORIES.map((item) => ({
-      key: item.id,
-      title: item.title,
-      imageSource: item.image,
-      apiItem: item,
-    }));
-  }, [folders]);
+  const items = useMemo(() => SYSTEMATIC_CATEGORIES.map((local)=>{
+    const remote=folders.find((entry)=>resolveSystematicCategoryId(entry)===local.id);
+    return {key:local.id,title:local.title,imageSource:local.image,apiItem:remote||local,apiMissing:!remote};
+  }),[folders]);
 
   const openCategory = async (entry) => {
     const source = entry.apiItem;
     const systematicId = resolveSystematicCategoryId(source);
 
     if (systematicId === 'user_account') {
-      navigation.navigate('Profile');
+      navigation.navigate(user?.account_type && !['individual','indiviual'].includes(user.account_type) ? 'OrganizationProfile' : 'Profile');
       return;
     }
 
@@ -257,6 +245,7 @@ const SystematicCategoryScreen = ({ navigation }) => {
       return;
     }
 
+    if(entry.apiMissing){showToastOrAlert(L('این دسته‌بندی فعلاً در دسترس نیست.'));return;}
     if (systematicId && getFlow(systematicId).length) {
       const backendId = Number(source?.id);
       navigation.navigate('SystematicDeviceScreen', {
@@ -293,38 +282,11 @@ const SystematicCategoryScreen = ({ navigation }) => {
 
   // همان کاشی‌ها و همان ترتیب صفحه‌ی موبایل؛ «حساب کاربری» روی دسکتاپ در
   // میان‌برهای کنار صفحه است، نه بین دستگاه‌ها.
-  const buildTiles = () => {
-    const categories = items.filter((entry) => {
-      const categoryId = resolveSystematicCategoryId(entry.apiItem);
-      const isComprehensive = entry.apiItem?.id === 'comprehensive' ||
-                             entry.title === 'انتخاب جامع' ||
-                             entry.title === 'Comprehensive Selection';
-      return categoryId !== 'user_account' && !isComprehensive;
-    });
-
-    const rest = categories.map((entry) => {
-      const categoryId = resolveSystematicCategoryId(entry.apiItem);
-      return {
-        key: entry.key,
-        title: entry.title,
-        subtitle: getCategory(categoryId)?.subtitle,
-        image: categoryId === 'trash' ? undefined : entry.image,
-        imageSource: localIconFor(categoryId) || entry.imageSource,
-        // «ضایعات» فقط برچسبِ «به‌زودی» دارد و کلیک روی آن کاری نمی‌کند — پنجره‌ی
-        // alert مرورگر («… says») نباید باز شود
-        onPress: categoryId === 'trash' ? undefined : () => openCategory(entry),
-        isTrash: categoryId === 'trash',
-      };
-    });
-
-    // «ضایعات» آخر از همه — روی دسکتاپ هنوز فعال نیست و نباید وسط دستگاه‌ها باشد
-    const trashIndex = rest.findIndex((tile) => tile.isTrash);
-    if (trashIndex > -1) {
-      const [trashTile] = rest.splice(trashIndex, 1);
-      rest.push(trashTile);
-    }
-    return rest;
-  };
+  const buildTiles = () => items.map((entry)=>{
+    const categoryId=resolveSystematicCategoryId(entry.apiItem);
+    return {key:entry.key,title:entry.title,subtitle:getCategory(categoryId)?.subtitle,
+      imageSource:entry.imageSource,onPress:categoryId==='trash'?undefined:()=>openCategory(entry),isTrash:categoryId==='trash'};
+  });
 
   const tiles = buildTiles();
 
@@ -367,7 +329,7 @@ const SystematicCategoryScreen = ({ navigation }) => {
                   />
                 }
               />
-              <View style={[styles.grid, dir.row]}>
+              <View style={[styles.grid, {flexDirection:'row'}]}>
                 {loader
                   ? Array.from({ length: 6 }, (_, i) => (
                       <View key={i} style={[styles.tile, styles.tileSkeleton]}>

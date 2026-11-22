@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 /**
  * Metro for the desktop bundle.
  *
@@ -34,6 +35,10 @@ const OVERRIDES = new Map(
 );
 
 const config = getDefaultConfig(__dirname);
+
+// Each app owns its cache; simultaneous --clear builds must not erase a sibling's files.
+config.cacheStores = config.cacheStores.map((store) => new store.constructor({root:path.resolve(__dirname,'../.cache/metro')}));
+config.cacheVersion = (config.cacheVersion || '') + '-localization-' + crypto.createHash('sha256').update(fs.readFileSync(path.resolve(__dirname, '../scripts/localize-ui-literals.cjs'))).digest('hex');
 
 config.watchFolders = [MOBILE_DIR];
 config.resolver.nodeModulesPaths = [path.join(MOBILE_DIR, 'node_modules')];

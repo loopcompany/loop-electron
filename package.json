@@ -1,7 +1,7 @@
 {
   "name": "loop-customer-electron",
   "productName": "Loop",
-  "version": "1.1.8",
+  "version": "1.1.9",
   "description": "Loop (لوپ) — Windows desktop shell around the loop-customer-mobile web build.",
   "private": true,
   "main": "electron/main.js",
@@ -21,7 +21,8 @@
     "dist:win:portable": "npm run build:web && node scripts/dist-win.js zip",
     "check:overrides": "node scripts/check-overrides.js",
     "overrides:accept": "node scripts/check-overrides.js --accept",
-    "installer:art": "node scripts/installer-art.js"
+    "installer:art": "node scripts/installer-art.js",
+    "test:localization": "node --test test/localization.test.js"
   },
   "devDependencies": {
     "concurrently": "^10.0.5",

@@ -1,3 +1,4 @@
+import localizedCopy from '@utils/localizedCopy';
 import { OrderReadOnlyContext } from '@contexts/OrderReadOnlyContext';
 import CustomerVisitDecisionCard from '@components/CustomerVisitDecisionCard';
 import useRealtimeRefresh from '@hooks/useRealtimeRefresh';
@@ -492,7 +493,7 @@ function Details({ route, navigation }) {
     const minPrice = useSelector(state => state.minPrice?.data)
     // desktop: direction, copy and the scroll positions of the stage cards
     const dir = useDir();
-    const copy = COPY[dir.rtl ? 'fa' : 'en'];
+    const copy = localizedCopy(COPY.fa,COPY.en,dir.lang);
     const scrollRef = useRef(null);
     const stageY = useRef({});
     if (data.length <= 0) { return <Loader /> }

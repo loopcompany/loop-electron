@@ -1,3 +1,6 @@
+import localizedCopy from '@utils/localizedCopy';
+import useProfileRelogin from '@hooks/useProfileRelogin';
+import AddressBuildingFields from '@components/AddressBuildingFields';
 /**
  * DESKTOP OVERRIDE of loop-customer-mobile/screens/account/OrganizationProfile.js
  *
@@ -407,6 +410,7 @@ function PasswordInput({ value, onChangeText, visible, onToggle, invalid, icon =
 const OrganizationProfile = () => {
   const navigation = useNavigation();
   const { logoutWithConfirmation, isLoggingOut } = useLogout();
+  const profileRelogin=useProfileRelogin('organization');
   const { t, i18n } = useTranslation();
   // Form states - مطابق با فیلدهای ثبت‌نام
   const [profileImage, setProfileImage] = useState(null);
@@ -432,6 +436,7 @@ const OrganizationProfile = () => {
   const [city, setCity] = useState('');
   const [region, setRegion] = useState('');
   const [organizationAddress, setOrganizationAddress] = useState('');
+  const [building, setBuilding] = useState({work_number:'',work_unit:'',work_floor:''});
   const [organizationPostalCode, setOrganizationPostalCode] = useState('');
   const token = useSelector(state => state.auth?.token)
   // Password change states
@@ -474,6 +479,7 @@ const OrganizationProfile = () => {
 
 
       if (response.data.status === 'success') {
+        if(await profileRelogin(response.data)) return;
         const data = response.data.data;
         setEditRequest(data?.edited_organization)
         setSavedMainData(data)
@@ -509,6 +515,7 @@ const OrganizationProfile = () => {
         setCity(data.city || '');
         setRegion(data.region_id || '');
         setOrganizationAddress(data.organization_address || '');
+        setBuilding({work_number:data.work_number??'',work_unit:data.work_unit??'',work_floor:data.work_floor??''});
         setOrganizationPostalCode(data.postal_code || '');
 
         if (data.profile_image) {
@@ -610,6 +617,7 @@ const OrganizationProfile = () => {
         formData.append('organization_email', organizationEmail);
         formData.append('organization_phone', organizationPhoneNumber);
         formData.append('organization_address', organizationAddress);
+        Object.entries(building).forEach(([key,value])=>formData.append(key,String(value)));
         formData.append('manager_full_name', familyName);
         formData.append('city', city);
         formData.append('region', region);
@@ -635,6 +643,7 @@ const OrganizationProfile = () => {
           organization_email: organizationEmail,
           organization_phone: organizationPhoneNumber,
           organization_address: organizationAddress,
+          ...building,
           manager_full_name: familyName,
           city: city,
           region: region,
@@ -665,6 +674,7 @@ const OrganizationProfile = () => {
 
 
       if (response.data.status === 'success') {
+        if(await profileRelogin(response.data)) return;
         const responseData = response.data.data;
 
 
@@ -850,7 +860,7 @@ const OrganizationProfile = () => {
 
   // دسکتاپ: تب فعال؛ مدارک و کاربران همین‌جا خوانده می‌شوند تا شمارشان کنار تب‌ها باشد
   const dir = useDir();
-  const copy = COPY[dir.rtl ? 'fa' : 'en'];
+  const copy = localizedCopy(COPY.fa,COPY.en,dir.lang);
   const [tab, setTab] = useState('org');
   const accountRows = useAccountRows(navigation, { isOrganization: true });
   const documents = useRemoteResource(listDocuments);
@@ -1093,7 +1103,7 @@ const OrganizationProfile = () => {
               <PanelGroup title={copy.contact} hint={copy.contactHint} icon="call-outline">
                 <FieldGrid>
                   <Field label={t('Organization email *')}>
-                    <TextField icon="mail-outline" value={organizationEmail} onChangeText={setOrganizationEmail} editable={isEditing} keyboardType="email-address" autoCapitalize="none" />
+                    <TextField icon="mail-outline" value={organizationEmail} onChangeText={setOrganizationEmail} editable={false} keyboardType="email-address" autoCapitalize="none" />
                   </Field>
                   <Field label={t('Organization landline *')}>
                     <TextField icon="call-outline" unit="021" value={organizationPhoneNumber} onChangeText={setOrganizationPhoneNumber} editable={isEditing} keyboardType="phone-pad" />
@@ -1110,6 +1120,7 @@ const OrganizationProfile = () => {
                   </Field>
                   <Field label={t('Organization address *')} full>
                     <TextField icon="home-outline" multiline rows={3} value={organizationAddress} onChangeText={setOrganizationAddress} editable={isEditing} />
+<AddressBuildingFields kind="work" value={building} onChange={(key,value)=>setBuilding((prev)=>({...prev,[key]:value}))} />
                   </Field>
                 </FieldGrid>
               </PanelGroup>

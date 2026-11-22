@@ -1,3 +1,4 @@
+import localizedCopy from '@utils/localizedCopy';
 import useRealtimeRefresh from '@hooks/useRealtimeRefresh';
 /**
  * DESKTOP OVERRIDE of loop-customer-mobile/screens/orders/OrdersScreen.js
@@ -72,7 +73,7 @@ function OrdersScreen({ navigation }) {
   const homeRoute = useHomeRoute();
   const { t } = useTranslation();
   const dir = useDir();
-  const copy = COPY[dir.rtl ? 'fa' : 'en'];
+  const copy = localizedCopy(COPY.fa,COPY.en,dir.lang);
   const dispatch = useDispatch();
   // لغوشده‌ها فقط در «سفارش‌های لغوشده» می‌آیند («تغییرات اپ کاربر» بند ۲).
   const allOrders = useSelector(state => state.orders?.data);

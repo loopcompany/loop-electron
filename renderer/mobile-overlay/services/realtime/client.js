@@ -92,7 +92,7 @@
             if (frame.event === 'pusher:connection_established') {
               activityTimeout = Math.max(10000, Number(payload.activity_timeout || 30) * 1000);
               for (const channel of config.channels || []) {
-                const auth = await request(options.authUrl, { socket_id: payload.socket_id, channel_name: channel });
+                const auth = channel.startsWith('private-') || channel.startsWith('presence-') ? await request(options.authUrl, { socket_id: payload.socket_id, channel_name: channel }) : {};
                 if (stopped || current !== generation) return;
                 send('pusher:subscribe', { channel, auth: auth.auth });
               }

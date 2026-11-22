@@ -9,6 +9,9 @@ const fs = require('fs');
 const path = require('path');
 const { app, BrowserWindow, Menu, ipcMain, screen, shell, session } = require('electron');
 
+// Apply Chromium's audio/video autoplay policy before any renderer or AudioContext exists.
+app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
+
 const { APP_ORIGIN, DEV_URL, isDev, APP_USER_MODEL_ID, getWebRoot } = require('./config');
 const { registerSchemePrivileges, registerAppProtocol } = require('./protocol');
 const { isAppUrl, canUseAppPermission, classifyMainNavigation, classifyNewWindow } = require('./routing');

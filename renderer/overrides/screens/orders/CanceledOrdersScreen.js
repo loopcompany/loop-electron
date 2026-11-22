@@ -1,3 +1,4 @@
+import localizedCopy from '@utils/localizedCopy';
 import useRealtimeRefresh from '@hooks/useRealtimeRefresh';
 /**
  * DESKTOP OVERRIDE of loop-customer-mobile/screens/orders/CanceledOrdersScreen.js
@@ -44,7 +45,7 @@ function CanceledOrdersScreen({ navigation }) {
   useRealtimeRefresh(["orders"], () => dispatch(fetchOrders()));
   const { t } = useTranslation();
   const dir = useDir();
-  const copy = COPY[dir.rtl ? 'fa' : 'en'];
+  const copy = localizedCopy(COPY.fa,COPY.en,dir.lang);
   const dispatch = useDispatch();
   const orders = useSelector(state => state.orders?.data);
   const user = useSelector(state => state.user?.data);

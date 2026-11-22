@@ -1,3 +1,6 @@
+import localizedCopy from '@utils/localizedCopy';
+import ProcurementConsultationActions from '@components/ProcurementConsultationActions';
+import { procurementNeedsBudget } from '@utils/procurementBudget';
 /**
  * DESKTOP OVERRIDE of loop-customer-mobile/org/HardwareSelectionScreen.js
  *
@@ -126,10 +129,13 @@ const COPY = {
 const HardwareSelectionScreen = ({ navigation }) => {
   useTranslation();
   const dir = useDir();
-  const copy = COPY[dir.rtl ? 'fa' : 'en'];
+  const copy = localizedCopy(COPY.fa,COPY.en,dir.lang);
   const [selectedCategory, setSelectedCategory] = useState('لپ تاپ');
   const [generalNeed, setGeneralNeed] = useState('');
   const [description, setDescription] = useState('');
+  const [budgetRial,setBudgetRial]=useState('');
+  const supplyIds={'لپ تاپ':'laptop','کیس':'case_standard','کیس معمولی':'case_standard','کیس حرفه‌ای':'case_professional','مینی کیس':'mini_case'};
+  const supplyId=supplyIds[selectedCategory];
   const [quantities, setQuantities] = useState({
     'کارکرده': 0,
     'اکبند': 0
@@ -141,7 +147,9 @@ const HardwareSelectionScreen = ({ navigation }) => {
 
   const categories = [
     'لپ تاپ',
-    'کیس',
+    'کیس معمولی',
+    'کیس حرفه‌ای',
+    'مینی کیس',
     'مانیتور',
     'آل این وان',
     'هارد دیسک',
@@ -158,7 +166,7 @@ const HardwareSelectionScreen = ({ navigation }) => {
 
   const total = Object.values(quantities).reduce((sum, n) => sum + n, 0);
 
-  const canProceed = total > 0 && Boolean(deliveryDate && timeSlot && addressId && technicianGender);
+  const canProceed = !procurementNeedsBudget(supplyId,{new:quantities['اکبند'],used:quantities['کارکرده'],desc:description,budgetRial}) && total > 0 && Boolean(deliveryDate && timeSlot && addressId && technicianGender);
 
   const submitOrder = () => {
     if (!canProceed) return;
@@ -169,6 +177,7 @@ const HardwareSelectionScreen = ({ navigation }) => {
       addressId,
       technicianGender,
       procurementSelection: {
+        item_id:supplyId, budget_rial:budgetRial || undefined,
         title: selectedCategory,
         new_count: quantities['اکبند'],
         used_count: quantities['کارکرده'],
@@ -177,6 +186,7 @@ const HardwareSelectionScreen = ({ navigation }) => {
       orderTitle: `سفارش خدمات سخت‌افزاری - ${selectedCategory}`,
       summaryLines: [
         { label: 'دسته‌بندی', value: selectedCategory },
+        ...(budgetRial ? [{label:'محدوده هزینه (ریال)',value:budgetRial}] : []),
         ...Object.entries(quantities)
           .filter(([, count]) => count > 0)
           .map(([condition, count]) => ({ label: condition, value: count })),
@@ -263,6 +273,7 @@ const HardwareSelectionScreen = ({ navigation }) => {
             </Field>
             <Field label={copy.notes} full>
               <TextField multiline rows={4} value={description} onChangeText={setDescription} placeholder={copy.notesPlaceholder} />
+              <ProcurementConsultationActions itemId={supplyId} title={selectedCategory} newCount={quantities['اکبند']} usedCount={quantities['کارکرده']} desc={description} budgetRial={budgetRial} onBudgetChange={setBudgetRial} />
             </Field>
           </FieldGrid>
         </FormSection>

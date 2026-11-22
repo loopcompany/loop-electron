@@ -1,3 +1,4 @@
+import localizedCopy from '@utils/localizedCopy';
 import useRealtimeRefresh from '@hooks/useRealtimeRefresh';
 /**
  * DESKTOP OVERRIDE of loop-customer-mobile/screens/account/Wallet.js
@@ -66,7 +67,7 @@ export default function Wallet({ navigation }) {
   useRealtimeRefresh(["wallet"], () => refresh());
   const { t } = useTranslation();
   const dir = useDir();
-  const copy = COPY[dir.rtl ? 'fa' : 'en'];
+  const copy = localizedCopy(COPY.fa,COPY.en,dir.lang);
   const dispatch = useDispatch();
 
   const token = useSelector((state) => state?.auth?.token);

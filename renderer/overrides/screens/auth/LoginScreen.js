@@ -1,3 +1,4 @@
+import localizedCopy from '@utils/localizedCopy';
 /**
  * DESKTOP OVERRIDE of loop-customer-mobile/screens/auth/LoginScreen.js
  *
@@ -117,7 +118,7 @@ export default function LoginScreen({ navigation }) {
   const [state, dispatch] = useReducer(formReducer, initialState);
   const reduxDispatch = useDispatch();
   const { t, i18n } = useTranslation();
-  const copy = COPY[i18n.language === 'fa' ? 'fa' : 'en'];
+  const copy = localizedCopy(COPY.fa,COPY.en,i18n.language);
 
   // Form validation
   const validateForm = () => {

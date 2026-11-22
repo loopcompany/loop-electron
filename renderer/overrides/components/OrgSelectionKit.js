@@ -1,3 +1,4 @@
+import ProcurementConsultationActions from '@components/ProcurementConsultationActions';
 /**
  * DESKTOP OVERRIDE of loop-customer-mobile/components/OrgSelectionKit.js
  *
@@ -488,7 +489,7 @@ export const LabeledCounterRow = ({ label, count, onIncrement, onDecrement }) =>
   </View>
 );
 
-export const ProcurementCard = ({ image, title, newCount, usedCount, desc, onNewInc, onNewDec, onUsedInc, onUsedDec, onDescChange }) => {
+export const ProcurementCard = ({ image, title, itemId, budgetRial, onBudgetChange, newCount, usedCount, desc, onNewInc, onNewDec, onUsedInc, onUsedDec, onDescChange }) => {
   const active = newCount > 0 || usedCount > 0;
   return (
     <View style={[k.card, k.bigCard, active && k.cardActive]}>
@@ -504,6 +505,7 @@ export const ProcurementCard = ({ image, title, newCount, usedCount, desc, onNew
         <LabeledCounterRow label={L('کارکرده')} count={usedCount} onIncrement={onUsedInc} onDecrement={onUsedDec} />
       </View>
       <DescriptionInput value={desc} onChangeText={onDescChange} />
+    <ProcurementConsultationActions itemId={itemId} title={title} newCount={newCount} usedCount={usedCount} desc={desc} budgetRial={budgetRial} onBudgetChange={onBudgetChange} />
     </View>
   );
 };

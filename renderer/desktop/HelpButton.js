@@ -1,3 +1,4 @@
+import localizedCopy from '@utils/localizedCopy';
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -23,7 +24,7 @@ const COPY = {
  */
 export default function HelpButton({ help, dark = true }) {
   const dir = useDir();
-  const copy = COPY[dir.rtl ? 'fa' : 'en'];
+  const copy = localizedCopy(COPY.fa,COPY.en,dir.lang);
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
 

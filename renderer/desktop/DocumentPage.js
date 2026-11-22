@@ -1,3 +1,4 @@
+import localizedCopy from '@utils/localizedCopy';
 import { Ionicons } from '@expo/vector-icons';
 import { useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -67,7 +68,7 @@ const COPY = {
  */
 export default function DocumentPage({ icon, title, lead, meta, items, expanded, setExpanded, loading, empty, footer, onRefresh, refreshing, qa }) {
   const dir = useDir();
-  const copy = COPY[dir.rtl ? 'fa' : 'en'];
+  const copy = localizedCopy(COPY.fa,COPY.en,dir.lang);
   const navigation = useNavigation();
   const [query, setQuery] = useState('');
   const scrollRef = useRef(null);

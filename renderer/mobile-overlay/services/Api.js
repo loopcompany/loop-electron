@@ -19,6 +19,7 @@ const apiClient = axios.create({
 // Request interceptor to add auth token
 apiClient.interceptors.request.use(
   async (config) => {
+    config.headers['Accept-Language'] = i18next.language || 'fa';
     // Add auth token if available
     try {
       const token = await AsyncStorage.getItem('userToken');

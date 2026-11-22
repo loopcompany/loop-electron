@@ -1,3 +1,4 @@
+import i18n from 'i18next';
 /**
  * Desktop-only presentation of the menu entries MenuProvider builds: which
  * icon each route gets and which sidebar group it sits in. The entries
@@ -99,7 +100,7 @@ export const SHELL_LABELS = {
     close: 'بستن',
     charge: 'شارژ کیف پول',
     transactions: 'تراکنش‌ها',
-    switchLanguage: 'تغییر زبان به انگلیسی',
+    switchLanguage: 'انتخاب زبان',
     apps: 'اپلیکیشن‌های هوشمند لوپ',
     appsHint: 'دانلود نسخه‌ی موبایل',
     website: 'سایت لوپ',
@@ -139,7 +140,7 @@ export const SHELL_LABELS = {
     close: 'Close',
     charge: 'Top up wallet',
     transactions: 'Transactions',
-    switchLanguage: 'Switch to Persian',
+    switchLanguage: 'Choose language',
     apps: 'Loop smart apps',
     appsHint: 'Download the mobile app',
     website: 'Loop website',
@@ -150,4 +151,4 @@ export const SHELL_LABELS = {
   },
 };
 
-export const shellLabels = (lang) => SHELL_LABELS[lang === 'fa' ? 'fa' : 'en'];
+export const shellLabels = (lang) => Object.fromEntries(Object.entries(SHELL_LABELS.fa).map(([key,value]) => [key, key === 'language' ? String(lang || 'fa').toUpperCase() : i18n.t(value,{defaultValue:lang === 'en' ? SHELL_LABELS.en[key] : value})]));

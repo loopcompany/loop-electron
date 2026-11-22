@@ -1,3 +1,4 @@
+import localizedCopy from '@utils/localizedCopy';
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -82,7 +83,7 @@ export function ProfileLayout({ banner, side, children }) {
  */
 export function ProfileBanner({ image, initial, fallbackIcon = 'person', onPickImage, kicker, name, pills = [], meta = [], code, progress }) {
   const dir = useDir();
-  const copy = COPY[dir.rtl ? 'fa' : 'en'];
+  const copy = localizedCopy(COPY.fa,COPY.en,dir.lang);
   const percent = progress ? Math.max(0, Math.min(100, Math.round(progress.percent))) : 0;
   return (
     <View style={[styles.banner, dir.row, animate('loop-fade-up', '320ms')]}>
@@ -347,7 +348,7 @@ const checkDesktopVersion = () =>
  */
 export function useAccountRows(navigation, { isOrganization } = {}) {
   const { t, i18n } = useTranslation();
-  const copy = COPY[i18n.language === 'fa' ? 'fa' : 'en'];
+  const copy = localizedCopy(COPY.fa,COPY.en,i18n.language);
   const [checking, setChecking] = useState(false);
   const version = desktopVersion() || '-';
 
@@ -420,7 +421,7 @@ export function LinkRows({ rows }) {
 /** Light / dark / system as three segments (./theme). */
 export function ThemeSwitch() {
   const dir = useDir();
-  const copy = COPY[dir.rtl ? 'fa' : 'en'];
+  const copy = localizedCopy(COPY.fa,COPY.en,dir.lang);
   const { mode: savedMode } = useTheme();
   const [mode, setMode] = useState(savedMode);
   const options = [
@@ -466,7 +467,7 @@ const STRENGTH_COLORS = [surface.border, palette.danger, tone.warning.fg, palett
 /** Four bars and a word under a new-password field. */
 export function StrengthMeter({ value }) {
   const dir = useDir();
-  const copy = COPY[dir.rtl ? 'fa' : 'en'];
+  const copy = localizedCopy(COPY.fa,COPY.en,dir.lang);
   const score = passwordScore(value);
   return (
     <View style={[styles.strength, dir.row]}>

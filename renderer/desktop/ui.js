@@ -1,3 +1,4 @@
+import { languageDirection } from '@services/localizationRegistry';
 import { useOrderReadOnly } from '@contexts/OrderReadOnlyContext';
 /**
  * Small building blocks for everything the desktop bundle draws itself:
@@ -19,7 +20,7 @@ export function useDir() {
   const { t, i18n } = useTranslation();
   const lang = i18n.language;
   return useMemo(() => {
-    const rtl = lang === 'fa';
+    const rtl = languageDirection(lang) === 'rtl';
     return {
       t,
       lang,

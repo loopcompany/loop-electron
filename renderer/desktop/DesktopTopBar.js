@@ -1,3 +1,4 @@
+import { languageDirection } from '@services/localizationRegistry';
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
@@ -53,7 +54,7 @@ export default function DesktopTopBar({
   onToggleMusic,
   lang,
 }) {
-  const rtl = lang === 'fa';
+  const rtl = languageDirection(lang) === 'rtl';
   const L = shellLabels(lang);
   const row = { flexDirection: rtl ? 'row-reverse' : 'row' };
   const align = { textAlign: rtl ? 'right' : 'left', writingDirection: rtl ? 'rtl' : 'ltr' };

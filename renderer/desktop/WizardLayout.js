@@ -1,3 +1,4 @@
+import localizedCopy from '@utils/localizedCopy';
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useRef, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
@@ -91,7 +92,7 @@ export const isLongSummaryValue = (value) =>
  */
 export default function WizardLayout({ title, subtitle, image, steps, currentId, onSelect, filledCount, children, summary }) {
   const dir = useDir();
-  const copy = COPY[dir.rtl ? 'fa' : 'en'];
+  const copy = localizedCopy(COPY.fa,COPY.en,dir.lang);
   const { height } = useWindowDimensions();
   const [pageWidth, setPageWidth] = useState(0);
   const [mainWidth, setMainWidth] = useState(0);

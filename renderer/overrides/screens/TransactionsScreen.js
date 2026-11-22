@@ -1,3 +1,4 @@
+import localizedCopy from '@utils/localizedCopy';
 import useRealtimeRefresh from '@hooks/useRealtimeRefresh';
 /**
  * DESKTOP OVERRIDE of loop-customer-mobile/screens/TransactionsScreen.js
@@ -79,7 +80,7 @@ export default function TransactionsScreen() {
   useRealtimeRefresh(["wallet"], () => fetchTransactions());
   const { t } = useTranslation();
   const dir = useDir();
-  const copy = COPY[dir.rtl ? 'fa' : 'en'];
+  const copy = localizedCopy(COPY.fa,COPY.en,dir.lang);
   const token = useSelector((state) => state?.auth?.token);
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);

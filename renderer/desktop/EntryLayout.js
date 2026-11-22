@@ -1,10 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useLocalization } from '@components/LocalizationProvider';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { useDispatch } from 'react-redux';
 
-import { setLanguage } from '@slices/languageSlice';
+
+
 
 import { elevation, gradients, motion, onDark, palette, radii } from './desktopTheme';
 import { animate } from './globalStyles';
@@ -50,18 +50,12 @@ const COPY = {
  */
 export default function EntryLayout({ title, subtitle, children, footer }) {
   const dir = useDir();
-  const copy = COPY[dir.rtl ? 'fa' : 'en'];
+  const text = (fa,en) => dir.t(fa,{defaultValue:dir.lang === 'en' ? en : fa});
+  const copy = {...COPY.fa, headline:text(COPY.fa.headline,COPY.en.headline),lead:text(COPY.fa.lead,COPY.en.lead),features:COPY.fa.features.map((feature,index)=>({...feature,title:text(feature.title,COPY.en.features[index].title),text:text(feature.text,COPY.en.features[index].text)}))};
   const { i18n } = useTranslation();
-  const dispatch = useDispatch();
+  const { openLanguagePicker, language } = useLocalization();
   const version = typeof window !== 'undefined' ? window.loopDesktop?.appVersion : null;
 
-  // same three steps as MenuProvider's language switch
-  const toggleLanguage = async () => {
-    const lng = i18n.language === 'en' ? 'fa' : 'en';
-    await i18n.changeLanguage(lng);
-    await AsyncStorage.setItem('language', lng);
-    dispatch(setLanguage(lng));
-  };
 
   return (
     <View style={styles.root}>
@@ -89,12 +83,12 @@ export default function EntryLayout({ title, subtitle, children, footer }) {
           {version ? `  ·  v${version}` : ''}
         </Text>
         <Pressable
-          onPress={toggleLanguage}
+          onPress={openLanguagePicker}
           accessibilityRole="button"
           style={({ hovered }) => [styles.lang, dir.row, hovered && styles.langHover]}
         >
           <Ionicons name="language-outline" size={15} color={onDark.soft} />
-          <Text style={[styles.langText, dir.bold]}>{copy.language}</Text>
+          <Text style={[styles.langText, dir.bold]}>{language.toUpperCase()} ▾</Text>
         </Pressable>
       </View>
     </View>
@@ -118,7 +112,8 @@ export function CosmicBackdrop() {
  */
 export function BrandStory({ style, compact }) {
   const dir = useDir();
-  const copy = COPY[dir.rtl ? 'fa' : 'en'];
+  const text = (fa,en) => dir.t(fa,{defaultValue:dir.lang === 'en' ? en : fa});
+  const copy = {...COPY.fa, headline:text(COPY.fa.headline,COPY.en.headline),lead:text(COPY.fa.lead,COPY.en.lead),features:COPY.fa.features.map((feature,index)=>({...feature,title:text(feature.title,COPY.en.features[index].title),text:text(feature.text,COPY.en.features[index].text)}))};
   const greeting = useTimeGreeting(dir.lang);
   return (
     <View style={[styles.story, dir.start, animate('loop-fade-up', '500ms'), style]}>

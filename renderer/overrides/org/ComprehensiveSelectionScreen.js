@@ -1,3 +1,4 @@
+import { procurementNeedsBudget } from '@utils/procurementBudget';
 import OrganizationAgreementPanel from '@components/OrganizationAgreementPanel';
 /**
  * DESKTOP OVERRIDE of loop-customer-mobile/org/ComprehensiveSelectionScreen.js
@@ -420,7 +421,8 @@ const ComprehensiveSelectionScreen = ({ navigation, route }) => {
 
   const hasService = softwareSummaryLines.length > 0 || hardwareSummaryLines.length > 0;
   const supplyOnly = !hasService && procurementSummaryLines.length > 0;
-  const canProceed = !hasMissingQuantity && deliveryMode.length > 0 &&
+  const hasMissingBudget = Object.entries(procurementItems).some(([id, entry]) => procurementNeedsBudget(id, entry));
+  const canProceed = !hasMissingBudget && !hasMissingQuantity && deliveryMode.length > 0 &&
     (hasService || supplyOnly) && (supplyOnly || equipmentStatus.length > 0) &&
     Boolean(serviceLevel && (isOnceShort ? onceDate : startDate) && timeSlot && addressId && technicianGender) &&
     (isOnceShort || Boolean(letterFile && (supplyOnly || criticalInfra) && !getOperatorInfoError()));
@@ -645,6 +647,7 @@ const ComprehensiveSelectionScreen = ({ navigation, route }) => {
                 const entry = procurementItems[item.id] || { new: 0, used: 0, desc: '' };
                 return (
                   <ProcurementCard
+                  itemId={item.id} budgetRial={entry.budgetRial} onBudgetChange={(budgetRial) => setProcurementItems((prev) => ({ ...prev, [item.id]: { ...prev[item.id], budgetRial } }))}
                     key={item.id}
                     image={item.image}
                     title={L(item.title)}

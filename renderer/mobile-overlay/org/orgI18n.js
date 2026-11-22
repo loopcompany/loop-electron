@@ -452,14 +452,8 @@ const EN = {
 /** Translate a single Persian string. Falls back to the input unchanged. */
 export const L = (fa) => {
   if (fa == null || fa === '') return fa;
-  if (i18n.language !== 'en') return fa;
-  return EN[fa] || fa;
+  return i18n.t(fa, { defaultValue: i18n.language === 'en' ? (EN[fa] || fa) : fa });
 };
-
-/** Translate the `title` of every option in an array (non-mutating). */
-export const LO = (options) => {
-  if (!Array.isArray(options) || i18n.language !== 'en') return options;
-  return options.map((o) => (o && o.title ? { ...o, title: EN[o.title] || o.title } : o));
-};
+export const LO = (options) => Array.isArray(options) ? options.map((option) => option?.title ? {...option,title:L(option.title)} : option) : options;
 
 export default L;

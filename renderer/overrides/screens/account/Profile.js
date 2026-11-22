@@ -1,3 +1,5 @@
+import useProfileRelogin from '@hooks/useProfileRelogin';
+import AddressBuildingFields from '@components/AddressBuildingFields';
 /**
  * DESKTOP OVERRIDE of loop-customer-mobile/screens/account/Profile.js
  *
@@ -79,6 +81,7 @@ export default function Profile() {
     const fa = i18n.language === 'fa';
     const navigation = useNavigation();
     const { logoutWithConfirmation, logoutFromAllDevicesWithConfirmation, isLoggingOut } = useLogout();
+  const profileRelogin=useProfileRelogin('individual');
     const [datePickerModal, setDatePickerModal] = useState(false);
     const [checkingUserType, setCheckingUserType] = useState(true);
     const [userType, setUserType] = useState(null);
@@ -99,6 +102,12 @@ export default function Profile() {
         postal_code: '',
         city: '',
         region_id: '',
+        home_number: '',
+        home_unit: '',
+        home_floor: '',
+        work_number: '',
+        work_unit: '',
+        work_floor: '',
         home_address: '',
         work_address: '',
         card_number: '',
@@ -257,6 +266,12 @@ export default function Profile() {
                     postal_code: user.postal_code || '',
                     city: user.city || '',
                     region_id: user.region_id || '',
+                    home_number: user.home_number ?? '',
+                    home_unit: user.home_unit ?? '',
+                    home_floor: user.home_floor ?? '',
+                    work_number: user.work_number ?? '',
+                    work_unit: user.work_unit ?? '',
+                    work_floor: user.work_floor ?? '',
                     home_address: user.home_address || '',
                     work_address: user.work_address || '',
                     card_number: user.card_number || '',
@@ -366,7 +381,7 @@ export default function Profile() {
                                 formData.append('region', profileData[key]?.code);
                             }
                         } else if (key !== 'phone') {
-                            const value = (profileData[key] || '').toString().trim();
+                            const value = (profileData[key] ?? '').toString().trim();
                             formData.append(key, value);
                             if (value) addedFields++;
                             console.log(`📝 Field ${key}: ${value || '(empty)'}`);
@@ -386,6 +401,7 @@ export default function Profile() {
                     const response = await userAPI.updateProfile(formData);
 
                     if (response.success) {
+                        if(await profileRelogin(response)) return;
                         showToastOrAlert(response.message);
                         // رسید آدرس/تلفن ثابت/کد ملی را از همین پروفایل می‌خواند
                         // و نتیجه را کش می‌کند؛ بدون این، رسید تا ری‌لود بعدی
@@ -441,8 +457,8 @@ export default function Profile() {
                                 updateData['region_id'] = profileData[key]?.id
                                 updateData['region'] = profileData[key]?.code
                             }
-                        } else if (key !== 'phone' && profileData[key] && profileData[key].trim() !== '') {
-                            updateData[key] = profileData[key].trim();
+                        } else if (key !== 'phone' && profileData[key] && String(profileData[key]).trim() !== '') {
+                            updateData[key] = String(profileData[key]).trim();
                         }
                     });
 
@@ -463,6 +479,7 @@ export default function Profile() {
                     const response = await userAPI.updateProfile(updateData);
 
                     if (response.success) {
+                        if(await profileRelogin(response)) return;
                         showToastOrAlert(response.message);
                         // رسید آدرس/تلفن ثابت/کد ملی را از همین پروفایل می‌خواند
                         // و نتیجه را کش می‌کند؛ بدون این، رسید تا ری‌لود بعدی
@@ -518,7 +535,8 @@ export default function Profile() {
                     if (errors && typeof errors === 'object') {
                         const firstErrorKey = Object.keys(errors)[0];
                         const firstError = errors[firstErrorKey][0];
-                        showToastOrAlert(firstError);
+                        setErrorTxt(errors);
+                        showToastOrAlert(Object.values(errors).flat().join('\n'));
                     } else {
                         showToastOrAlert(error.response.data.message || t('Error validating information'));
                     }
@@ -568,6 +586,7 @@ export default function Profile() {
             });
 
             if (response.success) {
+                        if(await profileRelogin(response)) return;
                 showToastOrAlert(response.message);
                 // Clear password fields
                 setPasswordData({ currentPassword: '', newPassword: '' });
@@ -800,7 +819,8 @@ export default function Profile() {
                                         <SelectField value={birthDate} placeholder={t('Birth Date')} onPress={() => setDatePickerModal(true)} />
                                     </Field>
                                     <Field label={t('Email Address')} required error={errorTxt?.email && t(errorTxt?.email)}>
-                                        <TextField icon="mail-outline" invalid={!!errorTxt?.email} placeholder={t('Email Address')} keyboardType="email-address" value={profileData.email} onChangeText={setField('email')} />
+                                        <TextField icon="mail-outline" invalid={!!errorTxt?.email} placeholder={t('Email Address')} keyboardType="email-address" value={profileData.email}
+                            editable={false} onChangeText={setField('email')} />
                                     </Field>
                                 </FieldGrid>
                             </PanelGroup>
@@ -845,9 +865,11 @@ export default function Profile() {
                                 <FieldGrid>
                                     <Field label={t('Home Address')}>
                                         <TextField icon="home-outline" multiline rows={4} placeholder={t('Home Address')} value={profileData.home_address} onChangeText={setField('home_address')} />
+<AddressBuildingFields kind="home" value={profileData} onChange={(field,value)=>setProfileData((prev)=>({...prev,[field]:value}))} />
                                     </Field>
                                     <Field label={t('Work Address')}>
                                         <TextField icon="business-outline" multiline rows={4} placeholder={t('Work Address')} value={profileData.work_address} onChangeText={setField('work_address')} />
+<AddressBuildingFields kind="work" value={profileData} onChange={(field,value)=>setProfileData((prev)=>({...prev,[field]:value}))} />
                                     </Field>
                                 </FieldGrid>
                             </PanelGroup>

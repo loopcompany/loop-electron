@@ -1,3 +1,4 @@
+import localizedCopy from '@utils/localizedCopy';
 /**
  * DESKTOP OVERRIDE of loop-customer-mobile/org/List.js
  *
@@ -140,7 +141,7 @@ const COPY = {
 const List = ({ navigation }) => {
   useTranslation();
   const dir = useDir();
-  const copy = COPY[dir.rtl ? 'fa' : 'en'];
+  const copy = localizedCopy(COPY.fa,COPY.en,dir.lang);
   const dispatch = useDispatch();
   const token = useSelector((state) => state?.auth?.token);
   const user = useSelector((state) => state?.user?.data);

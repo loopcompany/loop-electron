@@ -1,3 +1,4 @@
+import localizedCopy from '@utils/localizedCopy';
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -30,7 +31,7 @@ const GROUPS = [
  */
 export default function EmojiPicker({ onPick, disabled }) {
   const dir = useDir();
-  const copy = COPY[dir.rtl ? 'fa' : 'en'];
+  const copy = localizedCopy(COPY.fa,COPY.en,dir.lang);
   const [open, setOpen] = useState(false);
   const [group, setGroup] = useState(0);
   const rootRef = useRef(null);

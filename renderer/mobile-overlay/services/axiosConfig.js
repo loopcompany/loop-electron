@@ -56,6 +56,7 @@ const apiClient = axios.create({
  */
 apiClient.interceptors.request.use(
   async (config) => {
+    config.headers['Accept-Language'] = i18next.language || 'fa';
     try {
       // اضافه کردن token از AsyncStorage
       const token = await AsyncStorage.getItem('userToken');

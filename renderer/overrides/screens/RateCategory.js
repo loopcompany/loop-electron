@@ -1,3 +1,4 @@
+import localizedCopy from '@utils/localizedCopy';
 /**
  * DESKTOP OVERRIDE of loop-customer-mobile/screens/RateCategory.js
  *
@@ -71,7 +72,7 @@ export default function RateCategory() {
   useRealtimeRefresh(['catalog'], () => fetchLetterRates());
   const { t } = useTranslation();
   const dir = useDir();
-  const copy = COPY[dir.rtl ? 'fa' : 'en'];
+  const copy = localizedCopy(COPY.fa,COPY.en,dir.lang);
 
   const [show, setShow] = useState(null)
   const [rates, setRates] = useState([]);

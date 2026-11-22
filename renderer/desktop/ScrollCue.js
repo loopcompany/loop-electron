@@ -1,3 +1,4 @@
+import localizedCopy from '@utils/localizedCopy';
 /**
  * "There is more below" cue for the home dashboards. On a tall window the
  * first screen ends at the order options, so the actions, account and quick
@@ -66,7 +67,7 @@ const SWEEP = {
 
 export function useScrollCue(scrollRef) {
   const dir = useDir();
-  const copy = COPY[dir.rtl ? 'fa' : 'en'];
+  const copy = localizedCopy(COPY.fa,COPY.en,dir.lang);
   const metrics = useRef({ y: 0, view: 0, content: 0 });
   const [show, setShow] = useState(false);
 

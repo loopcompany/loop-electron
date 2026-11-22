@@ -1,3 +1,4 @@
+import localizedCopy from '@utils/localizedCopy';
 /**
  * DESKTOP OVERRIDE of loop-customer-mobile/screens/auth/RegistrationVerificationScreen.js
  *
@@ -62,7 +63,7 @@ const normalizeVerificationCode = value => String(value || '')
 
 export default function RegistrationVerificationScreen({ route, navigation }) {
   const { t, i18n } = useTranslation();
-  const copy = COPY[i18n.language === 'fa' ? 'fa' : 'en'];
+  const copy = localizedCopy(COPY.fa,COPY.en,i18n.language);
   const dispatch = useDispatch();
   const { phone, userData } = route.params || {};
 

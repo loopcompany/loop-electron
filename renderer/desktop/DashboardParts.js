@@ -201,6 +201,7 @@ export { greetingIcon } from './brandCopy';
  * @param {boolean} [props.serviceOpen]    the service card's panel is showing
  */
 export function HomeActions({ onService, onSupply, onOrders, orders, serviceOpen }) {
+  const userType = useSelector((state) => state.auth?.userType);
   const dir = useDir();
   const copy = dashboardCopy(dir.rtl);
   const list = Array.isArray(orders) ? orders : [];
@@ -245,7 +246,7 @@ export function HomeActions({ onService, onSupply, onOrders, orders, serviceOpen
                 </View>
                 <View style={[styles.actionTags, dir.row]}>
                   {!!action.badge && <Pill label={action.badge} kind="gold" size="sm" dot />}
-                  <HelpButton help={copy.help[action.key]} />
+                  <HelpButton help={action.key === 'supply' && userType !== 'organization' ? { ...copy.help.supply, text: copy.help.supply.text.replace(/ سازمان$/, '') } : copy.help[action.key]} />
                 </View>
               </View>
               <Text style={[styles.actionTitle, dir.bold, dir.align]}>{action.title}</Text>

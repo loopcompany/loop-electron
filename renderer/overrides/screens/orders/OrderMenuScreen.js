@@ -1,3 +1,4 @@
+import localizedCopy from '@utils/localizedCopy';
 /**
  * DESKTOP OVERRIDE of loop-customer-mobile/screens/orders/OrderMenuScreen.js
  *
@@ -49,7 +50,7 @@ const COPY = {
 
 function OrderMenuScreen({ navigation }) {
   const { t, i18n } = useTranslation();
-  const copy = COPY[i18n.language === 'fa' ? 'fa' : 'en'];
+  const copy = localizedCopy(COPY.fa,COPY.en,i18n.language);
   const contact = useSelector(state => state.contacts?.data?.data?.contact_urgent)
   const token = useSelector(state => state.auth?.token);
   const userType = useSelector(state => state.auth?.userType);

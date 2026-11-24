@@ -1,14 +1,8 @@
 /**
  * DESKTOP OVERRIDE of loop-customer-mobile/screens/Landing.js
  *
- * The splash logo motion, played WITH sound on desktop (the mobile file mutes
- * it on web because browsers block unmuted autoplay; the Electron window
- * allows it — `autoplayPolicy` in electron/main.js) — silent from the start
- * when the user switched the music off, and muted live by the floating music
- * button (`useBackgroundMusic`). The background music is
- * held while the logo motion plays so the two never overlap, and starts once
- * the splash is gone. Same data flow as the mobile file: the same requests,
- * auth check, timeouts and navigation.
+ * Electron permits audible autoplay. The video owns its mute control and holds
+ * the dashboard music until it finishes. Playback events drive navigation.
  *
  * When the mobile file changes, `npm run check:overrides` fails: port the
  * change here, then run `npm run overrides:accept`.
@@ -30,9 +24,8 @@ import { setLanguage } from '@slices/languageSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { fetchPdfDocs } from '@slices/pdfDocumentSlice';
 import { fetchMinPrice } from '@slices/minPriceSlice';
-import { useVideoPlayer, VideoView } from 'expo-video';
+import { Asset } from 'expo-asset';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useEvent } from 'expo';
 import { getSmsHash } from '@screens/auth/OtpRetriever';
 import { setHashApp } from '@slices/hashAppSlice';
 import { holdBackgroundMusic } from '@desktop/backgroundMusic';
@@ -42,67 +35,43 @@ import { holdBackgroundMusic } from '@desktop/backgroundMusic';
 //
 // قبلاً همین ۶ ثانیه از لحظه‌ی mount شمرده می‌شد، در حالی که لوگوموشن ۸ ثانیه
 // است؛ پس روی همه‌ی دستگاه‌ها ویدیو وسط پخش قطع می‌شد. حالا بعد از شروع پخش،
-// سقف دوباره از روی مدت واقعی ویدیو تنظیم می‌شود (پایین‌تر، اثرِ isPlaying).
-const SPLASH_START_TIMEOUT_MS = 6000;
+// سقف دوباره از روی مدت واقعی ویدیو تنظیم می‌شود.
+const SPLASH_START_TIMEOUT_MS = 10000;
 
 // مدت لوگوموشن، وقتی player هنوز duration را گزارش نکرده است.
 const SPLASH_VIDEO_FALLBACK_S = 8;
 
 // حاشیه‌ی بعد از پایان ویدیو برای رسیدن رویداد playToEnd؛ فقط اگر آن رویداد
 // نرسد، این تایمر ادامه می‌دهد.
-const SPLASH_END_GRACE_MS = 1500;
+const SPLASH_END_GRACE_MS = 3500;
 
 // سقفِ مطلق: حتی اگر بررسیِ توکن هم گیر کند (شبکه‌ی کند، تایم‌اوتِ ۱۰ ثانیه‌ای
 // axios)، کاربر بعد از این مدت به هر حال وارد صفحه‌ی خانه می‌شود.
-const SPLASH_MAX_MS = 20000;
+const SPLASH_MAX_MS = 25000;
+const splashSource = Asset.fromModule(require('@desktop/assets/logo-motion-landscape.mp4')).uri;
+const fullVideo = { position: 'absolute', inset: 0, width: '100%', height: '100%' };
 
 export default function Landing({ navigation }) {
   const dispatch = useDispatch();
   const mountedRef=React.useRef(true);
   useEffect(()=>{mountedRef.current=true;return()=>{mountedRef.current=false;};},[]);
-  const [checking, setChecking] = useState(true);
   const [logoMuted, setLogoMuted] = useState(false);
   // نگهبان‌های تک‌بار-بودن: هم playToEnd و هم تایم‌اوت می‌توانند مسیر را ادامه دهند.
   const startedRef = React.useRef(false);
   const settledRef = React.useRef(false);
   const fallbackTimerRef = React.useRef(null);
-  const playbackArmedRef = React.useRef(false);
-  const player = useVideoPlayer(require('@desktop/assets/logo-motion-landscape.mp4'), player => {
-    console.log("player ready");
-    // Intro audio is independent from the optional dashboard background music.
-    player.muted = false;
-    player.volume = 1;
-    // The intro must be clearly audible; silence any other player while it runs.
-    player.audioMixingMode = "doNotMix";
-    player.play();
-  });
-  // لایه‌ی پس‌زمینه: همان کلیپ با `cover` و بلور. در پنجره‌های ۱۶:۹ زیرِ کلیپ اصلی
-  // پنهان است؛ در نسبت‌های دیگر (مثلاً ۱۶:۱۰) حاشیه‌ی بالا/پایین را با فضای
-  // ستاره‌دارِ متحرک پر می‌کند تا لوگوموشن تمام‌پنجره باشد و کلیپ هم کامل بماند.
-  const backdropPlayer = useVideoPlayer(require('@desktop/assets/logo-motion-landscape.mp4'), (p) => {
-    p.muted = true;
-    p.volume = 0;
-    p.play();
-  });
-
-  // On web the setup callback runs before VideoView mounts its HTML element.
-  // Calling play there has no target; start again after mount and media readiness.
+  const backdropRef = React.useRef(null);
+  const backdropFrameRef = React.useRef(null);
+  const videoRef = React.useRef(null);
   useEffect(() => {
-    const start = () => { if (!settledRef.current) player.play(); };
-    const subscription = player.addListener('statusChange', ({ status }) => {
-      if (status === 'readyToPlay') start();
-    });
-    start();
-    return () => subscription.remove();
-  }, [player]);
+    const video = videoRef.current;
+    return () => {
+      if (backdropFrameRef.current !== null) video?.cancelVideoFrameCallback?.(backdropFrameRef.current);
+    };
+  }, []);
 
   // background music waits until the splash (and its sound) is over
   useEffect(() => holdBackgroundMusic(), []);
-  // The intro has its own mute control; keep volume and muted synchronized.
-  useEffect(() => {
-    player.muted = logoMuted;
-    player.volume = logoMuted ? 0 : 1;
-  }, [player, logoMuted]);
   // Check authentication on component mount
   useEffect(() => {
 
@@ -158,7 +127,6 @@ export default function Landing({ navigation }) {
   const settle = (routeName) => {
     if (settledRef.current || !mountedRef.current) return;
     settledRef.current = true;
-    setChecking(false);
     navigation.replace(routeName);
   };
 
@@ -166,17 +134,6 @@ export default function Landing({ navigation }) {
   const navigateToMainApp = () => settle('List');
   const navigateToWelcome = () => settle('Welcome');
 
-
-  useEffect(() => {
-    const subscription = player.addListener('playToEnd', () => {
-      // ۲. بعد از اتمام ویدیو به صفحه بعد بروید
-      checkAuthenticationStatus();
-    });
-
-    return () => {
-      subscription.remove();
-    };
-  }, [player]);
 
   // Fallback: never let a video that refuses to play (or never emits
   // `playToEnd`) strand the user on the splash screen.
@@ -226,27 +183,30 @@ export default function Landing({ navigation }) {
     };
   }, []);
 
-  useEffect(() => {
-    const subscription = player.addListener('statusChange', ({ status, error }) => {
-
-      console.log('Player status changed: ', error);
-    });
-
-    return () => {
-      subscription.remove();
-    };
-  }, []);
-  const { isPlaying } = useEvent(player, 'playingChange', { isPlaying: player.playing });
-
-  // به محض شروع پخش، سقف «شروع نشد» را با «باقی‌مانده‌ی ویدیو + حاشیه» عوض
-  // می‌کنیم تا لوگوموشن کامل پخش شود و فقط اگر playToEnd نرسید، ادامه دهیم.
-  useEffect(() => {
-    if (!isPlaying || playbackArmedRef.current || settledRef.current) return;
-    playbackArmedRef.current = true;
-    const duration = player.duration > 0 ? player.duration : SPLASH_VIDEO_FALLBACK_S;
-    const remaining = Math.max(0, duration - (player.currentTime || 0));
+  const handleProgress = ({ currentTarget: video }) => {
+    if (!video.currentTime || settledRef.current) return;
+    const duration = Number.isFinite(video.duration) ? video.duration : SPLASH_VIDEO_FALLBACK_S;
+    const remaining = Math.max(0, duration - video.currentTime);
     armFallback(remaining * 1000 + SPLASH_END_GRACE_MS);
-  }, [isPlaying, player]);
+    if (!video.requestVideoFrameCallback && backdropRef.current) {
+      const canvas = backdropRef.current;
+      canvas.getContext('2d')?.drawImage(video, 0, 0, canvas.width, canvas.height);
+    }
+  };
+
+  const drawBackdrop = ({ currentTarget: video }) => {
+    if (!video.requestVideoFrameCallback || backdropFrameRef.current !== null) return;
+    const canvas = backdropRef.current;
+    const context = canvas?.getContext('2d');
+    if (!context) return;
+
+    const draw = () => {
+      if (!mountedRef.current || settledRef.current || video.ended) return;
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      backdropFrameRef.current = video.requestVideoFrameCallback(draw);
+    };
+    backdropFrameRef.current = video.requestVideoFrameCallback(draw);
+  };
 
 
 
@@ -256,17 +216,24 @@ export default function Landing({ navigation }) {
       <LinearGradient colors={SPLASH_GRADIENT} style={StyleSheet.absoluteFill} />
 
       {/* Preserve the complete landscape clip; the blurred backdrop fills window margins. */}
-      <VideoView
-        style={[styles.video, styles.backdrop]}
-        nativeControls={false}
-        player={backdropPlayer}
-        contentFit="cover"
+      <canvas
+        ref={backdropRef}
+        width={480}
+        height={270}
+        aria-hidden="true"
+        style={{ ...fullVideo, objectFit: 'cover', filter: 'blur(34px)', transform: 'scale(1.12)', opacity: 0.85 }}
       />
-      <VideoView
-        style={styles.video}
-        nativeControls={false}
-        player={player}
-        contentFit="contain"
+      <video
+        ref={videoRef}
+        src={splashSource}
+        autoPlay
+        playsInline
+        muted={logoMuted}
+        onPlaying={drawBackdrop}
+        onTimeUpdate={handleProgress}
+        onEnded={checkAuthenticationStatus}
+        onError={checkAuthenticationStatus}
+        style={{ ...fullVideo, objectFit: 'contain' }}
       />
       <Pressable accessibilityRole="button" accessibilityLabel={logoMuted ? "پخش صدای لوگوموشن" : "قطع صدای لوگوموشن"} onPress={() => setLogoMuted((value) => !value)} style={{ position: "absolute", bottom: 24, right: 24, padding: 12, backgroundColor: "#17334f", borderRadius: 12 }}><Text style={{color:"#fff"}}>{logoMuted ? "🔇" : "🔊"}</Text></Pressable>
     </View>
@@ -282,28 +249,6 @@ const styles = StyleSheet.create({
     backgroundColor: SPLASH_GRADIENT[1],
     // اسپلش هیچ‌وقت نباید اسکرول شود؛ این هر سرریزِ احتمالی را می‌برد.
     overflow: 'hidden',
-  },
-  // عرض/ارتفاعِ صریح، نه فقط `StyleSheet.absoluteFill`.
-  //
-  // روی وب این استایل مستقیم روی خودِ تگ `<video>` می‌نشیند، و `<video>` یک
-  // replaced element است: طبق CSS، وقتی `width`/`height` برابر `auto` باشند
-  // (چیزی که absoluteFill تنها با top/left/right/bottom باقی می‌گذارد) مرورگر
-  // ابعادِ ذاتیِ فایل را به کار می‌برد — یعنی ۷۲۰×۱۲۸۰ پیکسل. روی پنجره‌ی
-  // کوچکِ موبایل این از صفحه بیرون می‌زد و `#root` (که `overflow: auto` دارد)
-  // اسکرول افقی و عمودی نشان می‌داد. با `100%` این اتفاق نمی‌افتد و روی نیتیو
-  // هم دقیقاً همان absoluteFill است.
-  video: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    width: '100%',
-    height: '100%',
-  },
-  // Blurred starry fill behind the clip; scaled up so the blurred edge stays outside.
-  backdrop: {
-    filter: 'blur(34px)',
-    transform: 'scale(1.12)',
-    opacity: 0.85,
   },
   background: {
     flex: 1,

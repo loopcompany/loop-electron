@@ -40,6 +40,7 @@ import {
   PhotoNoteInput,
   SummaryBox,
   OrderActionButtons,
+  ActionButton,
 } from '@components/OrgSelectionKit';
 import {
   HARDWARE_ITEMS,
@@ -50,6 +51,7 @@ import {
   hasDescriptionWithoutQuantity,
 } from './deviceCatalog';
 import { getCategory, getFlow, SERVICE_STEP_IDS } from './systematicFlows';
+import { leaveBlockReason, leaveBlockMessage, listMissingSteps } from './systematicRequired';
 import { counterLines, procurementLines } from '@org/summaryLines';
 import { themeColor10, colors } from '@theme/Color';
 import { spacing } from '@theme/Spacing';
@@ -142,6 +144,17 @@ const SystematicDeviceScreen = ({ navigation, route }) => {
     if (id !== expanded && missingQuantityStep?.id === expanded) {
       showToastOrAlert(L('برای موارد دارای توضیحات، تعداد را وارد کنید.'));
       return;
+    }
+    // قاعده‌ی سند کارفرما (۲۵ آبان ۱۴۰۵، بند ۳۵): با «بعدی» یا کلیک روی مرحله‌ی بعدی،
+    // از یک مرحله‌ی الزامیِ ناقص نمی‌شود گذشت؛ پیام می‌آید و کاربر روی همان مرحله
+    // می‌ماند. «قبلی» و برگشتن به مراحل قبل آزاد است. تا ۱۴۰۵/۰۹/۰۲ کاربر می‌توانست
+    // بدون تکمیل مراحل به آخر برسد و آنجا دکمه‌ی غیرفعال می‌دید.
+    if (id !== expanded) {
+      const block = leaveBlockReason(steps, answers, isStepFilled, expanded, id);
+      if (block) {
+        showToastOrAlert(leaveBlockMessage(block, L));
+        return;
+      }
     }
     setExpanded(id);
   };
@@ -271,10 +284,13 @@ const SystematicDeviceScreen = ({ navigation, route }) => {
     []
   );
 
-  const serviceSteps = steps.filter((step) => SERVICE_STEP_IDS.includes(step.id));
-  const firstMissingStep = () =>
-    steps.find((step) => step.required && !isStepFilled(step, answers[step.id])) ||
-    (serviceSteps.some((step) => isStepFilled(step, answers[step.id])) ? null : serviceSteps[0]);
+  // مراحل الزامیِ ناقص، به ترتیب مراحل؛ گروه خدمات در جای اولین عضوش (منطق مشترک با
+  // موبایل در org/systematicRequired.js، با تست).
+  const missingSteps = useMemo(
+    () => listMissingSteps(steps, answers, isStepFilled),
+    [steps, answers]
+  );
+  const firstMissingStep = () => missingSteps[0] || null;
 
   const missingBudgetStep = steps.find((step) => step.type === 'procurement' && Object.entries(answers[step.id] || {}).some(([id, entry]) => procurementNeedsBudget(id, entry)));
   const missingQuantityStep = steps.find((step) =>
@@ -585,8 +601,25 @@ const SystematicDeviceScreen = ({ navigation, route }) => {
       case 'orderActions':
         return (
           <>
+            {/* دکمه‌ها همیشه فعال‌اند. تا ۱۴۰۵/۰۹/۰۲ با هر مرحله‌ی ناقص، بی‌توضیح
+                کم‌رنگ و غیرفعال می‌شدند و کاربر «دکمه‌ای نداشت». حالا با مرحله‌ی ناقص،
+                پیام می‌دهند و به آن مرحله می‌روند؛ مراحل مانده هم فهرست می‌شوند. */}
+            {missingSteps.length > 0 ? (
+              <View style={styles.missingBox}>
+                <Text style={styles.missingTitle}>
+                  {`${L('مراحل الزامی باقی‌مانده')} (${missingSteps.length}): ${missingSteps
+                    .map((step) => L(step.title))
+                    .join('، ')}`}
+                </Text>
+                <ActionButton
+                  title={L('رفتن به مرحله‌ی ناقص')}
+                  color={colors.error}
+                  onPress={() => selectStep(missingSteps[0].id)}
+                  last
+                />
+              </View>
+            ) : null}
             <OrderActionButtons
-              disabled={Boolean(missingBudgetStep || missingQuantityStep || firstMissingStep())}
               onIssueReceipt={() => handleOrderAction('issue_receipt')}
               onShowReceipt={() => handleOrderAction('show_receipt')}
               onSubmit={() => handleOrderAction('submit_order')}
@@ -632,6 +665,23 @@ const SystematicDeviceScreen = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: 'transparent' },
   emptyWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  // بنر «مراحل الزامی باقی‌مانده» بالای دکمه‌های ثبت سفارش (روی کارت روشن ویزارد)
+  missingBox: {
+    backgroundColor: colors.error.bgColor(0.08),
+    borderColor: colors.error.bgColor(0.35),
+    borderWidth: 1,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  missingTitle: {
+    fontFamily: 'VazirBold',
+    fontSize: fontSize.sm,
+    color: colors.textPrimary.color,
+    textAlign: 'center',
+    lineHeight: fontSize.sm * 1.8,
+    marginBottom: spacing.md,
+  },
   subLabel: {
     fontFamily: 'VazirBold',
     fontSize: fontSize.xs,

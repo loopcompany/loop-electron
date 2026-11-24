@@ -36,31 +36,38 @@ const sectionIcon = {
   criticalInfra: require('@assets/icons/sections/critical-infra.png'),
 };
 
+// تصاویر کاشی‌های صفحه‌ی «انتخاب سیستماتیک»: همان تصاویر اصلی که کارفرما داده است
+// (روی سرور: category/*.png و userfolder/TrashV.png). تا ۱۴۰۵/۰۹/۰۲ آیکون‌های
+// بازطراحی‌شده‌ی سرمه‌ای نمایش داده می‌شد. برای نمایش فوری فقط اندازه کوچک شده
+// (۵۱۲ پیکسل WebP)؛ ظاهر دست‌نخورده است. منطبق با org/systematicFlows.js در اپ کاربر.
 const deviceIcon = {
-  laptop: require('@assets/icons/hardware-services/laptop.png'),
-  monitor: require('@assets/icons/hardware-services/monitor.png'),
-  case: require('@assets/icons/hardware-services/case-standard.png'),
-  allInOne: require('@assets/icons/hardware-services/all-in-one.png'),
-  printer: require('@assets/icons/hardware-services/printer-multi.png'),
-  hardDisk: require('@assets/icons/hardware-services/storage-drive.png'),
-  // آیکون اختصاصی «ضایعات» - جایگزین گلیف trash-outline قبلی
-  trash: require('@assets/icons/hardware-services/trash.png'),
+  laptop: require('@assets/icons/systematic/laptop.webp'),
+  monitor: require('@assets/icons/systematic/monitor.webp'),
+  case: require('@assets/icons/systematic/case.webp'),
+  allInOne: require('@assets/icons/systematic/all-in-one.webp'),
+  printer: require('@assets/icons/systematic/printer.webp'),
+  hardDisk: require('@assets/icons/systematic/hard-disk.webp'),
+  trash: require('@assets/icons/systematic/trash.webp'),
 };
 
 // ---------------------------------------------------------------------------
 // شبکه‌ی دسته‌ها - همان کاشی‌های صفحه‌ی «انتخاب سیستماتیک» در طرح
+//
+// ترتیب، همان ترتیب سند کارفرما (۲۵ آبان ۱۴۰۵، بند ۲۹) است:
+// حساب کاربری، مانیتور، Trash، لپ تاپ، کیس، آل این وان، پرینتر / کپی، هارد.
 // ---------------------------------------------------------------------------
 export const SYSTEMATIC_CATEGORIES = [
   {
     id: 'user_account',
     title: 'حساب کاربری',
     subtitle: 'User Account',
-    image: require('@assets/icons/sections/account-menu.png'),
+    image: require('@assets/icons/systematic/account.webp'),
     // این کاشی مرحله‌ای ندارد و مستقیم صفحه‌ی حساب کاربری موجود را باز می‌کند.
     screen: 'Profile',
   },
   { id: 'monitor', title: 'مانیتور', subtitle: 'Monitor', image: deviceIcon.monitor },
-  { id: 'trash', title: 'ضایعات', subtitle: 'به زودی', image: deviceIcon.trash },
+  // «Trash» طبق سند در هر دو زبان همین‌طور نوشته می‌شود؛ با ضربه پیام «به زودی» می‌آید.
+  { id: 'trash', title: 'Trash', subtitle: 'Coming soon', image: deviceIcon.trash },
   { id: 'laptop', title: 'لپ تاپ', subtitle: 'Laptop', image: deviceIcon.laptop },
   { id: 'case', title: 'کیس', subtitle: 'Case', image: deviceIcon.case },
   { id: 'all_in_one', title: 'آل این وان', subtitle: 'All in One', image: deviceIcon.allInOne },

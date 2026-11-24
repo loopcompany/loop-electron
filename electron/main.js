@@ -78,6 +78,15 @@ if (!app.requestSingleInstanceLock()) {
 }
 
 function onReady() {
+  const updater = require('./updater').createUpdater(app, (state) => {
+    if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('loop:update:state', state);
+  });
+  for (const operation of ['check', 'download', 'install']) {
+    ipcMain.handle('loop:update:' + operation, (event) => {
+      if (!mainWindow || event.sender !== mainWindow.webContents || !isAppUrl(event.senderFrame?.url, APP_ORIGINS)) throw Error('Untrusted update caller');
+      return updater[operation]();
+    });
+  }
   app.setAppUserModelId(APP_USER_MODEL_ID);
   Menu.setApplicationMenu(null);
 

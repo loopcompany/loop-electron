@@ -36,12 +36,12 @@ body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; 
 
 /* Slim, quiet scrollbars that darken on hover */
 * { scrollbar-width: thin; scrollbar-color: var(--loop-scrollbar) transparent; }
-::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
   background: var(--loop-scrollbar);
   border-radius: 999px;
-  border: 3px solid transparent;
+  border: 2px solid transparent;
   background-clip: content-box;
 }
 ::-webkit-scrollbar-thumb:hover { background-color: var(--loop-scrollbar-hover); }
@@ -49,6 +49,13 @@ body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; 
 [data-loop-dark] ::-webkit-scrollbar-thumb,
 [data-loop-dark]::-webkit-scrollbar-thumb { background-color: rgba(255, 255, 255, 0.12); }
 [data-loop-dark] ::-webkit-scrollbar-thumb:hover { background-color: rgba(255, 255, 255, 0.24); }
+
+/* Sidebar navigation (employer request 2026-11-23): a slim bar in the gold accent
+   that stays visible, so it is obvious the menu scrolls on a short window. */
+.loop-nav-scroll { scrollbar-width: thin; scrollbar-color: rgba(217, 169, 64, 0.55) transparent; }
+.loop-nav-scroll::-webkit-scrollbar { width: 6px; }
+.loop-nav-scroll::-webkit-scrollbar-thumb { background: rgba(217, 169, 64, 0.55); border: none; }
+.loop-nav-scroll::-webkit-scrollbar-thumb:hover { background: rgba(217, 169, 64, 0.9); }
 
 /* Keyboard focus is visible; mouse focus is not */
 :focus { outline: none; }

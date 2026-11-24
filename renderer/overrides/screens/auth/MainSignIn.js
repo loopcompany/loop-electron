@@ -75,7 +75,6 @@ const initialState = {
     melicode: '',
     phone: '',
     email: '',
-    otherReferralCode: '',
     captchaInput: '',
     captcha: Math.floor(1000 + Math.random() * 9000).toString(),
     province: null,
@@ -121,7 +120,6 @@ export default function MainSignIn({ navigation }) {
     const [state, dispatch] = useReducer(formReducer, initialState);
     const hashApp = useSelector(state => state.hashApp?.hash)
 
-    const inviteLetter = 'L'; // Static invite letter
     const { t, i18n } = useTranslation();
     const copy = localizedCopy(COPY.fa,COPY.en,i18n.language);
 
@@ -201,7 +199,6 @@ export default function MainSignIn({ navigation }) {
                 province_id: state.province?.id,
                 city_id: state.city?.id,
                 region_id: state.region?.id,
-                other_referral_code: state.otherReferralCode ? `${inviteLetter}${state.otherReferralCode}` : null,
                 hashApp: hashApp?.[0]
             };
 
@@ -323,25 +320,6 @@ export default function MainSignIn({ navigation }) {
                     />
                 </AuthField>
 
-                <AuthField
-                    label={copy.referral}
-                    hint={copy.referralHint}
-                    error={state.errors.otherReferralCode || state.errors.other_referral_code}
-                >
-                    <AuthInput
-                        icon="gift-outline"
-                        ltr
-                        prefix={`${inviteLetter}-`}
-                        value={state.otherReferralCode}
-                        onChangeText={setField('otherReferralCode')}
-                        placeholder={copy.referralPlaceholder}
-                        maxLength={5}
-                        autoCapitalize="none"
-                        autoCorrect={false}
-                        invalid={!!(state.errors.otherReferralCode || state.errors.other_referral_code)}
-                        onSubmitEditing={handleRegistration}
-                    />
-                </AuthField>
 
                 <CaptchaField
                     code={state.captcha}

@@ -87,13 +87,10 @@ const readCachedCategories = async (lang) => {
 const writeCachedCategories = (lang, categories) =>
   AsyncStorage.setItem(cacheKeyFor(lang), JSON.stringify(categories)).catch(() => {});
 
-const prefetchIcons = (categories) => {
-  const urls = [
-    `${imageUri}/userfolder/Profile.png`,
-    ...categories.map((item) => item?.image_path).filter(Boolean).map((path) => `${imageUri}/${path}`),
-  ];
-  ExpoImage.prefetch(urls, 'memory-disk').catch(() => {});
-};
+// تصاویر کارت‌ها داخل بسته‌اند (assets/icons/systematic/، نسخه‌ی سبکِ همان تصاویر اصلی
+// کارفرما) و دیگر از سرور دانلود نمی‌شوند: تصاویر سرور هر کدام ۱٫۵ تا ۱٫۸ مگابایت بودند
+// (حدود ۱۰ مگابایت برای یک صفحه) و همین علت دیر لود شدن بود.
+const prefetchIcons = () => {};
 
 // Desktop-only copy; kept here rather than in the shared i18n files.
 const COPY = {
@@ -154,7 +151,10 @@ const SystematicCategoryScreen = ({ navigation }) => {
 
   const [folders, setFolders] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
-  const [loader, setLoader] = useState(true);
+  // تصاویر کارت‌ها از ۱۴۰۵/۰۹/۰۲ داخل بسته هستند (نسخه‌ی سبکِ تصاویر اصلی کارفرما)، پس
+  // کارت‌ها بدون انتظار برای ‎/categories نمایش داده می‌شوند؛ پاسخ سرور فقط شناسه‌ی
+  // دسته‌ها را می‌دهد. تا این تغییر بخش دسته‌ها تا رسیدن پاسخ اسکلت‌بندی نشان می‌داد.
+  const [loader, setLoader] = useState(false);
 
   const lang = i18n.language;
 
@@ -284,8 +284,10 @@ const SystematicCategoryScreen = ({ navigation }) => {
   // میان‌برهای کنار صفحه است، نه بین دستگاه‌ها.
   const buildTiles = () => items.map((entry)=>{
     const categoryId=resolveSystematicCategoryId(entry.apiItem);
+    // «Trash» طبق سند کارفرما (۲۵ آبان ۱۴۰۵، بند ۲۹) با کلیک پیام «به زودی» می‌دهد.
+    // تا ۱۴۰۵/۰۹/۰۲ کارت غیرفعال بود و به کلیک هیچ واکنشی نداشت.
     return {key:entry.key,title:entry.title,subtitle:getCategory(categoryId)?.subtitle,
-      imageSource:entry.imageSource,onPress:categoryId==='trash'?undefined:()=>openCategory(entry),isTrash:categoryId==='trash'};
+      imageSource:entry.imageSource,onPress:categoryId==='trash'?()=>showToastOrAlert(L('به زودی')):()=>openCategory(entry),isTrash:categoryId==='trash'};
   });
 
   const tiles = buildTiles();
@@ -368,27 +370,24 @@ function CategoryTile({ tile, index, dir, copy }) {
   return (
     <Pressable
       onPress={tile.onPress}
-      disabled={tile.isTrash}
       accessibilityRole="button"
-      accessibilityState={{ disabled: tile.isTrash }}
       accessibilityLabel={`${L(tile.title)}${tile.isTrash ? ` — ${copy.soon}` : ''}`}
       style={({ hovered, pressed }) => [
         styles.tile,
         animate('loop-fade-up', '320ms', `${160 + index * 40}ms`),
-        hovered && !tile.isTrash && styles.tileHover,
-        pressed && !tile.isTrash && styles.tilePressed,
-        tile.isTrash && styles.tileDisabled,
+        hovered && styles.tileHover,
+        pressed && styles.tilePressed,
       ]}
     >
       {({ hovered }) => (
         <>
-          <View style={[styles.tileGlow, hovered && !tile.isTrash && styles.tileGlowOn]} />
+          <View style={[styles.tileGlow, hovered && styles.tileGlowOn]} />
           {tile.isTrash && (
             <View style={[styles.soon, dir.rtl ? styles.soonRtl : styles.soonLtr]}>
               <Pill label={copy.soon} kind="neutral" size="sm" />
             </View>
           )}
-          <View style={[styles.tileIconWrap, hovered && !tile.isTrash && styles.tileIconHover]}>
+          <View style={[styles.tileIconWrap, hovered && styles.tileIconHover]}>
             {source ? (
               <ExpoImage
                 source={source}
@@ -407,7 +406,7 @@ function CategoryTile({ tile, index, dir, copy }) {
           <Text style={[styles.tileTitle, dir.bold]} numberOfLines={1}>
             {L(tile.title)}
           </Text>
-          <View style={[styles.tileCta, dir.row, hovered && !tile.isTrash && styles.tileCtaOn]}>
+          <View style={[styles.tileCta, dir.row, hovered && styles.tileCtaOn]}>
             <Text style={[styles.tileCtaText, dir.light]}>{tile.isTrash ? copy.soon : copy.start}</Text>
             {!tile.isTrash && <Ionicons name={dir.forward} size={13} color={palette.brandBright} />}
           </View>

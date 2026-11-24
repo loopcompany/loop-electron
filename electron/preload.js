@@ -20,6 +20,16 @@ contextBridge.exposeInMainWorld('loopDesktop', {
   /** 'overlay': the app draws its own title bar (Windows); 'native': the OS frame. */
   titleBar: argValue('loop-title-bar') || 'native',
   electronVersion: process.versions.electron,
+  updates: {
+    check: () => ipcRenderer.invoke('loop:update:check'),
+    download: () => ipcRenderer.invoke('loop:update:download'),
+    install: () => ipcRenderer.invoke('loop:update:install'),
+    subscribe: (listener) => {
+      const handler = (_event, value) => listener(value);
+      ipcRenderer.on('loop:update:state', handler);
+      return () => ipcRenderer.removeListener('loop:update:state', handler);
+    },
+  },
   /** After a native confirm()/prompt(): give the window keyboard focus back (Windows). */
   refocus: () => ipcRenderer.send('loop:refocus'),
 });

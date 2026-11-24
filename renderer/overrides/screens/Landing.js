@@ -72,7 +72,17 @@ export default function Landing({ navigation }) {
     // Intro audio is independent from the optional dashboard background music.
     player.muted = false;
     player.volume = 1;
+    // The intro must be clearly audible; silence any other player while it runs.
+    player.audioMixingMode = "doNotMix";
     player.play();
+  });
+  // لایه‌ی پس‌زمینه: همان کلیپ با `cover` و بلور. در پنجره‌های ۱۶:۹ زیرِ کلیپ اصلی
+  // پنهان است؛ در نسبت‌های دیگر (مثلاً ۱۶:۱۰) حاشیه‌ی بالا/پایین را با فضای
+  // ستاره‌دارِ متحرک پر می‌کند تا لوگوموشن تمام‌پنجره باشد و کلیپ هم کامل بماند.
+  const backdropPlayer = useVideoPlayer(require('@desktop/assets/logo-motion-landscape.mp4'), (p) => {
+    p.muted = true;
+    p.volume = 0;
+    p.play();
   });
 
   // On web the setup callback runs before VideoView mounts its HTML element.
@@ -245,7 +255,13 @@ export default function Landing({ navigation }) {
       <CustomStatusBar />
       <LinearGradient colors={SPLASH_GRADIENT} style={StyleSheet.absoluteFill} />
 
-      {/* Preserve the complete landscape clip; the gradient fills window margins. */}
+      {/* Preserve the complete landscape clip; the blurred backdrop fills window margins. */}
+      <VideoView
+        style={[styles.video, styles.backdrop]}
+        nativeControls={false}
+        player={backdropPlayer}
+        contentFit="cover"
+      />
       <VideoView
         style={styles.video}
         nativeControls={false}
@@ -282,6 +298,12 @@ const styles = StyleSheet.create({
     left: 0,
     width: '100%',
     height: '100%',
+  },
+  // Blurred starry fill behind the clip; scaled up so the blurred edge stays outside.
+  backdrop: {
+    filter: 'blur(34px)',
+    transform: 'scale(1.12)',
+    opacity: 0.85,
   },
   background: {
     flex: 1,

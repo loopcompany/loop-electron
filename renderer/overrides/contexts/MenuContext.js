@@ -466,6 +466,7 @@ export const MenuProvider = ({ children }) => {
     const menuItems = useMemo(() => {
 
         const baseMenuItems = [
+            { id: 1001, title: t('اسکن کارت تکنسین'), screen: 'TechnicianIdentity', image: require('@assets/icons/sections/account-menu.png') },
             // { id: 24, title: t("Delete Account"), screen: null, action: () => { Linking.openURL(`${mainUri}/delete-account-request`) } },
             // { id: 23, title: t("Submit order"), screen: "FolderScreen" },
             // { id: 12, title: t("Lucky Wheel"), screen: "Club", apple_check: userData?.apple_check, image:`${imageUri}/userfolder/gift.png` },

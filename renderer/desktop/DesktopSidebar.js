@@ -226,7 +226,16 @@ export default function DesktopSidebar({
         </Pressable>
       </View>
 
-      <ScrollView style={styles.nav} contentContainerStyle={styles.navContent} showsVerticalScrollIndicator={false}>
+      {/* درخواست کارفرما (۱۴۰۵/۰۹/۰۲): منو با نوار اسکرول باریک و ظریف نمایش داده شود.
+          تا این تغییر نشانگر پنهان بود (`showsVerticalScrollIndicator={false}`) و روی
+          پنجره‌های کوتاه معلوم نبود که منو اسکرول می‌شود. قالب نوار: `.loop-nav-scroll`
+          در desktop/globalStyles.js. */}
+      <ScrollView
+        style={styles.nav}
+        contentContainerStyle={styles.navContent}
+        className="loop-nav-scroll"
+        showsVerticalScrollIndicator
+      >
         {renderItem({
           key: 'home',
           title: L.home,

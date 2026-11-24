@@ -23,7 +23,9 @@ import DocumentPage from '@desktop/DocumentPage';
 import { DButton } from '@desktop/ui';
 
 export default function OrganizationTermsScreen() {
-  useRealtimeRefresh(["catalog"], () => loadTerms());
+  // The loader below is named loadFaqs (copied from the mobile FAQ screen); the old
+  // `loadTerms` reference threw a ReferenceError on every catalog realtime event.
+  useRealtimeRefresh(["catalog"], () => loadFaqs());
   const { t, i18n } = useTranslation();
   const [terms, setTerms] = useState([]);
   const [isLoading, setIsLoading] = useState(true);

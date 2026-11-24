@@ -517,7 +517,8 @@ function Details({ route, navigation }) {
         if (female > 0) details.push(t("Female"));
         return (details.length > 0 ? `${details.join(' ')}` : '');
     })();
-    const payable = totalDiscountedPrice < Number(minPrice?.price) ? totalDiscountedPrice + 200000 : totalDiscountedPrice;
+    const settlementBalance = data?.payment_method === 'remaining' ? data?.remaining_amount : null;
+    const payable = settlementBalance ?? (totalDiscountedPrice < Number(minPrice?.price) ? totalDiscountedPrice + 200000 : totalDiscountedPrice);
     const basePrice = Number(data?.technician_price ?? data?.pakar_price) || 0;
 
     // the same "is this stage open yet" rules as the mobile accordions
@@ -945,7 +946,7 @@ function Details({ route, navigation }) {
                                             <Text style={[ds.payLabel, dir.bold]}>{t("Payable amount")}</Text>
                                             <Text style={[ds.payValue, dir.bold]}>{formatPrice(payable)} <Text style={ds.payUnit}>{t("Tomans")}</Text></Text>
                                         </View>
-                                        {totalDiscountedPrice < Number(minPrice?.price) && (
+                                        {settlementBalance == null && totalDiscountedPrice < Number(minPrice?.price) && (
                                             <View style={[ds.payRowMuted, dir.row]}>
                                                 <Text style={[ds.payMuted, dir.light]}>{t("Travel and tuition fees")}</Text>
                                                 <Text style={[ds.payMuted, dir.bold]}>{formatPrice(200000)} {t("Tomans")}</Text>

@@ -7,6 +7,7 @@ import i18n from 'i18next';
 
 /** Ionicons name per route; anything missing falls back to `ellipse-outline`. */
 export const ROUTE_ICONS = {
+  TechnicianIdentity: 'qr-code-outline',
   SystematicCategoryScreen: 'grid-outline',
   List: 'grid-outline',
   OrdersScreen: 'receipt-outline',

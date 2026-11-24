@@ -1,3 +1,4 @@
+import AppUpdateProvider from '@components/AppUpdateProvider';
 import LocalizationProvider from '@components/LocalizationProvider';
 import { NavigationContainer } from '@react-navigation/native';
 import { isRunningInExpoGo } from 'expo';
@@ -101,7 +102,7 @@ const App = () => {
   return (
     <Provider store={store}>
       <I18nextProvider i18n={i18n}>
-        <LocalizationProvider app="customer">
+        <LocalizationProvider app="customer"><AppUpdateProvider app="customer">
         <SafeAreaProvider>
           <NavigationContainer
             ref={navigationRef}
@@ -123,7 +124,7 @@ const App = () => {
             </AuthInitializer>
           </NavigationContainer>
         </SafeAreaProvider>
-      </LocalizationProvider>
+      </AppUpdateProvider></LocalizationProvider>
       </I18nextProvider>
     </Provider>
   );

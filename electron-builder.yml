@@ -34,10 +34,11 @@ nsis:
   artifactName: Loop-Setup-${version}.${ext}
   oneClick: false
   perMachine: false
-  include: build/installer.nsh
-  installerLanguages: [fa_IR]
-  language: '1065' # Farsi; installer.nsh maps electron-builder's "Persian" to NSIS's "Farsi"
-  allowToChangeInstallationDirectory: false # installer.nsh has its own folder page
+  include: build/installer-multilingual.nsh
+  installerLanguages: [fa_IR, en_US, zh_CN, ms_MY, fr_FR, ar_SA]
+  displayLanguageSelector: true
+  language: '1065'
+  allowToChangeInstallationDirectory: true
   installerIcon: build/icon.ico
   uninstallerIcon: build/icon.ico
   installerSidebar: build/installerSidebar.bmp

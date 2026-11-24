@@ -339,6 +339,33 @@ const EN = {
   'آنتی ویروس، بروزرسانی یا آپدیت نمی‌شود': 'Antivirus will not update',
   'درایورهای هارد در زمان نصب ویندوز نمایش داده نمی‌شوند': 'Disk drivers not shown during Windows install',
 
+  // مرحله‌های «عیوب نرم افزار» و «عیوب سخت افزار» (سند ۲۵ آبان ۱۴۰۵، بندهای ۱۱ و ۳۵)
+  'عیوب نرم افزار': 'Software faults',
+  'عیوب سخت افزار': 'Hardware faults',
+  'مشکلات نرم‌افزاری دستگاه؛ هر مورد که مصداق دارد را انتخاب کنید.':
+    'Software faults of the device; select every one that applies.',
+  'عیوب قطعات و سخت‌افزار لپ تاپ؛ هر مورد که مصداق دارد را انتخاب کنید.':
+    'Hardware faults of the laptop; select every one that applies.',
+  'ویروسی شدن دستگاه': 'Device is infected with a virus',
+  'روشن نمی‌شود': 'Does not power on',
+  'صفحه نمایش خط دارد، خاموش است یا شکسته': 'Screen has lines, stays dark or is cracked',
+  'کیبورد یا بعضی کلیدها کار نمی‌کند': 'Keyboard or some keys do not work',
+  'شارژ نمی‌شود / پورت شارژ مشکل دارد': 'Does not charge / charging port problem',
+  'باتری خیلی زود تخلیه می‌شود': 'Battery drains very quickly',
+  'زیاد داغ می‌کند / فن صدای زیادی دارد': 'Overheats / fan is very noisy',
+  'هارد صدا می‌دهد یا شناخته نمی‌شود': 'Drive is noisy or not detected',
+  'پورت‌های USB / HDMI کار نمی‌کنند': 'USB / HDMI ports do not work',
+  'لولا یا بدنه آسیب دیده': 'Hinge or body is damaged',
+  'سایر عیوب سخت‌افزاری': 'Other hardware faults',
+
+  // راهنمای مراحل الزامی در انتهای سفارش سیستماتیک
+  'الزامی': 'Required',
+  'مراحل الزامی باقی‌مانده': 'Remaining required steps',
+  'یکی از این مراحل الزامی است': 'One of these steps is required',
+  'رفتن به مرحله‌ی ناقص': 'Go to the incomplete step',
+  'برای استعلام، نمایش پیش‌رسید یا ثبت سفارش، ابتدا مراحل الزامی را تکمیل کنید.':
+    'Complete the required steps before requesting a quote, showing the pre-invoice or placing the order.',
+
   'کیس روشن نمی‌شود': 'Case does not power on',
   'کیس کار نمی‌کند': 'Case does not work',
   'کیس کند است': 'Case is slow',

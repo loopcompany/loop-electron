@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
-import api from '../services/Api';
-import useRealtimeRefresh from '../hooks/useRealtimeRefresh';
+import api from '@services/Api';
+import useRealtimeRefresh from '@hooks/useRealtimeRefresh';
 
 const digits = (value) => String(value).replace(/[۰-۹٠-٩]/g, (c) => String(c.charCodeAt(0) - (c <= '۹' && c >= '۰' ? 1776 : 1632)));
 const money = (value) => Number(value || 0).toLocaleString('fa-IR') + ' تومان';
@@ -30,7 +30,7 @@ export default function ReferralWalletPanel() {
     } catch { setError('دریافت اطلاعات پورسانت انجام نشد؛ دوباره تلاش کنید.'); }
   }, []);
   useEffect(() => { load(); }, [load]);
-  useRealtimeRefresh(['wallet'], load);
+  useRealtimeRefresh(['wallet','account'], load);
   const withdraw = async () => {
     if (busy) return;
     const value = Number(digits(amount));
@@ -45,7 +45,7 @@ export default function ReferralWalletPanel() {
   if (summary && !summary.is_agent) return null;
   if (!summary && !error) return null;
   return <View style={styles.panel}>
-    <Text style={styles.title}>کیف پول پورسانت کد معرف</Text>
+    <Text style={styles.title}>کیف پول پورسانت مسئول خرید</Text>
     {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
     {message ? <Text accessibilityRole="alert" style={styles.text}>{message}</Text> : null}
     <TouchableOpacity accessibilityRole="button" onPress={load}><Text style={styles.link}>دریافت اطلاعات تازه</Text></TouchableOpacity>
